@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>eSIM 工具卡写号教程</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --surface-2: #334155;
+    --border: #475569;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --accent: #38bdf8;
+    --accent-dim: #0ea5e9;
+    --green: #4ade80;
+    --green-dim: #166534;
+    --yellow: #facc15;
+    --yellow-dim: #854d0e;
+    --red: #f87171;
+    --red-dim: #991b1b;
+    --orange: #fb923c;
+    --purple: #a78bfa;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 2rem 1rem;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  /* Header */
+  .hero {
+    text-align: center;
+    padding: 3rem 2rem;
+    margin-bottom: 2rem;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1a1a2e 100%);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 30% 50%, rgba(56, 189, 248, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 70% 50%, rgba(167, 139, 250, 0.06) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .hero h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.5rem;
+  }
+  .hero .subtitle {
+    color: var(--text-dim);
+    font-size: 1rem;
+  }
+  .hero .tags {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .hero .tag {
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    background: var(--surface-2);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+
+  /* TOC */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem 2rem;
+    margin-bottom: 2rem;
+  }
+  .toc h2 {
+    font-size: 1rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 1rem;
+  }
+  .toc ol {
+    list-style: none;
+    counter-reset: toc;
+  }
+  .toc ol li {
+    counter-increment: toc;
+    margin-bottom: 0.4rem;
+  }
+  .toc ol li::before {
+    content: "0" counter(toc);
+    color: var(--accent);
+    font-weight: 600;
+    margin-right: 0.75rem;
+    font-size: 0.85rem;
+  }
+  .toc a {
+    color: var(--text);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: all 0.2s;
+  }
+  .toc a:hover {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  /* Section */
+  section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--surface-2);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  h2 .num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 8px;
+    background: var(--accent);
+    color: var(--bg);
+    font-size: 0.9rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 1.5rem 0 0.75rem;
+    color: var(--accent);
+  }
+
+  h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 1.2rem 0 0.5rem;
+    color: var(--text);
+  }
+
+  p { margin-bottom: 0.75rem; }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+  }
+  th, td {
+    padding: 0.6rem 0.8rem;
+    text-align: left;
+    border-bottom: 1px solid var(--surface-2);
+  }
+  th {
+    color: var(--text-dim);
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  tr:hover { background: rgba(56, 189, 248, 0.03); }
+
+  /* Code blocks */
+  pre {
+    background: #0c1222;
+    border: 1px solid var(--surface-2);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    overflow-x: auto;
+    margin: 1rem 0;
+    font-size: 0.85rem;
+    line-height: 1.6;
+  }
+  code {
+    font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', Menlo, monospace;
+    color: var(--green);
+  }
+  pre code { color: var(--text); }
+
+  .comment { color: var(--text-dim); }
+  .cmd { color: var(--green); }
+  .flag { color: var(--orange); }
+  .str { color: var(--yellow); }
+  .key { color: var(--purple); }
+
+  /* Inline code */
+  p code, li code, td code {
+    background: var(--surface-2);
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.85em;
+    color: var(--accent);
+  }
+
+  /* Callouts */
+  .callout {
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+    border-left: 3px solid;
+    font-size: 0.9rem;
+  }
+  .callout.info {
+    background: rgba(56, 189, 248, 0.08);
+    border-color: var(--accent);
+  }
+  .callout.warn {
+    background: rgba(250, 204, 21, 0.08);
+    border-color: var(--yellow);
+  }
+  .callout.danger {
+    background: rgba(248, 113, 113, 0.08);
+    border-color: var(--red);
+  }
+  .callout.success {
+    background: rgba(74, 222, 128, 0.08);
+    border-color: var(--green);
+  }
+  .callout-title {
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+  }
+  .callout.info .callout-title { color: var(--accent); }
+  .callout.warn .callout-title { color: var(--yellow); }
+  .callout.danger .callout-title { color: var(--red); }
+  .callout.success .callout-title { color: var(--green); }
+
+  /* Lists */
+  ul, ol {
+    padding-left: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+  li { margin-bottom: 0.3rem; }
+
+  /* Architecture diagram */
+  .arch-diagram {
+    background: #0c1222;
+    border: 1px solid var(--surface-2);
+    border-radius: 12px;
+    padding: 2rem;
+    margin: 1.5rem 0;
+    text-align: center;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.85rem;
+    line-height: 1.8;
+    overflow-x: auto;
+    white-space: pre;
+    color: var(--text-dim);
+  }
+  .arch-diagram .node {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .arch-diagram .arrow {
+    color: var(--text-dim);
+  }
+  .arch-diagram .label {
+    color: var(--purple);
+    font-size: 0.75rem;
+  }
+
+  /* Badge / pill */
+  .badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .badge.green { background: var(--green-dim); color: var(--green); }
+  .badge.yellow { background: var(--yellow-dim); color: var(--yellow); }
+  .badge.red { background: var(--red-dim); color: var(--red); }
+
+  /* Step list */
+  .steps {
+    list-style: none;
+    padding-left: 0;
+    counter-reset: step;
+  }
+  .steps > li {
+    counter-increment: step;
+    padding: 0.75rem 0 0.75rem 2.5rem;
+    position: relative;
+    border-left: 2px solid var(--surface-2);
+    margin-left: 0.75rem;
+  }
+  .steps > li::before {
+    content: counter(step);
+    position: absolute;
+    left: -0.85rem;
+    top: 0.65rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--bg);
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .steps > li:last-child { border-left-color: transparent; }
+  .steps > li strong { color: var(--accent); }
+
+  /* Comparison cards */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+  .card {
+    background: var(--bg);
+    border: 1px solid var(--surface-2);
+    border-radius: 10px;
+    padding: 1.25rem;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--accent); }
+  .card .card-title {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .card .card-body {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+  }
+  .card .card-body ul {
+    padding-left: 1.2rem;
+    margin-top: 0.4rem;
+  }
+  .card.recommended {
+    border-color: var(--green);
+    box-shadow: 0 0 0 1px var(--green-dim);
+  }
+  .card.recommended .card-title::after {
+    content: '推荐';
+    font-size: 0.7rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    background: var(--green-dim);
+    color: var(--green);
+    font-weight: 600;
+  }
+
+  /* JSON syntax highlight (simplified) */
+  .json .key { color: var(--purple); }
+  .json .str { color: var(--green); }
+  .json .num { color: var(--orange); }
+  .json .bool { color: var(--accent); }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-dim);
+    font-size: 0.8rem;
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    body { padding: 1rem 0.5rem; }
+    section { padding: 1.25rem; }
+    .hero { padding: 2rem 1rem; }
+    .hero h1 { font-size: 1.5rem; }
+    pre { font-size: 0.78rem; padding: 0.75rem; }
+    .cards { grid-template-columns: 1fr; }
+  }
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+<!-- Hero -->
+<header class="hero">
+  <h1>eSIM 工具卡写号教程</h1>
+  <p class="subtitle">eSTK / 9eSIM 白卡选购、读卡器写号、MTN 保号，国行手机也能用海外 eSIM 号码</p>
+  <div class="tags">
+    <span class="tag">eSTK 白卡</span>
+    <span class="tag">eUICC</span>
+    <span class="tag">NekokoLPA M</span>
+    <span class="tag">MiniLPA</span>
+    <span class="tag">MTN Nigeria</span>
+    <span class="tag">Timon 接码</span>
+  </div>
+</header>
+
+<!-- TOC -->
+<nav class="toc">
+  <h2>目录</h2>
+  <ol>
+    <li><a href="#why">为什么需要 eSIM 工具卡</a></li>
+    <li><a href="#products">白卡产品对比</a></li>
+    <li><a href="#methods">写卡方式说明</a></li>
+    <li><a href="#steps">eSTK + 读卡器写号步骤</a></li>
+    <li><a href="#multi">多号码管理</a></li>
+    <li><a href="#after">写入完成后</a></li>
+    <li><a href="#keep-number">MTN 号码日常费用与保号</a></li>
+    <li><a href="#device">设备分工建议</a></li>
+  </ol>
+</nav>
+
+<!-- 8. eSIM -->
+<section id="esim">
+  <h2>eSIM 工具卡写号教程</h2>
+
+  <h3>为什么需要 eSIM 工具卡</h3>
+  <p>Timon 钱包登录和重要操作需要接收尼日利亚手机号的短信验证码。但你人在国内，没有尼日利亚实体 SIM 卡。商家提供的是一个 <strong>eSIM 配置文件</strong>（二维码形式），需要写入手机才能接码。</p>
+
+  <div class="callout info">
+    <div class="callout-title">eSIM 是什么</div>
+    eSIM <strong>不是实体卡</strong>，而是一段数字配置文件（包含手机号、运营商信息等）。正常情况下写入手机内置芯片即可，但国行手机禁用了 eSIM 功能。<strong>eSIM 工具卡</strong>就是一张可编程的实体 nano-SIM 卡，把 eSIM 配置写进去，插到手机卡槽里当普通 SIM 卡用。
+  </div>
+
+  <div class="arch-diagram" style="text-align:left; line-height: 2;">
+<span class="label">海外手机的正常流程：</span>
+  <span class="str">eSIM 配置文件</span> <span class="arrow">→</span> 写入手机内置芯片 <span class="arrow">→</span> 直接识别号码
+
+<span class="label">国行手机的流程（用 eUICC 白卡）：</span>
+  <span class="str">eSIM 配置文件</span> <span class="arrow">→</span> 读卡器 + 电脑写入 <span class="node">eSTK 白卡</span> <span class="arrow">→</span> 插到手机卡槽 <span class="arrow">→</span> 当普通 SIM 卡识别</div>
+
+  <h3>eSIM 白卡（eUICC 卡）产品对比</h3>
+  <p>市面上主流的 eSIM 白卡都内置 <strong>eUICC 芯片</strong>（Embedded Universal Integrated Circuit Card），符合 GSMA 标准，MTN 的 eSIM 配置文件可以写入任何品牌的白卡。</p>
+
+  <table>
+    <tr><th>产品</th><th>价格</th><th>存储容量</th><th>可存号码</th><th>写卡方式</th><th>开源</th><th>特点</th></tr>
+    <tr>
+      <td><strong>eSTK</strong></td>
+      <td><strong>~¥24</strong></td>
+      <td>840KB</td>
+      <td>~40 个</td>
+      <td>读卡器 + 电脑/手机</td>
+      <td>是</td>
+      <td><strong>性价比最高</strong>，需配读卡器（¥20-30）</td>
+    </tr>
+    <tr>
+      <td>9eSIM V0</td>
+      <td>~¥85</td>
+      <td>中等</td>
+      <td>入门</td>
+      <td>读卡器 + 电脑/手机</td>
+      <td>是</td>
+      <td>入门版</td>
+    </tr>
+    <tr>
+      <td>9eSIM V3</td>
+      <td>~¥133</td>
+      <td><strong>1.6MB</strong></td>
+      <td><strong>~50 个</strong></td>
+      <td>读卡器 + 电脑/手机</td>
+      <td>是</td>
+      <td>容量最大，适合管理大量号码</td>
+    </tr>
+  </table>
+
+  <div class="callout warn">
+    <div class="callout-title">为什么价格差异大</div>
+    <ul style="margin:0.5rem 0 0 1rem;">
+      <li><strong>芯片存储容量</strong>：9eSIM V3（1.6MB）是 eSTK（840KB）的近 2 倍，能存更多号码</li>
+      <li><strong>写卡方式</strong>：eSTK/9eSIM 用读卡器 + 开源软件写卡，数据存本地，不依赖任何厂商服务器</li>
+      <li><strong>5ber 已停运</strong>：曾经最流行的 5ber 系列已跑路/停止国内销售，国内无法购买。eSTK 和 9eSIM 是当前主流替代品</li>
+    </ul>
+  </div>
+
+  <div class="callout success">
+    <div class="callout-title">推荐：eSTK + 读卡器（总 ~¥49）</div>
+    你只需要 1 个 MTN 号接验证码，eSTK 的 840KB 存储绰绰有余。开源 + 数据存本地 + 不依赖厂商 = 长期无后顾之忧。
+  </div>
+
+  <h3>写卡方式说明</h3>
+  <p>白卡写卡有两种方式，<strong>根据你的手机兼容性选择</strong>：</p>
+
+  <table>
+    <tr><th>方式</th><th>原理</th><th>适用品牌</th><th>工具</th></tr>
+    <tr>
+      <td><strong>读卡器 + 电脑写卡（推荐）</strong></td>
+      <td>卡插入 USB 读卡器接电脑，用电脑软件写入，完全绕过手机兼容性问题</td>
+      <td>eSTK、9eSIM</td>
+      <td>MiniLPA（macOS）/ EasyLPAC（Windows）</td>
+    </tr>
+    <tr>
+      <td>手机 App 直写</td>
+      <td>卡插入手机卡槽，App 通过 OMAPI 接口和卡通信（需手机兼容）</td>
+      <td>部分品牌（如已停运的 5ber）</td>
+      <td>EasyEUICC（开源）</td>
+    </tr>
+  </table>
+
+  <div class="callout danger">
+    <div class="callout-title">小米 15 兼容性问题</div>
+    <p>小米 15 的 OMAPI 接口受限，EasyEUICC 等手机端写卡 App <strong>直接插卡写入不兼容</strong>（提示设备不兼容）。这是国行安卓厂商的普遍问题，不是白卡本身的问题。</p>
+    <p><strong>解决方案：用读卡器 + 电脑写卡，完全绕过手机兼容性限制。</strong>写完后拔出来插到小米 15 正常使用，日常接短信不受影响。</p>
+  </div>
+
+  <h3>eSTK + 读卡器写号步骤（推荐）</h3>
+  <ol class="steps">
+    <li>
+      <strong>购买 eSTK 白卡 + USB-C 读卡器</strong>：淘宝/京东搜"eSTK eSIM"（~¥24）+ "eSIM 读卡器"（~¥25），总计约 ¥49
+    </li>
+    <li>
+      <strong>电脑安装写卡软件</strong>：
+      <ul>
+        <li>macOS：下载 <strong>MiniLPA</strong></li>
+        <li>Windows：下载 <strong>EasyLPAC</strong></li>
+      </ul>
+    </li>
+    <li>
+      <strong>eSTK 卡插入读卡器</strong>，读卡器 USB 接电脑
+    </li>
+    <li>
+      <strong>打开写卡软件</strong>：软件识别到读卡器和卡片后，显示卡片信息和剩余空间
+    </li>
+    <li>
+      <strong>写入 eSIM</strong>：将商家给的 MTN eSIM 二维码图片<strong>拖拽到软件窗口</strong>（或扫码），点确认开始写入
+    </li>
+    <li>
+      <strong>启用号码</strong>：写入完成后，右键点击卡片 → 启用（Enable）
+    </li>
+    <li>
+      <strong>拔出卡，插入小米手机</strong>：等待几分钟，信号栏出现 <code>MTN</code> 标识 → 成功
+    </li>
+  </ol>
+
+  <h3>多号码管理（进阶）</h3>
+  <p>如果以后往卡里写入更多号码（如美国号、其他国家号），同一时间只能激活 1 个号码，切换方式：</p>
+  <table>
+    <tr><th>场景</th><th>操作</th><th>说明</th></tr>
+    <tr><td>电脑切换</td><td>读卡器接电脑 → MiniLPA 禁用当前号 → 启用目标号</td><td>最可靠</td></tr>
+    <tr><td>安卓手机切换</td><td>EasyEUICC App（需手机 OMAPI 兼容）</td><td>小米 15 不兼容，需用电脑</td></tr>
+    <tr><td>STK 菜单切换</td><td>设置 → SIM 卡应用程序 → eSTK 菜单</td><td>部分手机支持</td></tr>
+  </table>
+  <p style="font-size:0.85rem;color:var(--text-dim);">* "下载次数"只消耗在写入新号码时。在已写入的号码之间切换不消耗次数，无限次。删除号码也不消耗次数。eSTK 下载次数无限。</p>
+
+  <div class="callout info">
+    <div class="callout-title">MTN 是什么</div>
+    MTN Nigeria 是尼日利亚最大的电信运营商（隶属南非 MTN Group），相当于国内的中国移动。覆盖最广、信号最稳，是商家默认选择的运营商。
+  </div>
+
+  <h3>写入完成后</h3>
+  <ul>
+    <li>白卡现在就是一张<strong>永久的尼日利亚 MTN 实体 SIM 卡</strong>，和普通 SIM 卡使用方式完全相同</li>
+    <li>插进手机就能收短信（Timon 验证码），不需要任何 App</li>
+    <li>不需要网络连接，短信走运营商蜂窝信号</li>
+    <li>换手机也能用 — 拔出来插到另一台手机就行</li>
+    <li>只需要接短信，不需要打电话或流量，不用买任何套餐</li>
+  </ul>
+
+  <h3>MTN 号码日常费用与保号</h3>
+
+  <p>MTN 是<strong>预付费</strong>（Prepaid）模式，没有月租。不打电话、不发短信、不用流量就不产生费用。接收短信（Timon 验证码）<strong>免费</strong>。</p>
+
+  <h4>保号防回收</h4>
+  <p>尼日利亚通信委员会 (NCC) 规定，SIM 卡连续 <strong>6 个月</strong>没有任何收入活动（充值、通话、发短信、买流量），运营商有权回收号码。MTN 提供专门的保号套餐：</p>
+
+  <h4>方式一：USSD 拨号（需话费余额，价格未验证）</h4>
+  <table>
+    <tr><th>套餐</th><th>拨号代码</th><th>费用</th><th>折合人民币</th><th>有效期</th></tr>
+    <tr><td>1 年保号</td><td><code>*365*1#</code></td><td>₦511</td><td>约 ¥2.5</td><td>12 个月</td></tr>
+    <tr><td>2 年保号</td><td><code>*365*2#</code></td><td>₦819</td><td>约 ¥4</td><td>24 个月</td></tr>
+    <tr><td><strong>3 年保号</strong></td><td><code>*365*3#</code></td><td><strong>₦1228</strong></td><td><strong>约 ¥6</strong></td><td><strong>36 个月</strong></td></tr>
+  </table>
+
+  <h4>方式二：MyMTN App（推荐，操作更方便）</h4>
+  <p>下载 <strong>MyMTN App</strong>（Google Play / App Store），登录 MTN 号码后，进入 <strong>Keep My Number</strong> 功能，直接选择保号时长并在线支付。</p>
+  <table>
+    <tr><th>套餐</th><th>费用</th><th>折合人民币</th><th>有效期</th></tr>
+    <tr><td>1 年保号</td><td>₦3,500</td><td>约 ¥16</td><td>365 天</td></tr>
+    <tr><td>2 年保号</td><td>₦5,000</td><td>约 ¥23</td><td>730 天</td></tr>
+    <tr><td><strong>3 年保号</strong></td><td><strong>₦7,500</strong></td><td><strong>约 ¥34</strong></td><td><strong>1095 天</strong></td></tr>
+  </table>
+
+  <div class="callout warn">
+    <div class="callout-title">两种方式价格不同</div>
+    USSD 拨号价格来自网上资料，<strong>未经实测验证，可能已过时</strong>。MyMTN App 价格为 2026 年 6 月实测。如果 USSD 价格已变动，建议直接用 MyMTN App 操作。
+  </div>
+
+  <div class="callout success">
+    <div class="callout-title">推荐：MyMTN App 买 1 年保号（₦3,500 ≈ ¥16），操作可视、价格确定</div>
+    <ol style="margin:0.5rem 0 0 1rem;">
+      <li>eSTK 卡插入手机，确认能收到信号</li>
+      <li>下载 MyMTN App → 登录 MTN 号码</li>
+      <li>进入 Keep My Number → 选择 1 年保号（₦3,500）→ 在线支付</li>
+      <li>保号成功，1 年内不会被回收</li>
+    </ol>
+  </div>
+
+  <h4>费用总结</h4>
+  <table>
+    <tr><th>项目</th><th>费用</th><th>频率</th></tr>
+    <tr><td>月租</td><td>¥0</td><td>—</td></tr>
+    <tr><td>接短信（验证码）</td><td>¥0</td><td>—</td></tr>
+    <tr><td>保号</td><td>¥16（1 年，MyMTN App 实测价 ₦3,500）</td><td>每年一次</td></tr>
+    <tr><td><strong>年均持有成本</strong></td><td><strong>约 ¥16</strong></td><td>—</td></tr>
+  </table>
+
+  <h3>设备分工建议</h3>
+  <table>
+    <tr><th>设备</th><th>卡槽 1</th><th>卡槽 2</th><th>用途</th></tr>
+    <tr><td><strong>主力机（小米 15）</strong></td><td>国内 SIM 卡</td><td>—</td><td>日常使用 + 尼区 Google Play 订阅 Claude</td></tr>
+    <tr><td><strong>备用机（小米 11 Pro）</strong></td><td>eSTK 白卡（尼日利亚号）</td><td>—</td><td>装 Timon App，需要接码时开机</td></tr>
+  </table>
+  <p>Timon 接码频率很低（登录、支付验证），备用机平时不用开机。</p>
+</section>
+
+
+<footer>
+  <p>整理于 2026 年 6 月 · 仅供个人学习与技术参考</p>
+  <p style="font-size:0.8rem;">本文档从 <a href="ai_subscription_guide.html" style="color:var(--accent);">海外 AI 服务订阅指南</a> 拆分而来。</p>
+</footer>
+
+</div>
+
+</body>
+</html>

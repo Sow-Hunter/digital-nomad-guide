@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V2rayN / V2rayNG 代理机制详解</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --surface-2: #334155;
+    --border: #475569;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --accent: #38bdf8;
+    --green: #4ade80;
+    --green-dim: #166534;
+    --yellow: #facc15;
+    --yellow-dim: #854d0e;
+    --red: #f87171;
+    --red-dim: #991b1b;
+    --orange: #fb923c;
+    --purple: #a78bfa;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 2rem 1rem;
+  }
+
+  .container { max-width: 900px; margin: 0 auto; }
+
+  .hero {
+    text-align: center;
+    padding: 3rem 2rem;
+    margin-bottom: 2rem;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1a1a2e 100%);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(circle at 30% 50%, rgba(56, 189, 248, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 70% 50%, rgba(167, 139, 250, 0.06) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .hero h1 {
+    font-size: 2rem; font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 0.5rem;
+  }
+  .hero .subtitle { color: var(--text-dim); font-size: 1rem; }
+
+  .toc { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem 2rem; margin-bottom: 2rem; }
+  .toc h2 { font-size: 1rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1rem; }
+  .toc ol { list-style: none; counter-reset: toc; }
+  .toc ol li { counter-increment: toc; margin-bottom: 0.4rem; }
+  .toc ol li::before { content: "0" counter(toc); color: var(--accent); font-weight: 600; margin-right: 0.75rem; font-size: 0.85rem; }
+  .toc a { color: var(--text); text-decoration: none; border-bottom: 1px solid transparent; transition: all 0.2s; }
+  .toc a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+  section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; }
+
+  h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 2px solid var(--surface-2); display: flex; align-items: center; gap: 0.5rem; }
+  h2 .num { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; border-radius: 8px; background: var(--accent); color: var(--bg); font-size: 0.9rem; font-weight: 700; flex-shrink: 0; }
+  h3 { font-size: 1.1rem; font-weight: 600; margin: 1.5rem 0 0.75rem; color: var(--accent); }
+  h4 { font-size: 1rem; font-weight: 600; margin: 1.2rem 0 0.5rem; color: var(--text); }
+  p { margin-bottom: 0.75rem; }
+
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+  th, td { padding: 0.6rem 0.8rem; text-align: left; border-bottom: 1px solid var(--surface-2); }
+  th { color: var(--text-dim); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  tr:hover { background: rgba(56, 189, 248, 0.03); }
+
+  pre { background: #0c1222; border: 1px solid var(--surface-2); border-radius: 8px; padding: 1rem 1.25rem; overflow-x: auto; margin: 1rem 0; font-size: 0.85rem; line-height: 1.6; }
+  code { font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', Menlo, monospace; color: var(--green); }
+  pre code { color: var(--text); }
+  p code, li code, td code { background: var(--surface-2); padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.85em; color: var(--accent); }
+
+  .callout { padding: 1rem 1.25rem; border-radius: 8px; margin: 1rem 0; border-left: 3px solid; font-size: 0.9rem; }
+  .callout.info { background: rgba(56, 189, 248, 0.08); border-color: var(--accent); }
+  .callout.warn { background: rgba(250, 204, 21, 0.08); border-color: var(--yellow); }
+  .callout.danger { background: rgba(248, 113, 113, 0.08); border-color: var(--red); }
+  .callout.success { background: rgba(74, 222, 128, 0.08); border-color: var(--green); }
+  .callout-title { font-weight: 600; margin-bottom: 0.3rem; }
+  .callout.info .callout-title { color: var(--accent); }
+  .callout.warn .callout-title { color: var(--yellow); }
+  .callout.danger .callout-title { color: var(--red); }
+  .callout.success .callout-title { color: var(--green); }
+
+  ul, ol { padding-left: 1.5rem; margin-bottom: 0.75rem; }
+  li { margin-bottom: 0.3rem; }
+
+  .arch-diagram {
+    background: #0c1222;
+    border: 1px solid var(--surface-2);
+    border-radius: 12px;
+    padding: 2rem;
+    margin: 1.5rem 0;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.85rem;
+    line-height: 1.8;
+    overflow-x: auto;
+    white-space: pre;
+    color: var(--text-dim);
+  }
+  .arch-diagram .node { color: var(--accent); font-weight: 600; }
+  .arch-diagram .arrow { color: var(--text-dim); }
+  .arch-diagram .label { color: var(--purple); font-size: 0.75rem; }
+  .arch-diagram .direct { color: var(--green); }
+  .arch-diagram .proxy { color: var(--orange); }
+  .arch-diagram .block { color: var(--red); }
+
+  .badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
+  .badge.green { background: var(--green-dim); color: var(--green); }
+  .badge.yellow { background: var(--yellow-dim); color: var(--yellow); }
+  .badge.red { background: var(--red-dim); color: var(--red); }
+
+  footer { text-align: center; padding: 2rem; color: var(--text-dim); font-size: 0.8rem; }
+  @media (max-width: 640px) { body { padding: 1rem 0.5rem; } section { padding: 1.25rem; } .hero { padding: 2rem 1rem; } .hero h1 { font-size: 1.5rem; } pre { font-size: 0.78rem; padding: 0.75rem; } }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header class="hero">
+  <h1>V2rayN / V2rayNG 代理机制详解</h1>
+  <p class="subtitle">Tun 模式、系统代理、路由规则三者的关系，以及流量在桌面端和移动端的完整流转路径</p>
+</header>
+
+<nav class="toc">
+  <h2>目录</h2>
+  <ol>
+    <li><a href="#overview">核心概念：流量怎么被代理</a></li>
+    <li><a href="#desktop">桌面端（V2rayN macOS / Windows）</a></li>
+    <li><a href="#mobile">移动端（V2rayNG Android）</a></li>
+    <li><a href="#routing">路由规则详解</a></li>
+    <li><a href="#terminal">终端程序的代理配置</a></li>
+    <li><a href="#scenarios">常见场景配置推荐</a></li>
+  </ol>
+</nav>
+
+<!-- 1. Overview -->
+<section id="overview">
+  <h2><span class="num">1</span> 核心概念：流量怎么被代理</h2>
+
+  <p>代理的本质是<strong>拦截流量 → 判断去向 → 转发或直连</strong>。V2rayN/V2rayNG 把这个过程分成三个独立的层次，理解这三层是搞清楚所有配置的关键。</p>
+
+  <h3>三层过滤模型</h3>
+  <p>流量经过三层逐层筛选，可以理解为漏斗：</p>
+
+  <div class="arch-diagram">
+<span class="node">应用发出流量</span>
+    <span class="arrow">│</span>
+    <span class="arrow">▼</span>
+┌─────────────────────────────┐
+│ <span class="node">第 1 层：流量捕获</span>             │  <span class="label">← 决定哪些流量进入代理管道</span>
+│ (Tun / 系统代理 / VPN API)   │  <span class="label">   不同平台机制不同</span>
+└─────────────────────────────┘
+    <span class="arrow">│</span> (进入管道的流量)
+    <span class="arrow">▼</span>
+┌─────────────────────────────┐
+│ <span class="node">第 2 层：路由规则</span>             │  <span class="label">← 对进入管道的流量按域名/IP 分流</span>
+│ (绕过大陆 / 全局 / 黑名单)   │  <span class="label">   决定 <span class="direct">direct</span> / <span class="proxy">proxy</span> / <span class="block">block</span></span>
+└─────────────────────────────┘
+    <span class="arrow">│</span>
+    <span class="arrow">▼</span>
+┌─────────────────────────────┐
+│ <span class="node">第 3 层：出站代理节点</span>         │  <span class="label">← 需要代理的流量走哪个服务器</span>
+│ (Lightsail XHTTP Reality)   │
+└─────────────────────────────┘</div>
+
+  <div class="callout info">
+    <div class="callout-title">关键认知</div>
+    <p>三层是<strong>独立配置、逐层生效</strong>的。第 1 层决定"能不能捕获到"，第 2 层决定"走不走代理"，第 3 层决定"走哪个代理"。任何一层配错，流量就不会按预期走。</p>
+  </div>
+</section>
+
+<!-- 2. Desktop -->
+<section id="desktop">
+  <h2><span class="num">2</span> 桌面端（V2rayN macOS / Windows）</h2>
+
+  <h3>第 1 层：流量捕获方式</h3>
+  <p>桌面端有<strong>两种</strong>捕获流量的方式，二选一：</p>
+
+  <table>
+    <tr><th>方式</th><th>原理</th><th>捕获范围</th><th>适用场景</th></tr>
+    <tr>
+      <td><strong>系统代理</strong></td>
+      <td>V2rayN 在本地监听 HTTP/SOCKS5 端口（默认 <code>10809</code> / <code>10808</code>），并告诉操作系统"所有 HTTP 流量走这个端口"</td>
+      <td><span class="badge yellow">仅 HTTP/HTTPS</span>——只有遵守系统代理设置的程序才走代理（浏览器、部分 App）</td>
+      <td>日常浏览、网页访问</td>
+    </tr>
+    <tr>
+      <td><strong>Tun 模式</strong></td>
+      <td>V2rayN 创建一个虚拟网卡（TUN 设备），操作系统的<strong>所有网络流量</strong>都被路由到这个虚拟网卡</td>
+      <td><span class="badge green">全部流量</span>——TCP/UDP/ICMP 全捕获，包括不走系统代理的程序（终端命令行、游戏、SSH 等）</td>
+      <td>需要全局代理、终端工具、游戏加速</td>
+    </tr>
+  </table>
+
+  <div class="arch-diagram">
+<span class="label">系统代理模式：</span>
+
+  <span class="node">浏览器</span> ──→ 读取系统代理设置 ──→ <span class="proxy">HTTP 127.0.0.1:10809</span> ──→ V2rayN ──→ 路由规则
+  <span class="node">终端 curl</span> ──→ <span class="direct">不走代理（除非手动设 HTTPS_PROXY）</span>
+  <span class="node">SSH</span> ──→ <span class="direct">不走代理</span>
+
+<span class="label">Tun 模式：</span>
+
+  <span class="node">浏览器</span> ──→ 虚拟网卡 ──→ V2rayN ──→ 路由规则
+  <span class="node">终端 curl</span> ──→ 虚拟网卡 ──→ V2rayN ──→ 路由规则
+  <span class="node">SSH</span> ──→ 虚拟网卡 ──→ V2rayN ──→ 路由规则
+  <span class="label">（所有流量无差别捕获）</span></div>
+
+  <h3>系统代理 vs Tun 对比</h3>
+  <table>
+    <tr><th>维度</th><th>系统代理</th><th>Tun 模式</th></tr>
+    <tr><td>捕获范围</td><td>仅遵守系统代理的程序</td><td><strong>全部程序</strong></td></tr>
+    <tr><td>终端命令行</td><td>需手动设 <code>HTTPS_PROXY</code></td><td><strong>自动走代理</strong></td></tr>
+    <tr><td>UDP 流量（游戏、DNS）</td><td>不捕获</td><td><strong>捕获</strong></td></tr>
+    <tr><td>性能开销</td><td>低</td><td>略高（虚拟网卡转发）</td></tr>
+    <tr><td>权限要求</td><td>无</td><td>需管理员/Root 权限</td></tr>
+    <tr><td>Claude Code</td><td>需 <code>export HTTPS_PROXY</code></td><td><strong>自动走代理，无需配置</strong></td></tr>
+  </table>
+
+  <div class="callout warn">
+    <div class="callout-title">两种方式不要同时开</div>
+    <p>系统代理和 Tun 模式同时开可能导致流量回环（流量被捕获两次）。V2rayN 通常会自动处理，但如果遇到网络异常，检查是否两个都开了。</p>
+  </div>
+
+  <h3>V2rayN 操作位置</h3>
+  <table>
+    <tr><th>操作</th><th>macOS</th><th>Windows</th></tr>
+    <tr><td>开启/关闭系统代理</td><td>菜单栏图标 → 系统代理 → 自动配置 / 不改变</td><td>右下角托盘 → 系统代理 → 自动配置 / 不改变</td></tr>
+    <tr><td>开启/关闭 Tun 模式</td><td>菜单栏图标 → Tun 模式 → 开启/关闭</td><td>右下角托盘 → Tun 模式 → 开启/关闭</td></tr>
+    <tr><td>选择路由规则</td><td>底部状态栏 → 路由 → 绕过大陆 / 全局 / 黑名单</td><td>底部状态栏 → 路由 → 绕过大陆 / 全局 / 黑名单</td></tr>
+    <tr><td>查看本地端口</td><td>设置 → Core 基础设置 → 本地端口</td><td>设置 → 参数设置 → 本地端口</td></tr>
+  </table>
+</section>
+
+<!-- 3. Mobile -->
+<section id="mobile">
+  <h2><span class="num">3</span> 移动端（V2rayNG Android）</h2>
+
+  <h3>Android 上的核心区别</h3>
+  <p>V2rayNG 通过 <strong>Android VPN API</strong> 工作（类似桌面端的 Tun），不是简单的 HTTP 代理。连接后系统通知栏会显示 VPN 钥匙图标。</p>
+
+  <div class="callout info">
+    <div class="callout-title">Android 没有"系统代理"选择</div>
+    <p>和桌面端不同，Android 上 V2rayNG 只有<strong>一种捕获方式</strong>——VPN 模式（等同于 Tun）。点击连接按钮后，所有流量自动进入 VPN 隧道，不需要手动选择 Tun 还是系统代理。</p>
+  </div>
+
+  <h3>三层过滤模型（Android）</h3>
+
+  <div class="arch-diagram">
+<span class="node">应用发出流量</span>
+    <span class="arrow">│</span>
+    <span class="arrow">▼</span>
+┌──────────────────────────────────┐
+│ <span class="node">第 1 层：分应用路由</span>               │  <span class="label">← 决定哪些 APP 的流量进入 VPN 隧道</span>
+│ (分应用代理 / 分应用直连)         │  <span class="label">   V2rayNG 独有功能</span>
+└──────────────────────────────────┘
+    <span class="arrow">│</span> (进入隧道的流量)
+    <span class="arrow">▼</span>
+┌──────────────────────────────────┐
+│ <span class="node">第 2 层：路由规则</span>                 │  <span class="label">← 对进入隧道的流量按域名/IP 分流</span>
+│ (绕过大陆 / 全局 / 黑名单)        │  <span class="label">   <span class="direct">direct</span> / <span class="proxy">proxy</span> / <span class="block">block</span></span>
+└──────────────────────────────────┘
+    <span class="arrow">│</span>
+    <span class="arrow">▼</span>
+┌──────────────────────────────────┐
+│ <span class="node">第 3 层：出站代理节点</span>             │  <span class="label">← 需要代理的流量走哪个服务器</span>
+└──────────────────────────────────┘</div>
+
+  <h3>分应用路由（第 1 层，Android 独有）</h3>
+  <p>V2rayNG 允许你精确控制哪些 App 走 VPN、哪些不走。这是 Android VPN API 的能力，桌面端没有这个功能。</p>
+
+  <table>
+    <tr><th>模式</th><th>说明</th><th>适用场景</th></tr>
+    <tr>
+      <td><strong>分应用代理</strong>（白名单）</td>
+      <td>只有勾选的 App 走 VPN，其他直连</td>
+      <td>只想代理浏览器和特定 App，国内 App 不受影响</td>
+    </tr>
+    <tr>
+      <td><strong>分应用直连</strong>（黑名单）</td>
+      <td>勾选的 App 不走 VPN，其他全走</td>
+      <td>大部分流量需要代理，但个别 App（如银行、支付宝）必须直连</td>
+    </tr>
+    <tr>
+      <td><strong>不配置</strong>（默认）</td>
+      <td>所有 App 的流量都进入 VPN</td>
+      <td>配合路由规则"绕过大陆"使用</td>
+    </tr>
+  </table>
+
+  <p><strong>操作位置</strong>：V2rayNG → 左侧菜单 → 设置 → 分应用代理 → 勾选需要的 App</p>
+
+  <div class="callout info">
+    <div class="callout-title">分应用路由 vs 路由规则的关系</div>
+    <p>分应用路由是<strong>第 1 层过滤</strong>，在流量进入 VPN 之前就决定了去留。路由规则是<strong>第 2 层过滤</strong>，只对已经进入 VPN 的流量生效。两层可以叠加使用：</p>
+    <ul style="margin:0.5rem 0 0 1rem;">
+      <li>分应用代理选了 Chrome → Chrome 的流量进入 VPN → 路由规则再按域名分流（国内直连、国外代理）</li>
+      <li>微信没被选中 → 微信的流量<strong>完全不经过 VPN</strong>，路由规则对它无效</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 4. Routing -->
+<section id="routing">
+  <h2><span class="num">4</span> 路由规则详解（第 2 层）</h2>
+
+  <p>路由规则只对<strong>已进入代理管道</strong>的流量生效（桌面端被系统代理/Tun 捕获的、Android 端进入 VPN 的）。它按域名和 IP 判断流量去向。</p>
+
+  <h3>预定义规则</h3>
+  <table>
+    <tr><th>规则</th><th>逻辑</th><th>效果</th><th>适用场景</th></tr>
+    <tr>
+      <td><strong>绕过大陆</strong></td>
+      <td>匹配中国大陆域名/IP → 直连<br>其他 → 走代理</td>
+      <td>国内网站直连（快），海外网站走代理</td>
+      <td><span class="badge green">日常推荐</span> 兼顾速度和访问</td>
+    </tr>
+    <tr>
+      <td><strong>全局代理</strong></td>
+      <td>所有流量 → 走代理</td>
+      <td>无差别全部代理</td>
+      <td>需要完全隐匿 IP、注册敏感账号</td>
+    </tr>
+    <tr>
+      <td><strong>黑名单</strong>（GFWList）</td>
+      <td>匹配被墙域名 → 走代理<br>其他 → 直连</td>
+      <td>只代理已知被墙的网站</td>
+      <td>节省流量，但可能漏掉新被墙的站</td>
+    </tr>
+  </table>
+
+  <h3>路由规则的三种出站</h3>
+  <div class="arch-diagram">
+                        ┌──→ <span class="direct">direct（直连）</span>     <span class="label">不经过代理，直接访问目标</span>
+                        │
+<span class="node">进入管道的流量</span> ──→ <span class="node">路由判断</span> ──┼──→ <span class="proxy">proxy（代理）</span>     <span class="label">通过代理服务器转发</span>
+                        │
+                        └──→ <span class="block">block（拦截）</span>     <span class="label">丢弃，常用于屏蔽广告域名</span></div>
+
+  <h3>自定义路由规则</h3>
+  <p>除了预定义规则，还可以手动添加自定义规则。常见需求：</p>
+  <table>
+    <tr><th>需求</th><th>操作</th></tr>
+    <tr><td>某个国内域名需要走代理</td><td>在代理规则中添加该域名</td></tr>
+    <tr><td>某个海外域名需要直连</td><td>在直连规则中添加该域名</td></tr>
+    <tr><td>屏蔽广告域名</td><td>在拦截规则中添加广告域名</td></tr>
+  </table>
+
+  <p><strong>操作位置</strong>：</p>
+  <ul>
+    <li><strong>V2rayN</strong>：设置 → 路由设置 → 可编辑规则列表</li>
+    <li><strong>V2rayNG</strong>：左侧菜单 → 设置 → 预定义规则（选大类）；自定义路由规则（精细控制）</li>
+  </ul>
+
+  <div class="callout warn">
+    <div class="callout-title">路由规则 vs 服务端分流的关系</div>
+    <p>客户端路由规则和服务端 Xray 分流路由是<strong>两级分流</strong>，不冲突：</p>
+    <ul style="margin:0.5rem 0 0 1rem;">
+      <li><strong>客户端路由</strong>（V2rayN/NG）：决定流量是直连还是发给代理服务器</li>
+      <li><strong>服务端路由</strong>（Lightsail 上的 Xray config）：决定收到的流量从哪个出口出去（直连 / WARP / 住宅 IP）</li>
+    </ul>
+    <p>例如访问 claude.ai：客户端路由判断"不是大陆域名" → 发给代理服务器 → 服务端路由匹配 ai-services 规则 → 从 WARP 出口出去。</p>
+  </div>
+</section>
+
+<!-- 5. Terminal -->
+<section id="terminal">
+  <h2><span class="num">5</span> 终端程序的代理配置</h2>
+
+  <p>终端命令行程序（curl、git、npm、Claude Code 等）是否走代理，取决于第 1 层的捕获方式：</p>
+
+  <table>
+    <tr><th>捕获方式</th><th>终端是否自动走代理</th><th>需要额外配置吗</th></tr>
+    <tr><td><strong>Tun 模式</strong></td><td><span class="badge green">自动走</span></td><td>不需要，Tun 捕获所有流量</td></tr>
+    <tr><td><strong>系统代理</strong></td><td><span class="badge red">不走</span></td><td>需手动设置环境变量</td></tr>
+    <tr><td><strong>VPN（Android）</strong></td><td><span class="badge green">自动走</span></td><td>不需要（Termux 等终端也走 VPN）</td></tr>
+  </table>
+
+  <h3>系统代理模式下的终端配置</h3>
+  <p>如果不开 Tun，需要手动告诉终端程序代理地址：</p>
+  <pre><code><span class="comment"># 临时生效（当前终端会话）</span>
+export HTTPS_PROXY="http://127.0.0.1:10809"
+export HTTP_PROXY="http://127.0.0.1:10809"
+
+<span class="comment"># 或写入 ~/.zshrc 做成开关</span>
+proxy_on() {
+  export HTTPS_PROXY="http://127.0.0.1:10809"
+  export HTTP_PROXY="http://127.0.0.1:10809"
+}
+proxy_off() {
+  unset HTTPS_PROXY HTTP_PROXY
+}</code></pre>
+
+  <div class="callout warn">
+    <div class="callout-title">ping 不走代理</div>
+    <p><code>ping</code> 使用的是 <strong>ICMP 协议</strong>，不是 HTTP/HTTPS。环境变量 <code>http_proxy</code> / <code>https_proxy</code> 只对 HTTP 协议生效（curl、wget、npm、git 等），<strong>ping 永远不走代理</strong>，即使设了环境变量也无效。</p>
+    <p>测试代理是否生效应该用 <code>curl</code>，不要用 <code>ping</code>：</p>
+    <pre><code>curl -I https://www.google.com   <span class="comment"># 返回 HTTP 200 = 代理正常</span>
+ping google.com                  <span class="comment"># 即使代理正常也会超时，不代表代理有问题</span></code></pre>
+    <p>想让 ping 也走代理，必须开 <strong>Tun 模式</strong>——Tun 在网络层捕获所有协议（TCP/UDP/ICMP），系统代理模式做不到。</p>
+  </div>
+
+  <div class="callout info">
+    <div class="callout-title">Claude Code 用哪种</div>
+    <p>两种都行：</p>
+    <ul style="margin:0.5rem 0 0 1rem;">
+      <li><strong>Tun 模式</strong>：开了就完事，Claude Code 自动走代理，零配置</li>
+      <li><strong>系统代理 + HTTPS_PROXY</strong>：更精细控制，可以只让 Claude Code 走代理，其他终端工具直连</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 6. Scenarios -->
+<section id="scenarios">
+  <h2><span class="num">6</span> 常见场景配置推荐</h2>
+
+  <h3>桌面端（V2rayN）</h3>
+  <table>
+    <tr><th>场景</th><th>第 1 层</th><th>第 2 层</th><th>说明</th></tr>
+    <tr>
+      <td><strong>日常浏览 + Claude Code</strong></td>
+      <td>Tun 模式</td>
+      <td>绕过大陆</td>
+      <td>最省心，所有流量自动分流，终端不用额外配置</td>
+    </tr>
+    <tr>
+      <td><strong>日常浏览，终端单独控制</strong></td>
+      <td>系统代理</td>
+      <td>绕过大陆</td>
+      <td>浏览器自动走代理；终端用 <code>HTTPS_PROXY</code> 按需开关</td>
+    </tr>
+    <tr>
+      <td><strong>注册敏感账号（Claude、PayPal）</strong></td>
+      <td>Tun 模式</td>
+      <td>全局代理</td>
+      <td>确保所有流量（包括 DNS）都走代理，防泄露真实 IP</td>
+    </tr>
+    <tr>
+      <td><strong>打游戏需要低延迟</strong></td>
+      <td>Tun 模式</td>
+      <td>绕过大陆</td>
+      <td>国服直连、外服走代理，Tun 模式能捕获 UDP（游戏常用）</td>
+    </tr>
+    <tr>
+      <td><strong>与公司 VPN 共存</strong></td>
+      <td>系统代理</td>
+      <td>绕过大陆</td>
+      <td>避免 Tun 和公司 VPN 抢虚拟网卡冲突</td>
+    </tr>
+  </table>
+
+  <h3>移动端（V2rayNG Android）</h3>
+  <table>
+    <tr><th>场景</th><th>分应用路由</th><th>路由规则</th><th>说明</th></tr>
+    <tr>
+      <td><strong>日常使用</strong></td>
+      <td>不配置（全部进 VPN）</td>
+      <td>绕过大陆</td>
+      <td>国内 App 直连、海外 App 走代理，最常用</td>
+    </tr>
+    <tr>
+      <td><strong>只代理浏览器</strong></td>
+      <td>分应用代理 → 只选 Chrome</td>
+      <td>全局代理</td>
+      <td>其他 App 完全不受影响</td>
+    </tr>
+    <tr>
+      <td><strong>银行/支付 App 必须直连</strong></td>
+      <td>分应用直连 → 选银行 App</td>
+      <td>绕过大陆</td>
+      <td>银行 App 不走 VPN（防风控），其他正常分流</td>
+    </tr>
+    <tr>
+      <td><strong>TikTok 注册</strong></td>
+      <td>分应用代理 → 只选 TikTok</td>
+      <td>全局代理</td>
+      <td>TikTok 全流量走代理，其他 App 直连</td>
+    </tr>
+  </table>
+
+  <h3>完整流量路径示例</h3>
+  <p>以"桌面端 Tun 模式 + 绕过大陆 + 服务端 WARP 分流"为例，访问 claude.ai 的完整路径：</p>
+
+  <div class="arch-diagram">
+<span class="node">Claude Code</span> 发出 HTTPS 请求到 api.anthropic.com
+    <span class="arrow">│</span>
+    <span class="arrow">▼</span>
+<span class="node">Tun 虚拟网卡</span> 捕获流量                    <span class="label">← 第 1 层：流量捕获</span>
+    <span class="arrow">│</span>
+    <span class="arrow">▼</span>
+<span class="node">V2rayN 路由引擎</span>                          <span class="label">← 第 2 层：路由规则</span>
+    判断 api.anthropic.com → 不在大陆列表 → <span class="proxy">走代理</span>
+    <span class="arrow">│</span>
+    <span class="arrow">▼</span>
+<span class="node">VLESS-XHTTP-Reality</span> 加密传输              <span class="label">← 第 3 层：出站节点</span>
+    到 Lightsail 服务器 (Oregon)
+    <span class="arrow">│</span>
+    <span class="arrow">▼</span>
+<span class="node">Lightsail Xray 服务端路由</span>                <span class="label">← 服务端分流（独立于客户端）</span>
+    匹配 ai-services 规则 → <span class="proxy">走 WARP 出站</span>
+    <span class="arrow">│</span>
+    <span class="arrow">▼</span>
+<span class="node">Cloudflare WARP</span> (AS 13335)
+    <span class="arrow">│</span>
+    <span class="arrow">▼</span>
+<span class="node">api.anthropic.com</span>                        <span class="label">← 目标服务器看到的是 Cloudflare IP</span></div>
+
+</section>
+
+<footer>
+  <p>整理于 2026 年 6 月 · 仅供个人学习与技术参考</p>
+</footer>
+
+</div>
+</body>
+</html>

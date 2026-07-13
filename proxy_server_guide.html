@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>代理服务器搭建与运维指南</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --surface-2: #334155;
+    --border: #475569;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --accent: #38bdf8;
+    --accent-dim: #0ea5e9;
+    --green: #4ade80;
+    --green-dim: #166534;
+    --yellow: #facc15;
+    --yellow-dim: #854d0e;
+    --red: #f87171;
+    --red-dim: #991b1b;
+    --orange: #fb923c;
+    --purple: #a78bfa;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 2rem 1rem;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  /* Header */
+  .hero {
+    text-align: center;
+    padding: 3rem 2rem;
+    margin-bottom: 2rem;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1a1a2e 100%);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 30% 50%, rgba(56, 189, 248, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 70% 50%, rgba(167, 139, 250, 0.06) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .hero h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.5rem;
+  }
+  .hero .subtitle {
+    color: var(--text-dim);
+    font-size: 1rem;
+  }
+  .hero .tags {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .hero .tag {
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    background: var(--surface-2);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+
+  /* TOC */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem 2rem;
+    margin-bottom: 2rem;
+  }
+  .toc h2 {
+    font-size: 1rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 1rem;
+  }
+  .toc ol {
+    list-style: none;
+    counter-reset: toc;
+  }
+  .toc ol li {
+    counter-increment: toc;
+    margin-bottom: 0.4rem;
+  }
+  .toc ol li::before {
+    content: "0" counter(toc);
+    color: var(--accent);
+    font-weight: 600;
+    margin-right: 0.75rem;
+    font-size: 0.85rem;
+  }
+  .toc a {
+    color: var(--text);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: all 0.2s;
+  }
+  .toc a:hover {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  /* Section */
+  section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--surface-2);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  h2 .num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 8px;
+    background: var(--accent);
+    color: var(--bg);
+    font-size: 0.9rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 1.5rem 0 0.75rem;
+    color: var(--accent);
+  }
+
+  h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 1.2rem 0 0.5rem;
+    color: var(--text);
+  }
+
+  p { margin-bottom: 0.75rem; }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+  }
+  th, td {
+    padding: 0.6rem 0.8rem;
+    text-align: left;
+    border-bottom: 1px solid var(--surface-2);
+  }
+  th {
+    color: var(--text-dim);
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  tr:hover { background: rgba(56, 189, 248, 0.03); }
+
+  /* Code blocks */
+  pre {
+    background: #0c1222;
+    border: 1px solid var(--surface-2);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    overflow-x: auto;
+    margin: 1rem 0;
+    font-size: 0.85rem;
+    line-height: 1.6;
+  }
+  code {
+    font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', Menlo, monospace;
+    color: var(--green);
+  }
+  pre code { color: var(--text); }
+
+  .comment { color: var(--text-dim); }
+  .cmd { color: var(--green); }
+  .flag { color: var(--orange); }
+  .str { color: var(--yellow); }
+  .key { color: var(--purple); }
+
+  /* Inline code */
+  p code, li code, td code {
+    background: var(--surface-2);
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.85em;
+    color: var(--accent);
+  }
+
+  /* Callouts */
+  .callout {
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+    border-left: 3px solid;
+    font-size: 0.9rem;
+  }
+  .callout.info {
+    background: rgba(56, 189, 248, 0.08);
+    border-color: var(--accent);
+  }
+  .callout.warn {
+    background: rgba(250, 204, 21, 0.08);
+    border-color: var(--yellow);
+  }
+  .callout.danger {
+    background: rgba(248, 113, 113, 0.08);
+    border-color: var(--red);
+  }
+  .callout.success {
+    background: rgba(74, 222, 128, 0.08);
+    border-color: var(--green);
+  }
+  .callout-title {
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+  }
+  .callout.info .callout-title { color: var(--accent); }
+  .callout.warn .callout-title { color: var(--yellow); }
+  .callout.danger .callout-title { color: var(--red); }
+  .callout.success .callout-title { color: var(--green); }
+
+  /* Lists */
+  ul, ol {
+    padding-left: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+  li { margin-bottom: 0.3rem; }
+
+  /* Architecture diagram */
+  .arch-diagram {
+    background: #0c1222;
+    border: 1px solid var(--surface-2);
+    border-radius: 12px;
+    padding: 2rem;
+    margin: 1.5rem 0;
+    text-align: center;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.85rem;
+    line-height: 1.8;
+    overflow-x: auto;
+    white-space: pre;
+    color: var(--text-dim);
+  }
+  .arch-diagram .node {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .arch-diagram .arrow {
+    color: var(--text-dim);
+  }
+  .arch-diagram .label {
+    color: var(--purple);
+    font-size: 0.75rem;
+  }
+
+  /* Badge / pill */
+  .badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .badge.green { background: var(--green-dim); color: var(--green); }
+  .badge.yellow { background: var(--yellow-dim); color: var(--yellow); }
+  .badge.red { background: var(--red-dim); color: var(--red); }
+
+  /* Step list */
+  .steps {
+    list-style: none;
+    padding-left: 0;
+    counter-reset: step;
+  }
+  .steps > li {
+    counter-increment: step;
+    padding: 0.75rem 0 0.75rem 2.5rem;
+    position: relative;
+    border-left: 2px solid var(--surface-2);
+    margin-left: 0.75rem;
+  }
+  .steps > li::before {
+    content: counter(step);
+    position: absolute;
+    left: -0.85rem;
+    top: 0.65rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--bg);
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .steps > li:last-child { border-left-color: transparent; }
+  .steps > li strong { color: var(--accent); }
+
+  /* Comparison cards */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+  .card {
+    background: var(--bg);
+    border: 1px solid var(--surface-2);
+    border-radius: 10px;
+    padding: 1.25rem;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--accent); }
+  .card .card-title {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .card .card-body {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+  }
+  .card .card-body ul {
+    padding-left: 1.2rem;
+    margin-top: 0.4rem;
+  }
+  .card.recommended {
+    border-color: var(--green);
+    box-shadow: 0 0 0 1px var(--green-dim);
+  }
+  .card.recommended .card-title::after {
+    content: '推荐';
+    font-size: 0.7rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    background: var(--green-dim);
+    color: var(--green);
+    font-weight: 600;
+  }
+
+  /* JSON syntax highlight (simplified) */
+  .json .key { color: var(--purple); }
+  .json .str { color: var(--green); }
+  .json .num { color: var(--orange); }
+  .json .bool { color: var(--accent); }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-dim);
+    font-size: 0.8rem;
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    body { padding: 1rem 0.5rem; }
+    section { padding: 1.25rem; }
+    .hero { padding: 2rem 1rem; }
+    .hero h1 { font-size: 1.5rem; }
+    pre { font-size: 0.78rem; padding: 0.75rem; }
+    .cards { grid-template-columns: 1fr; }
+  }
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+<!-- Hero -->
+<header class="hero">
+  <h1>代理服务器搭建与运维指南</h1>
+  <p class="subtitle">AWS Lightsail + Xray VLESS-XHTTP-Reality + Cloudflare WARP，从零搭建到日常维护</p>
+  <div class="tags">
+    <span class="tag">AWS Lightsail</span>
+    <span class="tag">Xray VLESS-XHTTP-Reality</span>
+    <span class="tag">Cloudflare WARP</span>
+    <span class="tag">住宅 IP</span>
+    <span class="tag">V2rayN / V2rayNG</span>
+  </div>
+</header>
+
+<!-- TOC -->
+<nav class="toc">
+  <h2>目录</h2>
+  <ol>
+    <li><a href="#arch">整体架构方案</a></li>
+    <li><a href="#lightsail">Lightsail 注册与购买</a></li>
+    <li><a href="#xray">Xray VLESS-XHTTP-Reality 搭建（一键脚本）</a></li>
+    <li><a href="#warp">Cloudflare WARP 出口配置</a></li>
+    <li><a href="#routing">Xray 分流路由配置</a></li>
+    <li><a href="#client">本地客户端配置（V2rayN / V2rayNG）</a></li>
+    <li><a href="#residential">住宅 IP 代理方案（可选）</a></li>
+    <li><a href="#security">安全与风控注意事项</a></li>
+  </ol>
+</nav>
+
+<!-- 1. Architecture -->
+<section id="arch">
+  <h2><span class="num">1</span> 整体架构方案</h2>
+
+  <div class="arch-diagram"><span class="node">本地客户端</span>  <span class="label">(V2rayN macOS / V2rayNG Android)</span>
+    <span class="arrow">│</span>
+    <span class="arrow">│</span>  <span class="label">VLESS-XHTTP-Reality (HTTP 伪装，抗 DPI)</span>
+    <span class="arrow">▼</span>
+<span class="node">AWS Lightsail</span>  <span class="label">($5/月, Ubuntu 24.04)</span>
+    <span class="arrow">│</span>
+    <span class="arrow">├──</span> 普通流量 ──→ <span class="node">直连出站</span>
+    <span class="arrow">│</span>
+    <span class="arrow">└──</span> Claude / OpenAI ──→ <span class="node">WARP</span> <span class="label">(socks5://127.0.0.1:40000)</span>
+                              <span class="arrow">│</span>
+                              <span class="arrow">▼</span>
+                        <span class="node">Cloudflare 网络</span>  <span class="label">(AS 13335, IP 信誉优于 AWS)</span>
+                              <span class="arrow">│</span>
+                              <span class="arrow">▼</span>
+                     <span class="node">claude.ai / openai.com</span></div>
+
+  <h3>为什么选这个架构</h3>
+  <table>
+    <tr><th>维度</th><th>说明</th></tr>
+    <tr><td>协议层</td><td>VLESS-XHTTP-Reality 无需域名和 TLS 证书，流量特征类似普通 HTTPS 网页请求，抗 DPI 能力强</td></tr>
+    <tr><td>出口层</td><td>WARP 将 Claude/OpenAI 流量从 AWS IP 转为 Cloudflare IP，降低风控风险</td></tr>
+    <tr><td>成本</td><td>Lightsail $5/月 + WARP 免费 = <strong>$5/月</strong></td></tr>
+    <tr><td>IP 信誉</td><td>Cloudflare 承载数千万正常用户，IP 信誉远优于 AWS 数据中心段</td></tr>
+  </table>
+
+  <h3>IP 信誉对比</h3>
+  <table>
+    <tr><th></th><th>裸 Lightsail</th><th>+ WARP</th><th>+ 住宅 IP</th></tr>
+    <tr><td>AS 归属</td><td>AS 16509 (Amazon)</td><td>AS 13335 (Cloudflare)</td><td>当地 ISP</td></tr>
+    <tr><td>IP 性质</td><td>数据中心</td><td>数据中心 + 大量正常用户</td><td>住宅</td></tr>
+    <tr><td>被标记风险</td><td><span class="badge red">高</span></td><td><span class="badge yellow">中等</span></td><td><span class="badge green">低</span></td></tr>
+    <tr><td>额外成本</td><td>$0</td><td>$0</td><td>$2-5/月</td></tr>
+  </table>
+
+  <div class="callout info">
+    <div class="callout-title">推荐策略</div>
+    先用 WARP 跑一两周观察。如果稳定则无需加住宅 IP；如果被风控，再叠加 ISP 静态住宅代理作为 fallback 出口。
+  </div>
+
+  <div class="callout success">
+    <div class="callout-title">为什么选 XHTTP 而非 Vision</div>
+    <p>Vision 使用 TCP 长连接，DPI 容易识别出"一条 TLS 连接持续传输大量数据"的代理特征并干扰握手。实测 Tokyo 节点 Vision 握手成功率仅 1.4%（7846 次失败 / 109 次成功）。</p>
+    <p>XHTTP 将流量封装为标准 HTTP 请求/响应，和普通 HTTPS 网页浏览行为一致，DPI 无法区分。同一 IP 切换到 XHTTP 后握手成功率恢复 100%，确认之前的干扰是 DPI 针对 Vision 流量特征，而非链路丢包。</p>
+  </div>
+</section>
+
+
+<!-- 2. Lightsail Registration -->
+<section id="lightsail">
+  <h2><span class="num">2</span> Lightsail 注册与购买</h2>
+
+  <h3>注册 AWS 账号</h3>
+  <ol class="steps">
+    <li>访问 <strong>aws.amazon.com</strong>，点击「Create an AWS Account」</li>
+    <li><strong>邮箱</strong>：使用 Gmail 等国际邮箱，不用国内邮箱</li>
+    <li><strong>账号类型</strong>：选 Personal（个人）</li>
+    <li><strong>地址信息</strong>：填写美国地址，优先选免税州（Oregon / Delaware）</li>
+    <li>
+      <strong>绑定信用卡</strong>：需要 Visa / Mastercard
+      <ul>
+        <li>国内双币信用卡可以用，AWS 对卡限制宽松</li>
+        <li>也可使用 WildCard / Wise 虚拟卡</li>
+        <li>注册时预扣 $1 验证，之后退回</li>
+      </ul>
+    </li>
+    <li><strong>手机验证</strong>：+86 国内手机号可以接码</li>
+    <li><strong>支持计划</strong>：选 Basic Support（免费）</li>
+  </ol>
+
+  <div class="callout success">
+    <div class="callout-title">好消息</div>
+    AWS 注册对中国用户友好度远高于 Anthropic，国内信用卡和手机号都没问题，不需要伪装。
+  </div>
+
+  <h3>创建 Lightsail 实例</h3>
+  <p>登录 AWS 后，搜索栏搜「Lightsail」或直接访问 lightsail.aws.amazon.com。</p>
+
+  <table>
+    <tr><th>配置项</th><th>推荐选择</th><th>说明</th></tr>
+    <tr><td>Region</td><td><code>us-west-2</code> (Oregon)</td><td>国内直连 ~150-180ms，美东 Virginia ~220-260ms；AI 服务（Anthropic/OpenAI）主部署在美西，Oregon 出站延迟极低；Oregon 是免税州，AWS 账单不额外加税</td></tr>
+    <tr><td>Availability Zone</td><td><code>us-west-2b</code> 或 <code>us-west-2c</code></td><td>同 Region 内各 AZ 延迟/价格无差异。默认 2a 选的人最多，IP 段被滥用/被墙的概率略高，换一个避开从众效应</td></tr>
+    <tr><td>Platform</td><td>Linux/Unix</td><td></td></tr>
+    <tr><td>Blueprint</td><td><strong>OS Only</strong> → Ubuntu 24.04 LTS</td><td>选「Operating System only」标签页，不选「Apps + OS」。预装应用（WordPress、Node.js 等）用不上，占资源且增加攻击面</td></tr>
+    <tr><td>Network Type</td><td><strong>Dual-stack</strong></td><td>IPv4 + IPv6，无额外费用，多一个 IPv6 地址偶尔能用上</td></tr>
+    <tr><td>Plan Type</td><td><strong>General purpose</strong></td><td>Memory-optimized / Compute-optimized 用于数据库和批处理，代理服务器用不上</td></tr>
+    <tr><td>Plan</td><td><strong>$5/月</strong></td><td>1 vCPU, 1GB RAM, 2TB 流量</td></tr>
+    <tr><td>SSH Key</td><td>默认创建即可 → <strong>下载私钥</strong></td><td>务必保存好，丢失无法恢复</td></tr>
+    <tr><td>Launch Script</td><td>不用填</td><td>后面手动 SSH 安装</td></tr>
+    <tr><td>Automatic Snapshots</td><td>不用开</td><td>配置稳定后手动打一个快照即可，自动快照按量收费</td></tr>
+    <tr><td>Instance Name</td><td>随意，如 <code>proxy-oregon</code></td><td>自己认得出来就行，保持默认也无所谓</td></tr>
+    <tr><td>Tags</td><td>不用加</td><td>单台实例不需要标签分类</td></tr>
+  </table>
+
+  <div class="callout info">
+    <div class="callout-title">$5 够用吗？为什么不选 $7</div>
+    Xray + WARP 本质是转发流量，实测资源占用很低：CPU 日常 &lt;5%，Xray ~30MB + WARP ~50MB 内存，1GB 完全够用。即使兼做日常代理（YouTube 1080p ~5GB/小时），2TB/月流量也很难超。$7 档（2 vCPU / 2GB RAM）多出来的资源在代理场景下基本闲置。
+  </div>
+
+  <h3>后期升配</h3>
+  <p>如果以后发现资源不够（比如还想在上面跑其他服务），Lightsail 支持通过快照升配：</p>
+  <ol class="steps">
+    <li><strong>创建快照</strong>：Instances → 实例 → Snapshots → Create snapshot</li>
+    <li><strong>从快照创建新实例</strong>：选择更高配置（如 $7 / $10），Xray/WARP 配置完整保留</li>
+    <li><strong>迁移静态 IP</strong>：把静态 IP 从旧实例移到新实例（免费，IP 地址不变，客户端不用改配置）</li>
+    <li><strong>删除旧实例</strong>：删掉即停止计费，从升级那一刻起按新档价格计费，无补差价</li>
+  </ol>
+  <p>整个过程约 10-15 分钟，期间代理短暂中断。所以先买 $5 完全没问题，有需要再升，没有惩罚性费用。</p>
+
+  <h3>分配静态 IP</h3>
+  <p>默认 IP 重启会变，必须绑定静态 IP：<strong>Networking → Static IP → Create</strong>，关联到实例。绑定后 IP 地址可能会变成一个新的，需要同步更新客户端配置（重新扫码添加节点）。之后 IP 就固定不变了。</p>
+  <div class="callout info">
+    <div class="callout-title">计费说明</div>
+    静态 IP 绑定到运行中的实例是<strong>免费</strong>的。只有分配了静态 IP 但未关联到任何实例时才收费（$0.005/小时，约 $3.6/月）。正常使用不用担心。
+  </div>
+
+  <h3>配置防火墙</h3>
+  <p>路径：Instances → 实例 → Networking → IPv4 Firewall。<strong>新实例默认只开 22 和 80，443 必须手动添加，否则客户端连不上 Xray。</strong></p>
+  <pre><code><span class="comment"># 保留</span>
+SSH     TCP   22    <span class="cmd">✓</span>
+
+<span class="comment"># 删除（不需要）</span>
+HTTP    TCP   80    <span class="red">✗</span>
+
+<span class="comment"># 添加（Xray 端口，必须手动添加！）</span>
+Custom  TCP   443   <span class="cmd">✓</span></code></pre>
+  <p>同时检查下方的 <strong>IPv6 Firewall</strong>，也添加 <code>Custom TCP 443</code> 规则（如果选了 Dual-stack）。</p>
+
+  <h3>SSH 连接</h3>
+  <pre><code><span class="comment"># 设置私钥权限</span>
+<span class="cmd">chmod</span> <span class="flag">400</span> ~/path/to/LightsailDefaultKey.pem
+
+<span class="comment"># 连接</span>
+<span class="cmd">ssh</span> <span class="flag">-i</span> ~/path/to/LightsailDefaultKey.pem ubuntu@<span class="str">&lt;你的静态IP&gt;</span></code></pre>
+
+  <h3>内存优化（$5 实例必做）</h3>
+  <p>$5 plan 只有 1GB 内存（实际可用约 414MB）。Xray ~12MB + WARP ~77MB 本身不大，但 Ubuntu 默认运行的系统服务会额外占用 ~200MB，极易触发 <strong>OOM（Out of Memory）</strong>导致 DNS 崩溃、Xray 连接全断。</p>
+
+  <div class="callout danger">
+    <div class="callout-title">实测踩坑：OOM 导致代理全部断连</div>
+    <code>fwupd</code>（固件更新守护进程）启动时吃掉 130MB+，触发内核 OOM Killer → 系统 DNS 解析器（systemd-resolved）连带崩溃 → Xray Reality 无法解析 <code>www.microsoft.com</code> → 所有连接失败。日志表现为大量 <code>REALITY: failed to dial dest: server misbehaving</code>。
+  </div>
+
+  <h4>第一步：禁用不必要的系统服务</h4>
+  <pre><code><span class="comment"># 固件更新（云服务器不需要，OOM 元凶）</span>
+<span class="cmd">sudo systemctl</span> disable --now fwupd.service fwupd-refresh.timer
+
+<span class="comment"># Snap 包管理器（代理服务器用不上）</span>
+<span class="cmd">sudo systemctl</span> disable --now snapd.service snapd.socket snapd.seeded.service
+
+<span class="comment"># AWS SSM Agent（你用 SSH 管理，不需要）</span>
+<span class="cmd">sudo systemctl</span> disable --now snap.amazon-ssm-agent.amazon-ssm-agent.service
+
+<span class="comment"># 多路径存储（没有多路径设备）</span>
+<span class="cmd">sudo systemctl</span> disable --now multipathd.service
+
+<span class="comment"># 自动更新（可选，手动 apt upgrade 更可控）</span>
+<span class="cmd">sudo systemctl</span> disable --now unattended-upgrades.service</code></pre>
+
+  <table>
+    <tr><th>服务</th><th>释放内存</th><th>为什么不需要</th></tr>
+    <tr><td>fwupd</td><td>~130MB</td><td>固件更新对云服务器无意义，且是 OOM 主因</td></tr>
+    <tr><td>snapd</td><td>~25MB</td><td>代理服务器不需要 Snap 应用</td></tr>
+    <tr><td>amazon-ssm-agent</td><td>~18MB</td><td>SSH 管理即可，不需要 AWS 的远程管理代理</td></tr>
+    <tr><td>multipathd</td><td>~27MB</td><td>没有多路径存储设备</td></tr>
+    <tr><td>unattended-upgrades</td><td>~18MB</td><td>自动更新可能重启服务导致中断</td></tr>
+  </table>
+
+  <h4>第二步：添加 Swap 防止 OOM</h4>
+  <pre><code><span class="comment"># 创建 512MB swap 文件</span>
+<span class="cmd">sudo fallocate</span> -l 512M /swapfile
+<span class="cmd">sudo chmod</span> 600 /swapfile
+<span class="cmd">sudo mkswap</span> /swapfile
+<span class="cmd">sudo swapon</span> /swapfile
+
+<span class="comment"># 开机自动挂载</span>
+<span class="cmd">echo</span> <span class="str">'/swapfile none swap sw 0 0'</span> | <span class="cmd">sudo tee</span> -a /etc/fstab</code></pre>
+
+  <div class="callout info">
+    <div class="callout-title">优化后的内存对比</div>
+    <table>
+      <tr><th></th><th>优化前</th><th>优化后</th></tr>
+      <tr><td>内存可用</td><td>~136MB</td><td>~200MB（+47%）</td></tr>
+      <tr><td>Swap</td><td>无</td><td>512MB（OOM 兜底）</td></tr>
+    </table>
+    优化后 $5 实例跑 Xray + WARP 完全稳定，不需要升配到 $7。
+  </div>
+
+  <h3>开启 BBR 加速</h3>
+  <p>BBR（Bottleneck Bandwidth and Round-trip propagation time）是 Google 开发的 TCP 拥塞控制算法。Ubuntu 默认使用 <code>cubic</code>，在高延迟和丢包链路上表现保守——遇到丢包就大幅降速。BBR 不依赖丢包信号，能更好地维持吞吐量。</p>
+
+  <table>
+    <tr><th>场景</th><th>cubic（默认）</th><th>BBR</th></tr>
+    <tr><td>高延迟链路（200ms+）</td><td>吞吐量受限</td><td>明显提升</td></tr>
+    <tr><td>丢包链路（5-40%）</td><td>遇丢包大幅降速</td><td>不因丢包降速</td></tr>
+    <tr><td>YouTube 视频</td><td>缓冲慢，易卡顿</td><td>缓冲更快</td></tr>
+  </table>
+
+  <pre><code><span class="comment"># 检查当前算法</span>
+<span class="cmd">sysctl</span> net.ipv4.tcp_congestion_control
+<span class="comment"># 如果输出是 cubic，需要开启 BBR</span>
+
+<span class="comment"># 开启 BBR（立即生效 + 重启永久生效）</span>
+<span class="cmd">echo</span> <span class="str">'net.core.default_qdisc=fq'</span> | <span class="cmd">sudo tee</span> -a /etc/sysctl.conf
+<span class="cmd">echo</span> <span class="str">'net.ipv4.tcp_congestion_control=bbr'</span> | <span class="cmd">sudo tee</span> -a /etc/sysctl.conf
+<span class="cmd">sudo sysctl</span> -p
+
+<span class="comment"># 验证</span>
+<span class="cmd">sysctl</span> net.ipv4.tcp_congestion_control
+<span class="comment"># 输出应为：net.ipv4.tcp_congestion_control = bbr</span></code></pre>
+
+  <div class="callout info">
+    <div class="callout-title">BBR 无副作用</div>
+    BBR 是内核内置模块，不需要额外安装，两行配置即可。对服务器资源几乎无额外开销，重启后永久生效。建议所有实例都开启。
+  </div>
+
+  <h3>计费注意</h3>
+  <ul>
+    <li>新实例 <strong>前 3 个月免费</strong>（$5 以下 plan），按实例独立计算——同时创建 2 台 $5 实例，两台都各自有 3 个月免费</li>
+    <li>超出流量按 $0.09/GB 计费，2TB 代理用很难超</li>
+    <li>停止实例仍计费，只有 <strong>删除</strong> 才停止</li>
+    <li>IP 被墙时，删掉静态 IP 重新分配即可（免费）</li>
+  </ul>
+</section>
+
+
+<!-- 3. Xray -->
+<section id="xray">
+  <h2><span class="num">3</span> Xray VLESS-XHTTP-Reality 搭建（一键脚本）</h2>
+
+  <p>使用 <a href="https://github.com/zxcvos/Xray-script" style="color:var(--accent);">Xray-script</a> 一键安装 XHTTP Reality。脚本自动完成 Xray 安装、密钥生成、配置写入和服务启动。</p>
+
+  <h3>一键安装</h3>
+  <pre><code><span class="comment"># 下载安装脚本</span>
+<span class="cmd">sudo wget</span> --no-check-certificate -O /root/Xray-script.sh \
+  https://raw.githubusercontent.com/zxcvos/Xray-script/main/install.sh
+
+<span class="comment"># 快速安装 XHTTP 配置（自动生成密钥、UUID、shortId）</span>
+<span class="cmd">sudo</span> bash /root/Xray-script.sh <span class="flag">--xhttp</span></code></pre>
+
+  <p>安装完成后脚本输出三样东西：</p>
+  <ul>
+    <li><strong>客户端配置参数</strong>：address、port、uuid、PublicKey、ShortId、path 等</li>
+    <li><strong>分享链接</strong>：<code>vless://...</code> 格式，可复制导入客户端</li>
+    <li><strong>终端二维码</strong>：手机 / 电脑可直接扫码添加节点</li>
+  </ul>
+
+  <div class="callout info">
+    <div class="callout-title">保存好输出信息</div>
+    安装输出的参数后续添加客户端节点时需要用到。如果忘了，可以随时重新查看（见下方管理菜单）。
+  </div>
+
+  <h3>管理菜单</h3>
+  <p>安装完成后，随时可以通过管理菜单查看配置、重启服务：</p>
+  <pre><code><span class="comment"># 启动管理菜单</span>
+<span class="cmd">sudo</span> bash /root/Xray-script.sh
+
+<span class="comment"># 菜单选项：</span>
+<span class="comment"># 4. 启动</span>
+<span class="comment"># 5. 停止</span>
+<span class="comment"># 6. 重启</span>
+<span class="comment"># 7. 分享链接与二维码  ← 重新显示节点信息</span>
+<span class="comment"># 8. 信息统计</span>
+<span class="comment"># 9. 管理配置</span></code></pre>
+
+  <h3>验证安装</h3>
+  <pre><code><span class="comment"># 检查 Xray 状态</span>
+<span class="cmd">sudo systemctl</span> status xray
+
+<span class="comment"># 确认 443 端口监听</span>
+<span class="cmd">sudo</span> ss -tlnp | grep 443
+
+<span class="comment"># 查看日志</span>
+<span class="cmd">sudo</span> tail -20 /var/log/xray/error.log</code></pre>
+
+  <div class="callout warn">
+    <div class="callout-title">脚本不包含 WARP 和分流路由</div>
+    Xray-script 只负责 Xray 本身的安装和配置。WARP 出口和 AI 服务分流路由需要手动配置，详见第 4-5 章。
+  </div>
+</section>
+
+
+<!-- 4. WARP -->
+<section id="warp">
+  <h2><span class="num">4</span> Cloudflare WARP 出口配置</h2>
+
+  <h3>在 Lightsail 上安装 WARP</h3>
+  <pre><code><span class="comment"># 添加 Cloudflare 仓库</span>
+<span class="cmd">curl</span> -fsSL https://pkg.cloudflareclient.com/pubkey.gpg \
+  | <span class="cmd">sudo</span> gpg --dearmor -o /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg
+
+<span class="cmd">echo</span> <span class="str">"deb [signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] \
+  https://pkg.cloudflareclient.com/ $(lsb_release -cs) main"</span> \
+  | <span class="cmd">sudo</span> tee /etc/apt/sources.list.d/cloudflare-client.list
+
+<span class="comment"># 安装</span>
+<span class="cmd">sudo apt</span> update && <span class="cmd">sudo apt</span> install -y cloudflare-warp
+
+<span class="comment"># 注册并配置代理模式</span>
+<span class="cmd">warp-cli</span> registration new
+<span class="cmd">warp-cli</span> mode proxy          <span class="comment"># SOCKS5 代理模式，不接管全局路由</span>
+<span class="cmd">warp-cli</span> proxy port 40000    <span class="comment"># 监听端口</span>
+<span class="cmd">warp-cli</span> connect
+
+<span class="comment"># 验证</span>
+<span class="cmd">curl</span> --socks5 127.0.0.1:40000 https://cloudflare.com/cdn-cgi/trace</code></pre>
+
+  <div class="callout info">
+    <div class="callout-title">WARP 模式说明</div>
+    必须使用 <code>proxy</code> 模式（本地 SOCKS5），不要用默认的 <code>warp</code> 模式（会接管全局路由，导致 SSH 断连）。
+  </div>
+
+  <div class="callout warn">
+    <div class="callout-title">Xray-script 不会自动安装 WARP</div>
+    WARP 需要在 Xray-script 安装完成后手动安装。安装顺序：先跑 Xray-script → 再装 WARP → 最后配分流路由。
+  </div>
+</section>
+
+
+<!-- 5. Routing -->
+<section id="routing">
+  <h2><span class="num">5</span> Xray 分流路由配置</h2>
+
+  <p>Xray-script 生成的配置只有 <code>direct</code> 和 <code>block</code> 两个出站，需要手动添加 WARP 出站和 AI 服务分流规则。使用 <code>jq</code> 修改配置文件：</p>
+
+  <pre><code><span class="comment"># 备份原配置</span>
+<span class="cmd">sudo cp</span> /usr/local/etc/xray/config.json /usr/local/etc/xray/config.json.bak
+
+<span class="comment"># 用 jq 添加 WARP 出站 + AI 分流规则</span>
+<span class="cmd">sudo jq</span> <span class="str">'
+  .log.loglevel = "info" |
+  .outbounds += [{
+    "tag": "warp",
+    "protocol": "socks",
+    "settings": {
+      "servers": [{"address": "127.0.0.1", "port": 40000}]
+    }
+  }] |
+  .routing.rules = [
+    .routing.rules[0],
+    {
+      "ruleTag": "ai-services",
+      "domain": [
+        "anthropic.com", "claude.ai", "claude.com",
+        "clau.de", "claudeusercontent.com",
+        "claudemcpclient.com", "claudemcpcontent.com",
+        "servd-anthropic-website.b-cdn.net",
+        "openai.com", "chatgpt.com",
+        "oaiusercontent.com", "oaistatic.com",
+        "auth0.com", "arkoselabs.com", "azureedge.net",
+        "featuregates.org", "intercom.io", "intercomcdn.com",
+        "sentry.io", "statsigapi.net", "stripe.com"
+      ],
+      "outboundTag": "warp"
+    }
+  ] + .routing.rules[1:]
+'</span> /usr/local/etc/xray/config.json.bak | <span class="cmd">sudo tee</span> /usr/local/etc/xray/config.json > /dev/null
+
+<span class="comment"># 重启 Xray 生效</span>
+<span class="cmd">sudo systemctl</span> restart xray</code></pre>
+
+  <p>这段命令做了三件事：</p>
+  <ol>
+    <li>日志级别改为 <code>info</code>（方便排障，默认 <code>warning</code> 看不到路由决策）</li>
+    <li>添加 WARP SOCKS5 出站（<code>127.0.0.1:40000</code>）</li>
+    <li>在脚本原有的 api 规则之后插入 AI 服务分流规则，匹配的域名走 WARP 出口</li>
+  </ol>
+
+  <h3>验证分流生效</h3>
+  <pre><code><span class="comment"># 确认出站标签</span>
+<span class="cmd">sudo jq</span> '.outbounds[].tag' /usr/local/etc/xray/config.json
+<span class="comment"># 应输出: "direct" "block" "warp"</span>
+
+<span class="comment"># 确认路由规则</span>
+<span class="cmd">sudo jq</span> '.routing.rules[].ruleTag' /usr/local/etc/xray/config.json
+<span class="comment"># 应输出: "api" "ai-services" "bt" "private-ip" "cn-ip" "ad-domain"</span>
+
+<span class="comment"># 查看某条规则的完整域名列表（如 ai-services）</span>
+<span class="cmd">sudo jq</span> '.routing.rules[] | select(.ruleTag=="ai-services") | {ruleTag, domain, outboundTag}' \
+  /usr/local/etc/xray/config.json
+
+<span class="comment"># 查看所有走 WARP 的域名规则</span>
+<span class="cmd">sudo jq</span> '.routing.rules[] | select(.outboundTag=="warp") | {ruleTag, domain}' \
+  /usr/local/etc/xray/config.json</code></pre>
+
+  <div class="callout info">
+    <div class="callout-title">AI 服务域名列表说明（21 个域名）</div>
+    <p>当前 ai-services 规则仅覆盖 AI 服务及其依赖，Google 域名由 <code>toggle-google-warp.sh</code> 独立管理（见下方）：</p>
+    <ul style="margin:0.5rem 0 0 1rem;">
+      <li><strong>Claude / Anthropic</strong>（8 个）：<code>anthropic.com</code> <code>claude.ai</code> <code>claude.com</code> <code>clau.de</code> <code>claudeusercontent.com</code> <code>claudemcpclient.com</code> <code>claudemcpcontent.com</code> <code>servd-anthropic-website.b-cdn.net</code></li>
+      <li><strong>OpenAI / ChatGPT</strong>（5 个）：<code>openai.com</code> <code>chatgpt.com</code> <code>oaiusercontent.com</code> <code>oaistatic.com</code> <code>azureedge.net</code></li>
+      <li><strong>通用依赖</strong>（8 个）：<code>auth0.com</code> <code>arkoselabs.com</code> <code>featuregates.org</code> <code>intercom.io</code> <code>intercomcdn.com</code> <code>sentry.io</code> <code>statsigapi.net</code> <code>stripe.com</code></li>
+    </ul>
+    <p style="font-size:0.85rem;color:var(--text-dim);">Claude 域名参考：<a href="https://github.com/MetaCubeX/meta-rules-dat/blob/meta/geo/geosite/anthropic.yaml" style="color:var(--accent);">MetaCubeX/meta-rules-dat anthropic.yaml</a>（社区持续维护）<br>
+    AI 通用域名参考：<a href="https://gist.github.com/sarices/017da597ae6b28063bbdd52693d78385" style="color:var(--accent);">sarices/ai.list</a></p>
+  </div>
+
+  <div class="callout warn">
+    <div class="callout-title">域名补充</div>
+    上面列出了核心域名。实际使用中如果发现某些资源加载失败，可通过浏览器开发者工具或 <code>sudo tail -f /var/log/xray/access.log</code> 查看被直连的域名，添加到分流规则中。
+  </div>
+
+  <h3>Google 全家桶 WARP 分流开关脚本</h3>
+  <p>Google 域名不在 <code>ai-services</code> 规则中，而是由专用开关脚本 <code>/usr/local/bin/toggle-google-warp.sh</code> 独立管理。Google 的域名体系庞大（搜索、YouTube、Play Store、Firebase、Blogger、广告系统等，共 46 个域名），按需一键开启/关闭走 WARP：</p>
+
+  <pre><code><span class="comment"># 查看当前状态</span>
+<span class="cmd">sudo</span> toggle-google-warp.sh status
+
+<span class="comment"># 开启 Google 流量走 WARP（插入 google-warp 规则，自动备份 + 重启 Xray）</span>
+<span class="cmd">sudo</span> toggle-google-warp.sh on
+
+<span class="comment"># 关闭（删除 google-warp 规则，恢复直连）</span>
+<span class="cmd">sudo</span> toggle-google-warp.sh off</code></pre>
+
+  <div class="callout info">
+    <div class="callout-title">脚本工作原理</div>
+    <ul style="margin:0.5rem 0 0 1rem;">
+      <li><strong>on</strong>：用 <code>jq</code> 在 <code>routing.rules</code> 最前面插入一条 <code>ruleTag: "google-warp"</code> 的规则（最高优先级），覆盖 46 个 Google 域名，出站指向 WARP</li>
+      <li><strong>off</strong>：用 <code>jq</code> 删除 <code>ruleTag == "google-warp"</code> 的规则</li>
+      <li><strong>status</strong>：检查规则是否存在，列出当前覆盖的域名和 WARP 出站配置</li>
+      <li>每次操作前自动备份配置到 <code>/usr/local/etc/xray/backups/</code>，操作后自动重启 Xray</li>
+    </ul>
+  </div>
+
+  <p>脚本已部署到两台服务器：</p>
+  <table>
+    <tr><th>服务器</th><th>路径</th><th>当前状态</th></tr>
+    <tr><td>Oregon（44.236.112.113）</td><td><code>/usr/local/bin/toggle-google-warp.sh</code></td><td><span class="badge yellow">已部署，未开启</span></td></tr>
+    <tr><td>Tokyo（35.76.19.109）</td><td><code>/usr/local/bin/toggle-google-warp.sh</code></td><td><span class="badge yellow">已部署，未开启</span></td></tr>
+  </table>
+</section>
+
+
+<!-- 5.5 Client Config -->
+<section id="client">
+  <h2><span class="num">6</span> 本地客户端配置（V2rayN / V2rayNG）</h2>
+
+  <p>服务端搭好后，本地需要安装代理客户端连接。macOS 使用 <strong>V2rayN</strong>，Android 使用 <strong>V2rayNG</strong>，底层都是 Xray-core 内核，原生支持 XHTTP Reality 协议。</p>
+
+  <h3>安装客户端</h3>
+  <table>
+    <tr><th>平台</th><th>客户端</th><th>下载</th></tr>
+    <tr><td>macOS (Apple Silicon)</td><td><strong>V2rayN</strong></td><td>GitHub Releases 下载 <code>v2rayN-macos-arm64.dmg</code></td></tr>
+    <tr><td>macOS (Intel)</td><td><strong>V2rayN</strong></td><td>GitHub Releases 下载 <code>v2rayN-macos-64.dmg</code></td></tr>
+    <tr><td>Android</td><td><strong>V2rayNG</strong></td><td>Google Play 或 GitHub Releases</td></tr>
+  </table>
+
+  <h3>添加节点（推荐：终端二维码扫码）</h3>
+  <ol class="steps">
+    <li>
+      <strong>SSH 连接服务器</strong>
+      <pre><code><span class="cmd">ssh</span> <span class="flag">-i</span> ~/path/to/LightsailKey.pem ubuntu@<span class="str">&lt;服务器IP&gt;</span></code></pre>
+    </li>
+    <li>
+      <strong>启动管理菜单，选 7 显示二维码</strong>
+      <pre><code><span class="cmd">sudo</span> bash /root/Xray-script.sh
+<span class="comment"># 输入 7 → 终端显示分享链接和二维码</span></code></pre>
+    </li>
+    <li>
+      <strong>扫码添加</strong>
+      <ul>
+        <li><strong>V2rayN (Mac)</strong>：菜单栏 → 扫描屏幕二维码（或复制分享链接 → 从剪贴板导入）</li>
+        <li><strong>V2rayNG (Android)</strong>：右上角 <code>+</code> → 扫描二维码（对着电脑终端扫）</li>
+      </ul>
+    </li>
+  </ol>
+
+  <div class="callout info">
+    <div class="callout-title">为什么推荐扫码而不是分享链接</div>
+    实测发现分享链接导入时，部分客户端版本会错误映射 Reality 的 <code>publicKey</code> 和 <code>password</code> 字段，导致连接报错 <code>invalid "password"</code>。扫码走不同的解析路径，不存在这个问题。
+  </div>
+
+  <h3>路由模式设置</h3>
+  <table>
+    <tr><th>客户端</th><th>操作</th><th>效果</th></tr>
+    <tr><td>V2rayN (Mac)</td><td>底部状态栏 → 路由 → 选「绕过大陆」</td><td>国内直连，海外走代理</td></tr>
+    <tr><td>V2rayNG (Android)</td><td>左侧菜单 → 设置 → 预定义规则 → 选「绕过局域网及大陆地址」</td><td>同上</td></tr>
+  </table>
+  <p>选择「绕过大陆」后，ChatGPT、Claude、YouTube、Google、Telegram 等海外服务自动走代理，不需要手动添加域名规则。</p>
+
+  <h3>连接不通排查</h3>
+  <table>
+    <tr><th>检查项</th><th>命令 / 操作</th><th>说明</th></tr>
+    <tr><td><strong>1. Lightsail 防火墙</strong></td><td>控制台 → 实例 → Networking → IPv4 Firewall</td><td>必须有 <code>Custom TCP 443</code> 规则。新建实例默认只开 22 和 80，<strong>443 需要手动添加</strong></td></tr>
+    <tr><td>2. Xray 是否运行</td><td><code>sudo systemctl status xray</code></td><td>确认 Active: active (running)</td></tr>
+    <tr><td>3. 端口是否监听</td><td><code>sudo ss -tlnp | grep 443</code></td><td>应显示 xray 在 443 端口监听</td></tr>
+    <tr><td>4. 服务端日志</td><td><code>sudo tail -30 /var/log/xray/error.log</code></td><td>检查是否有连接记录或错误</td></tr>
+    <tr><td>5. WARP 状态</td><td><code>warp-cli --accept-tos status</code></td><td>应显示 Connected, healthy</td></tr>
+  </table>
+
+  <h3>网络链路质量问题</h3>
+  <p>国内到不同 Region 的实际延迟和稳定性取决于运营商国际出口：</p>
+  <table>
+    <tr><th>现象</th><th>原因</th><th>应对</th></tr>
+    <tr><td>连接超时、频繁断开</td><td>运营商国际出口拥堵或 DPI 干扰</td><td>换时段（晚高峰最差）、换 Region</td></tr>
+    <tr><td>SSH 输入卡顿</td><td>高延迟 + 丢包</td><td>用 Lightsail 自带浏览器终端，或安装 <code>mosh</code></td></tr>
+    <tr><td>持续严重丢包</td><td>IP 段或线路被针对</td><td>快照 → 新建实例换 IP（免费）</td></tr>
+  </table>
+
+  <div class="callout info">
+    <div class="callout-title">mosh 安装（替代 SSH，可选）</div>
+    mosh 对高延迟和丢包的容忍度远优于 SSH，推荐在链路质量差时使用：<br>
+    服务器：<code>sudo apt install -y mosh</code>（Lightsail 防火墙需开放 UDP 60000-61000）<br>
+    macOS：<code>brew install mosh</code><br>
+    连接：<code>mosh --ssh="ssh -i ~/path/to/key.pem" ubuntu@&lt;IP&gt;</code>
+  </div>
+
+  <h3>IP 被墙后的恢复操作</h3>
+  <p>GFW 的 DPI 可能将你的 Lightsail 静态 IP 加入黑名单，表现为：客户端突然无法连接，测试延迟显示超时或 <code>io: read/write on closed pipe</code>，但服务端 Xray 和 WARP 状态正常。</p>
+
+  <div class="callout danger">
+    <div class="callout-title">如何判断 IP 被墙</div>
+    <ul style="margin:0.5rem 0 0 1rem;">
+      <li>客户端（V2rayN / V2rayNG）连接超时或测速失败</li>
+      <li>Lightsail 浏览器终端能正常 SSH（说明服务器本身没问题）</li>
+      <li>本地终端 <code>ssh -i key.pem ubuntu@&lt;IP&gt;</code> 也超时（说明 IP 被墙，不只是 443 端口）</li>
+      <li>同一节点在其他国家/地区的网络下能正常连接</li>
+    </ul>
+  </div>
+
+  <h4>恢复步骤（约 2 分钟）</h4>
+  <ol class="steps">
+    <li>
+      <strong>Lightsail 控制台释放旧静态 IP</strong><br>
+      Networking → Static IPs → 选中被墙的 IP → Detach → Delete
+    </li>
+    <li>
+      <strong>分配新静态 IP</strong><br>
+      Static IPs → Create → 关联到同一实例 → 记下新 IP 地址<br>
+      <em>免费操作，不额外收费</em>
+    </li>
+    <li>
+      <strong>更新客户端节点</strong>：二选一
+      <ul>
+        <li><strong>快速方式</strong>：直接编辑客户端节点配置，把 <code>address</code> 改成新 IP，其他参数（UUID、密钥、path、SNI）不变</li>
+        <li><strong>稳妥方式</strong>：SSH 到服务器（用新 IP）→ <code>sudo bash /root/Xray-script.sh</code> → 选 7 显示新二维码 → 删掉旧节点，扫码添加新节点</li>
+      </ul>
+    </li>
+  </ol>
+
+  <div class="callout info">
+    <div class="callout-title">为什么服务端不用改任何配置</div>
+    Xray 监听的是 <code>0.0.0.0:443</code>（所有网卡），配置文件中不含服务器自身公网 IP。换 IP 后 Xray、WARP、分流路由全部自动生效，只需更新客户端的连接地址。
+  </div>
+
+  <div class="callout warn">
+    <div class="callout-title">降低被墙概率</div>
+    <ul style="margin:0.5rem 0 0 1rem;">
+      <li><strong>选 XHTTP 而非 Vision</strong>：Vision 使用 TCP 长连接，DPI 容易识别并干扰握手（实测 Tokyo Vision 握手成功率仅 1.4%）。XHTTP 伪装为普通 HTTP 请求，DPI 无法区分</li>
+      <li><strong>避开高风险线路</strong>：中日线路是 GFW 重点监控路线（日本是代理用户首选目的地），中美线路 DPI 力度相对较轻</li>
+      <li><strong>不同网络表现不同</strong>：同一节点在家宽 WiFi 下可能正常，移动数据下可能被拦截（运营商移动网络的国际出口 DPI 更集中）</li>
+      <li><strong>换 AZ</strong>：同 Region 内不同可用区（如 <code>us-west-2b</code> vs <code>2c</code>）的 IP 段不同，被墙概率也不同</li>
+    </ul>
+  </div>
+</section>
+
+
+<!-- 9. Residential IP -->
+<section id="residential">
+  <h2><span class="num">7</span> 住宅 IP 代理方案（可选）</h2>
+
+  <h3>什么时候需要住宅 IP</h3>
+  <p>当 WARP 出口仍被 Claude 风控时才需要。WARP 本质还是 Cloudflare 数据中心 IP（AS 13335），如果被标记，需要叠加一层<strong>真实住宅 IP</strong> 作为最终出口。住宅 IP 来自美国家庭宽带运营商（Comcast、AT&T、Verizon 等），平台几乎无法将其与正常美国用户区分。</p>
+
+  <div class="callout info">
+    <div class="callout-title">先试 WARP，不行再加</div>
+    住宅 IP 是备选方案，不是必须。大多数情况下 WARP 已经足够。先跑一两周观察，确认被风控后再购买住宅 IP，避免不必要的开支。
+  </div>
+
+  <h3>选择 ISP 静态住宅代理</h3>
+  <p>代理市场产品很多，但适合你场景的只有一种：</p>
+  <table>
+    <tr><th>类型</th><th>说明</th><th>适合吗</th></tr>
+    <tr><td>动态住宅代理（按流量）</td><td>IP 每次请求轮换，按 GB 计费</td><td><span class="badge red">不适合</span> Claude 需要固定 IP</td></tr>
+    <tr><td><strong>ISP 静态住宅代理（按 IP 包月）</strong></td><td>固定一个住宅 IP，长期不变</td><td><span class="badge green">最适合</span> 稳定不触发风控</td></tr>
+    <tr><td>数据中心代理</td><td>机房 IP，便宜但信誉差</td><td><span class="badge red">不适合</span> 和裸 Lightsail 一样</td></tr>
+  </table>
+
+  <h3>服务商推荐</h3>
+  <p>只需要 <strong>1 个美国静态住宅 IP</strong>，按性价比排列：</p>
+  <table>
+    <tr><th>服务商</th><th>价格</th><th>流量</th><th>协议</th><th>特点</th></tr>
+    <tr><td><strong>Proxy-Cheap</strong></td><td>~$3/月（年付）</td><td>需搭配流量包</td><td>HTTP/SOCKS5</td><td>性价比最高，700万+ IP 池，Claude 用户口碑好</td></tr>
+    <tr><td><strong>IPRoyal</strong></td><td>~$4-5/月</td><td>无限流量（部分套餐）</td><td>HTTP/SOCKS5</td><td>简单易用，195 国覆盖</td></tr>
+    <tr><td><strong>922S5</strong></td><td>~$5/月</td><td>无限流量</td><td>HTTP/SOCKS5</td><td>支持支付宝，中文友好</td></tr>
+    <tr><td>Oxylabs</td><td>~$1.6-3.2/IP/月</td><td>无限带宽（高级）</td><td>HTTP/SOCKS5</td><td>企业级品质，10 IP 起购</td></tr>
+    <tr><td>Bright Data</td><td>~$1.8/IP/月</td><td>按量另计</td><td>HTTP/SOCKS5</td><td>行业标杆，但贵且复杂</td></tr>
+  </table>
+
+  <div class="callout success">
+    <div class="callout-title">推荐：Proxy-Cheap 或 IPRoyal</div>
+    一个美国静态住宅 IP 月费 $3-5。加上 Lightsail $5，总代理成本 $8-10/月。922S5 支持支付宝付款，如果不想折腾外币支付可以优先考虑。
+  </div>
+
+  <h3>架构变化</h3>
+  <p>叠加住宅 IP 后，Xray 出站链路从 WARP 替换为住宅代理：</p>
+  <div class="arch-diagram" style="text-align:left; line-height: 2;">
+<span class="node">本地客户端</span>
+    <span class="arrow">│</span>  <span class="label">VLESS-XHTTP-Reality</span>
+    <span class="arrow">▼</span>
+<span class="node">AWS Lightsail</span>
+    <span class="arrow">│</span>
+    <span class="arrow">├──</span> 普通流量 ──→ <span class="node">直连出站</span>
+    <span class="arrow">│</span>
+    <span class="arrow">└──</span> Claude / OpenAI ──→ <span class="node">住宅代理 (SOCKS5)</span>  <span class="label">← 替换 WARP</span>
+                                  <span class="arrow">│</span>
+                                  <span class="arrow">▼</span>
+                        <span class="node">美国家庭宽带 IP</span>  <span class="label">(Comcast / AT&T / Verizon)</span>
+                                  <span class="arrow">│</span>
+                                  <span class="arrow">▼</span>
+                         <span class="node">claude.ai / openai.com</span></div>
+
+  <h3>Xray 配置变更</h3>
+  <p>把 WARP 出站替换为住宅代理出站，路由规则中 <code>"outboundTag": "warp"</code> 改为 <code>"outboundTag": "residential"</code>：</p>
+  <pre><code class="json">{
+  <span class="key">"outbounds"</span>: [
+    {
+      <span class="key">"tag"</span>: <span class="str">"direct"</span>,
+      <span class="key">"protocol"</span>: <span class="str">"freedom"</span>
+    },
+    {
+      <span class="key">"tag"</span>: <span class="str">"residential"</span>,
+      <span class="key">"protocol"</span>: <span class="str">"socks"</span>,
+      <span class="key">"settings"</span>: {
+        <span class="key">"servers"</span>: [
+          {
+            <span class="key">"address"</span>: <span class="str">"代理商提供的地址"</span>,
+            <span class="key">"port"</span>: <span class="num">代理商提供的端口</span>,
+            <span class="key">"users"</span>: [
+              {
+                <span class="key">"user"</span>: <span class="str">"你的用户名"</span>,
+                <span class="key">"pass"</span>: <span class="str">"你的密码"</span>
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  <span class="key">"routing"</span>: {
+    <span class="key">"rules"</span>: [
+      {
+        <span class="key">"type"</span>: <span class="str">"field"</span>,
+        <span class="key">"domain"</span>: [
+          <span class="str">"anthropic.com"</span>,
+          <span class="str">"claude.ai"</span>,
+          <span class="str">"openai.com"</span>,
+          <span class="str">"chatgpt.com"</span>
+        ],
+        <span class="key">"outboundTag"</span>: <span class="str">"residential"</span>
+      },
+      {
+        <span class="key">"type"</span>: <span class="str">"field"</span>,
+        <span class="key">"network"</span>: <span class="str">"tcp,udp"</span>,
+        <span class="key">"outboundTag"</span>: <span class="str">"direct"</span>
+      }
+    ]
+  }
+}</code></pre>
+
+  <h3>购买前验证 IP 质量</h3>
+  <p>拿到 IP 后，<strong>先用以下工具检测，确认质量合格后再绑定 Claude 账号</strong>：</p>
+  <table>
+    <tr><th>工具</th><th>检测内容</th><th>合格标准</th></tr>
+    <tr><td><code>ipinfo.io</code></td><td>IP 类型</td><td>显示为 <code>isp</code> 或 <code>residential</code>（不是 <code>hosting</code>）</td></tr>
+    <tr><td><code>scamalytics.com</code></td><td>欺诈风险评分</td><td>分数 &lt; 10（满分 100，越低越好）</td></tr>
+    <tr><td><code>whoer.net</code></td><td>匿名度 + DNS 泄露</td><td>匿名度 &gt; 90%，无 DNS 泄露</td></tr>
+    <tr><td><code>ping0.cc</code></td><td>原生 vs 广播 IP</td><td>优先选原生 IP（native），广播 IP 质量稍差</td></tr>
+  </table>
+
+  <div class="callout warn">
+    <div class="callout-title">避免踩坑</div>
+    <ul style="margin:0.5rem 0 0 1rem;">
+      <li>部分低价服务商用数据中心 IP 冒充住宅 IP，务必用上述工具验证</li>
+      <li>买之前确认支持<strong>美国地区</strong>且可以<strong>指定州/城市</strong></li>
+      <li>选择和 Lightsail 同区域（Oregon / 美西）的住宅 IP，减少延迟</li>
+      <li>一个 IP 只绑定一个 Claude 账号，不要多账号共用</li>
+    </ul>
+  </div>
+
+  <h3>总成本对比</h3>
+  <table>
+    <tr><th>方案</th><th>代理月费</th><th>IP 信誉</th><th>适用场景</th></tr>
+    <tr><td>Lightsail 裸 IP</td><td>$5</td><td><span class="badge red">低</span></td><td>临时使用、非敏感服务</td></tr>
+    <tr><td>Lightsail + WARP</td><td>$5</td><td><span class="badge yellow">中等</span></td><td>默认方案，大多数情况够用</td></tr>
+    <tr><td>Lightsail + 住宅 IP</td><td>$8-10</td><td><span class="badge green">高</span></td><td>WARP 被风控后的终极方案</td></tr>
+  </table>
+</section>
+
+
+<!-- 10. Security -->
+<section id="security">
+  <h2><span class="num">8</span> 安全与风控注意事项</h2>
+
+  <h3>服务器安全</h3>
+  <ul>
+    <li>SSH 私钥本地加密保存，不传到任何云服务</li>
+    <li>系统安装后立即 <code>sudo apt update && sudo apt upgrade</code></li>
+    <li>建议创建非 root 用户，禁用密码登录，仅密钥认证</li>
+    <li>防火墙最小化：只开 22（SSH）+ 443（Xray）</li>
+    <li>SSH 考虑换端口或限制来源 IP</li>
+  </ul>
+
+  <h3>账号风控</h3>
+  <table>
+    <tr><th>注意事项</th><th>说明</th></tr>
+    <tr><td>注册邮箱</td><td>使用 Gmail 等国际邮箱，不用国内邮箱</td></tr>
+    <tr><td>账号信息</td><td>名字和个人资料用英文，不要绑定中国手机号</td></tr>
+    <tr><td>IP 一致性</td><td>注册时就走代理，后续保持同一出口 IP</td></tr>
+    <tr><td>固定 Claude 出口</td><td>Claude 流量始终走同一个节点的 WARP 出口，不要今天美国明天日本。日常浏览可以用另一个节点</td></tr>
+    <tr><td>一 IP 一账号</td><td>同一个 WARP 出口 IP 不要登录多个 Claude 账号，多账号共用 IP 最容易触发关联封禁</td></tr>
+    <tr><td>地区一致性</td><td>付款地址、IP 所在地保持逻辑一致</td></tr>
+    <tr><td>设备稳定</td><td>不要频繁切换设备和 IP</td></tr>
+    <tr><td>浏览器语言</td><td><code>chrome://settings/languages</code> 把 English (US) 调到第一位，避免 <code>Accept-Language: zh-CN</code> 和美国 IP 矛盾</td></tr>
+  </table>
+
+  <div class="callout danger">
+    <div class="callout-title">高风险组合（避免）</div>
+    新注册账号 + 频繁切换 IP + 支付信息地区不一致 — 这种组合最容易触发封号。
+  </div>
+
+  <div class="callout info">
+    <div class="callout-title">关于"付款地址尼日利亚 vs 使用 IP 美国"是否矛盾</div>
+    <p><strong>尼日利亚在 Anthropic 官方支持的国家列表中</strong>（见 <a href="https://www.anthropic.com/supported-countries" style="color:var(--accent);">anthropic.com/supported-countries</a>），理论上用尼日利亚 IP 访问 Claude 是被允许的。</p>
+    <p>曾考虑过购买尼日利亚拉各斯 VPS 作为 Claude 出口，让付款地址（Timon 卡）和使用 IP 地区完全一致。调研结论：<strong>性价比不高，放弃。</strong></p>
+    <table>
+      <tr><th>方案</th><th>价格</th><th>结论</th></tr>
+      <tr><td>zhaomu.com 拉各斯 O 区 VPS</td><td>¥79/月</td><td>最靠谱的选项，支持退款，但额外增加 ¥79/月成本</td></tr>
+      <tr><td>IPRoyal Residential（Nigeria）</td><td>~$1.75/GB</td><td>需确认是否有尼日利亚 IP 库存（联系客服确认）</td></tr>
+      <tr><td>IPRoyal ISP 静态（Nigeria）</td><td>—</td><td>已无库存</td></tr>
+      <tr><td>SurferCloud 拉各斯</td><td>~$5.9/月（首月）</td><td><span class="badge red">不推荐</span>——三次换壳历史、稳定性差、退款困难、信用卡被盗刷投诉</td></tr>
+    </table>
+    <p><strong>实际结论：不需要尼日利亚 IP。</strong>Claude 账号没有区域概念——订阅通过 App Store，Claude 只知道你是 Pro 用户，不知道你付了多少钱。大量国内用户用美国/日本 IP + 尼区 App Store 订阅长期正常使用。封号更可能是 IP 信誉、行为模式等因素导致，不是"付款尼日利亚 + 使用美国"这种地区不一致。继续用 <strong>Lightsail + WARP 美国出口</strong>即可。</p>
+  </div>
+
+  <h3>代理出口质量检测</h3>
+  <p>配置完成后，开着代理逐一访问以下网站，确认出口 IP 的健康度和有无信息泄露：</p>
+
+  <h4>1. 确认 Claude 流量走了 WARP</h4>
+  <p>普通网站（如 ipinfo.io）走的是 Xray 直连出站，看到的是 Lightsail IP，不代表 Claude 的实际出口。需要用终端测试 Claude 域名：</p>
+  <pre><code><span class="comment"># 测试 Claude 域名的实际出口（端口按你的客户端配置）</span>
+<span class="cmd">curl</span> --proxy http://127.0.0.1:10809 https://api.anthropic.com/cdn-cgi/trace
+
+<span class="comment"># 确认输出中：</span>
+<span class="comment"># warp=on     ← 走了 WARP</span>
+<span class="comment"># ip=104.x.x.x ← Cloudflare IP，不是 AWS IP</span></code></pre>
+
+  <h4>2. IP 风险评分</h4>
+  <p>拿到上面的 Cloudflare 出口 IP 后，访问 <code>https://scamalytics.com/ip/&lt;你的IP&gt;</code> 查看风险评分：</p>
+  <table>
+    <tr><th>评分</th><th>等级</th><th>说明</th></tr>
+    <tr><td>0-14</td><td><span class="badge green">优秀</span></td><td>正常 Cloudflare IP 通常在此区间</td></tr>
+    <tr><td>15-30</td><td><span class="badge green">正常</span></td><td>低风险，可放心使用</td></tr>
+    <tr><td>30-60</td><td><span class="badge yellow">注意</span></td><td>有一定风险标记，观察使用</td></tr>
+    <tr><td>60+</td><td><span class="badge red">危险</span></td><td>高风险，考虑换出口方案</td></tr>
+  </table>
+  <p>同时关注页面下方的 <strong>External Blacklists</strong>（Firehol / Spamhaus 等），全部应为 <code>No</code>。</p>
+
+  <h4>3. 防泄露检查</h4>
+  <p>开着代理在浏览器中逐一访问：</p>
+  <table>
+    <tr><th>检测地址</th><th>检查什么</th><th>合格标准</th></tr>
+    <tr><td><code>https://browserleaks.com/dns</code></td><td>DNS 泄露</td><td>DNS 服务器应为 Cloudflare / Google / Alidns，不应出现中国 ISP 的 DNS（如运营商 DNS）</td></tr>
+    <tr><td><code>https://browserleaks.com/webrtc</code></td><td>WebRTC 泄露</td><td>不应显示你的真实内网/公网 IP。建议安装 Chrome 扩展 <code>WebRTC Leak Shield</code>（选择 Disable non-proxied UDP 模式，不影响视频通话）</td></tr>
+    <tr><td><code>https://whoer.net</code></td><td>综合匿名度</td><td>匿名度 &gt;90%，时区/语言/IP 地区应一致</td></tr>
+  </table>
+
+  <div class="callout info">
+    <div class="callout-title">实测参考值（WARP 出口）</div>
+    <table>
+      <tr><th>指标</th><th>实测值</th></tr>
+      <tr><td>Scamalytics 评分</td><td>14/100（Low Risk）</td></tr>
+      <tr><td>ISP 归属</td><td>Cloudflare, Inc.（AS 13335）</td></tr>
+      <tr><td>VPN / Tor / 公共代理检测</td><td>全部 No</td></tr>
+      <tr><td>外部黑名单</td><td>全部 No</td></tr>
+    </table>
+    WARP 出口 IP 质量整体良好，远优于裸 Lightsail IP。
+  </div>
+
+  <h3>线路稳定性</h3>
+  <ul>
+    <li>Oregon 区域偶尔有线路波动，可尝试不同可用区（<code>us-west-2a</code> / <code>2b</code>）</li>
+    <li>备选区域：<code>ap-northeast-1</code>（Tokyo），延迟更低（~70ms vs ~240ms），线路更稳定，但日本 IP 对部分美区服务可能有限制</li>
+    <li>建议多区域部署（如 Oregon + Tokyo），前 3 个月免费额度按实例独立计算，测完保留效果好的</li>
+    <li>如果 IP 被墙，删掉静态 IP 重新分配即可（免费操作）</li>
+    <li>配置稳定后做一个快照（Snapshot）留底，方便快速恢复</li>
+  </ul>
+
+  <h3>geodata.dat 自动更新踩坑与修复</h3>
+
+  <div class="callout danger">
+    <div class="callout-title">实测踩坑：Xray-script 自带的 geodata 更新脚本会搞崩 Xray</div>
+    <p><strong>现象</strong>：某天突然所有客户端连不上,服务器 443 端口显示 <code>Connection refused</code>,Xray 状态为 failed,错误信息：</p>
+    <pre style="margin:0.5rem 0;"><code>Failed to start: infra/conf: code not found in geoip.dat: PRIVATE</code></pre>
+    <p><strong>根因</strong>：Xray-script 安装时在 root crontab 注册了一个定时任务：</p>
+    <pre style="margin:0.5rem 0;"><code>30 6 * * * /usr/local/xray-script/tool/geodata.sh</code></pre>
+    <p>每天 06:30 UTC 自动从 GitHub 下载最新的 <code>geoip.dat</code> 和 <code>geosite.dat</code>。<strong>原始脚本的致命缺陷</strong>：curl 遇到 GitHub 限流/网络抖动时可能返回成功退出码但文件不完整（实测只拿到 20 字节），脚本不校验文件大小就直接 <code>rm</code> 旧文件 + <code>mv</code> 覆盖 → Xray 重启时读到损坏文件 → crash。</p>
+    <p><strong>为什么 Tokyo 比 Oregon 更容易出事</strong>：Tokyo 到 GitHub CDN（美国）经过太平洋海底光缆，偶尔丢包/限流导致下载中断；Oregon 在美国本土，到 GitHub 的链路天然更稳定。</p>
+  </div>
+
+  <h4>修复方案：安全更新脚本</h4>
+  <p>替换 <code>/usr/local/xray-script/tool/geodata.sh</code> 为以下版本（两台服务器都需要）：</p>
+  <pre><code><span class="comment">#!/usr/bin/env bash</span>
+
+set -e
+
+<span class="key">XRAY_DIR</span>=<span class="str">"/usr/local/share/xray"</span>
+<span class="key">TMP_DIR</span>=<span class="str">"/tmp/geodata-update"</span>
+<span class="key">MIN_SIZE</span>=<span class="num">1048576</span>  <span class="comment"># 1MB - 正常文件至少 5MB+, 低于 1MB 必然异常</span>
+
+<span class="key">GEOIP_URL</span>=<span class="str">"https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat"</span>
+<span class="key">GEOSITE_URL</span>=<span class="str">"https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"</span>
+
+cleanup() { rm -rf <span class="str">"$TMP_DIR"</span>; }
+trap cleanup EXIT
+
+mkdir -p <span class="str">"$TMP_DIR"</span>
+
+<span class="comment"># 下载到临时目录</span>
+<span class="cmd">curl</span> <span class="flag">-sL --max-time 120 --retry 3</span> -o <span class="str">"$TMP_DIR/geoip.dat"</span> <span class="str">"$GEOIP_URL"</span>
+<span class="cmd">curl</span> <span class="flag">-sL --max-time 120 --retry 3</span> -o <span class="str">"$TMP_DIR/geosite.dat"</span> <span class="str">"$GEOSITE_URL"</span>
+
+<span class="comment"># 校验文件大小</span>
+geoip_size=$(stat -c%s <span class="str">"$TMP_DIR/geoip.dat"</span> 2>/dev/null || echo 0)
+geosite_size=$(stat -c%s <span class="str">"$TMP_DIR/geosite.dat"</span> 2>/dev/null || echo 0)
+
+if [ <span class="str">"$geoip_size"</span> -lt <span class="str">"$MIN_SIZE"</span> ]; then
+    echo <span class="str">"[$(date)] ERROR: geoip.dat too small (${geoip_size} bytes), aborting"</span> >> /var/log/geodata-update.log
+    exit 1
+fi
+
+if [ <span class="str">"$geosite_size"</span> -lt <span class="str">"$MIN_SIZE"</span> ]; then
+    echo <span class="str">"[$(date)] ERROR: geosite.dat too small (${geosite_size} bytes), aborting"</span> >> /var/log/geodata-update.log
+    exit 1
+fi
+
+<span class="comment"># 安全替换（校验通过才覆盖）</span>
+<span class="cmd">cp</span> <span class="str">"$TMP_DIR/geoip.dat"</span> <span class="str">"$XRAY_DIR/geoip.dat"</span>
+<span class="cmd">cp</span> <span class="str">"$TMP_DIR/geosite.dat"</span> <span class="str">"$XRAY_DIR/geosite.dat"</span>
+
+<span class="comment"># 重启 Xray（仅在运行时）</span>
+if systemctl -q is-active xray; then
+    systemctl restart xray
+fi
+
+echo <span class="str">"[$(date)] OK: geoip=${geoip_size} geosite=${geosite_size}"</span> >> /var/log/geodata-update.log</code></pre>
+
+  <h4>新旧脚本对比</h4>
+  <table>
+    <tr><th>维度</th><th>旧脚本（Xray-script 默认）</th><th>新脚本</th></tr>
+    <tr><td>下载位置</td><td>直接下载到目标目录</td><td>先下载到 <code>/tmp/geodata-update/</code></td></tr>
+    <tr><td>大小校验</td><td>❌ 只检查 curl 退出码</td><td>✅ 文件 &lt; 1MB 直接 abort,不覆盖旧文件</td></tr>
+    <tr><td>超时/重试</td><td>❌ 无</td><td>✅ <code>--max-time 120 --retry 3</code></td></tr>
+    <tr><td>失败时旧文件</td><td>已被 <code>rm</code> 删掉,无法回退</td><td>不动旧文件,直接退出</td></tr>
+    <tr><td>日志</td><td><code>&gt;/dev/null</code> 吃掉所有输出</td><td>写入 <code>/var/log/geodata-update.log</code></td></tr>
+    <tr><td>临时文件清理</td><td>手动 <code>rm</code></td><td><code>trap cleanup EXIT</code> 自动清理</td></tr>
+  </table>
+
+  <h4>部署步骤（两台服务器都要做）</h4>
+  <pre><code><span class="comment"># 备份旧脚本</span>
+<span class="cmd">sudo cp</span> /usr/local/xray-script/tool/geodata.sh /usr/local/xray-script/tool/geodata.sh.bak
+
+<span class="comment"># 粘贴新脚本内容覆盖（或 scp 上传）</span>
+<span class="cmd">sudo nano</span> /usr/local/xray-script/tool/geodata.sh
+
+<span class="comment"># 赋予执行权限</span>
+<span class="cmd">sudo chmod</span> +x /usr/local/xray-script/tool/geodata.sh
+
+<span class="comment"># 手动跑一次验证</span>
+<span class="cmd">sudo</span> /usr/local/xray-script/tool/geodata.sh
+<span class="cmd">cat</span> /var/log/geodata-update.log
+<span class="comment"># 应显示: [日期] OK: geoip=18xxxxxx geosite=10xxxxxx</span></code></pre>
+
+  <h4>如果已经崩了,紧急恢复</h4>
+  <pre><code><span class="comment"># 重新下载正确的 geoip.dat（18MB+）</span>
+<span class="cmd">sudo wget</span> -O /usr/local/share/xray/geoip.dat \
+  https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat
+
+<span class="comment"># 重新下载 geosite.dat（10MB+）</span>
+<span class="cmd">sudo wget</span> -O /usr/local/share/xray/geosite.dat \
+  https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat
+
+<span class="comment"># 验证大小（geoip 应 >5MB, geosite 应 >3MB）</span>
+<span class="cmd">ls</span> -lh /usr/local/share/xray/geo*.dat
+
+<span class="comment"># 重启 Xray</span>
+<span class="cmd">sudo systemctl</span> restart xray
+<span class="cmd">sudo</span> ss -tlnp | grep 443</code></pre>
+
+  <div class="callout info">
+    <div class="callout-title">日常监控</div>
+    <p>部署新脚本后,偶尔看一眼日志确认每天的自动更新是否正常:</p>
+    <pre style="margin:0.5rem 0;"><code><span class="cmd">tail</span> -5 /var/log/geodata-update.log</code></pre>
+    <p>正常输出形如: <code>[Fri Jun 27 06:30:01 UTC 2026] OK: geoip=18612345 geosite=10234567</code><br>
+    异常输出形如: <code>[Fri Jun 27 06:30:01 UTC 2026] ERROR: geoip.dat too small (20 bytes), aborting</code>（此时 Xray 不受影响,继续用旧文件运行）</p>
+  </div>
+</section>
+
+
+<footer>
+  <p>整理于 2026 年 6 月 · 仅供个人学习与技术参考</p>
+  <p style="font-size:0.8rem;">本文档从 <a href="ai_subscription_guide.html" style="color:var(--accent);">海外 AI 服务订阅指南</a> 拆分而来，订阅/支付/eSIM 相关内容请参阅原文档。</p>
+</footer>
+
+</div>
+
+</body>
+</html>

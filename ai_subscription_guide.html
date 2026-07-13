@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>海外 AI 服务订阅全指南</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --surface-2: #334155;
+    --border: #475569;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --accent: #38bdf8;
+    --accent-dim: #0ea5e9;
+    --green: #4ade80;
+    --green-dim: #166534;
+    --yellow: #facc15;
+    --yellow-dim: #854d0e;
+    --red: #f87171;
+    --red-dim: #991b1b;
+    --orange: #fb923c;
+    --purple: #a78bfa;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 2rem 1rem;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  /* Header */
+  .hero {
+    text-align: center;
+    padding: 3rem 2rem;
+    margin-bottom: 2rem;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1a1a2e 100%);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 30% 50%, rgba(56, 189, 248, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 70% 50%, rgba(167, 139, 250, 0.06) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .hero h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.5rem;
+  }
+  .hero .subtitle {
+    color: var(--text-dim);
+    font-size: 1rem;
+  }
+  .hero .tags {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .hero .tag {
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    background: var(--surface-2);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+
+  /* TOC */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem 2rem;
+    margin-bottom: 2rem;
+  }
+  .toc h2 {
+    font-size: 1rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 1rem;
+  }
+  .toc ol {
+    list-style: none;
+    counter-reset: toc;
+  }
+  .toc ol li {
+    counter-increment: toc;
+    margin-bottom: 0.4rem;
+  }
+  .toc ol li::before {
+    content: "0" counter(toc);
+    color: var(--accent);
+    font-weight: 600;
+    margin-right: 0.75rem;
+    font-size: 0.85rem;
+  }
+  .toc a {
+    color: var(--text);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: all 0.2s;
+  }
+  .toc a:hover {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  /* Section */
+  section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--surface-2);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  h2 .num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 8px;
+    background: var(--accent);
+    color: var(--bg);
+    font-size: 0.9rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 1.5rem 0 0.75rem;
+    color: var(--accent);
+  }
+
+  h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 1.2rem 0 0.5rem;
+    color: var(--text);
+  }
+
+  p { margin-bottom: 0.75rem; }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+  }
+  th, td {
+    padding: 0.6rem 0.8rem;
+    text-align: left;
+    border-bottom: 1px solid var(--surface-2);
+  }
+  th {
+    color: var(--text-dim);
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  tr:hover { background: rgba(56, 189, 248, 0.03); }
+
+  /* Code blocks */
+  pre {
+    background: #0c1222;
+    border: 1px solid var(--surface-2);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    overflow-x: auto;
+    margin: 1rem 0;
+    font-size: 0.85rem;
+    line-height: 1.6;
+  }
+  code {
+    font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', Menlo, monospace;
+    color: var(--green);
+  }
+  pre code { color: var(--text); }
+
+  .comment { color: var(--text-dim); }
+  .cmd { color: var(--green); }
+  .flag { color: var(--orange); }
+  .str { color: var(--yellow); }
+  .key { color: var(--purple); }
+
+  /* Inline code */
+  p code, li code, td code {
+    background: var(--surface-2);
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.85em;
+    color: var(--accent);
+  }
+
+  /* Callouts */
+  .callout {
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+    border-left: 3px solid;
+    font-size: 0.9rem;
+  }
+  .callout.info {
+    background: rgba(56, 189, 248, 0.08);
+    border-color: var(--accent);
+  }
+  .callout.warn {
+    background: rgba(250, 204, 21, 0.08);
+    border-color: var(--yellow);
+  }
+  .callout.danger {
+    background: rgba(248, 113, 113, 0.08);
+    border-color: var(--red);
+  }
+  .callout.success {
+    background: rgba(74, 222, 128, 0.08);
+    border-color: var(--green);
+  }
+  .callout-title {
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+  }
+  .callout.info .callout-title { color: var(--accent); }
+  .callout.warn .callout-title { color: var(--yellow); }
+  .callout.danger .callout-title { color: var(--red); }
+  .callout.success .callout-title { color: var(--green); }
+
+  /* Lists */
+  ul, ol {
+    padding-left: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+  li { margin-bottom: 0.3rem; }
+
+  /* Architecture diagram */
+  .arch-diagram {
+    background: #0c1222;
+    border: 1px solid var(--surface-2);
+    border-radius: 12px;
+    padding: 2rem;
+    margin: 1.5rem 0;
+    text-align: center;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.85rem;
+    line-height: 1.8;
+    overflow-x: auto;
+    white-space: pre;
+    color: var(--text-dim);
+  }
+  .arch-diagram .node {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .arch-diagram .arrow {
+    color: var(--text-dim);
+  }
+  .arch-diagram .label {
+    color: var(--purple);
+    font-size: 0.75rem;
+  }
+
+  /* Badge / pill */
+  .badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .badge.green { background: var(--green-dim); color: var(--green); }
+  .badge.yellow { background: var(--yellow-dim); color: var(--yellow); }
+  .badge.red { background: var(--red-dim); color: var(--red); }
+
+  /* Step list */
+  .steps {
+    list-style: none;
+    padding-left: 0;
+    counter-reset: step;
+  }
+  .steps > li {
+    counter-increment: step;
+    padding: 0.75rem 0 0.75rem 2.5rem;
+    position: relative;
+    border-left: 2px solid var(--surface-2);
+    margin-left: 0.75rem;
+  }
+  .steps > li::before {
+    content: counter(step);
+    position: absolute;
+    left: -0.85rem;
+    top: 0.65rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--bg);
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .steps > li:last-child { border-left-color: transparent; }
+  .steps > li strong { color: var(--accent); }
+
+  /* Comparison cards */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+  .card {
+    background: var(--bg);
+    border: 1px solid var(--surface-2);
+    border-radius: 10px;
+    padding: 1.25rem;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--accent); }
+  .card .card-title {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .card .card-body {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+  }
+  .card .card-body ul {
+    padding-left: 1.2rem;
+    margin-top: 0.4rem;
+  }
+  .card.recommended {
+    border-color: var(--green);
+    box-shadow: 0 0 0 1px var(--green-dim);
+  }
+  .card.recommended .card-title::after {
+    content: '推荐';
+    font-size: 0.7rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    background: var(--green-dim);
+    color: var(--green);
+    font-weight: 600;
+  }
+
+  /* JSON syntax highlight (simplified) */
+  .json .key { color: var(--purple); }
+  .json .str { color: var(--green); }
+  .json .num { color: var(--orange); }
+  .json .bool { color: var(--accent); }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-dim);
+    font-size: 0.8rem;
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    body { padding: 1rem 0.5rem; }
+    section { padding: 1.25rem; }
+    .hero { padding: 2rem 1rem; }
+    .hero h1 { font-size: 1.5rem; }
+    pre { font-size: 0.78rem; padding: 0.75rem; }
+    .cards { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- Hero -->
+<header class="hero">
+  <h1>海外 AI 服务订阅全指南</h1>
+  <p class="subtitle">支付渠道、低价订阅与终端配置，一站式解决 Claude / Codex 等海外 AI 服务的付费与使用</p>
+  <div class="tags">
+    <span class="tag">AWS Lightsail</span>
+    <span class="tag">Xray VLESS-XHTTP-Reality</span>
+    <span class="tag">Cloudflare WARP</span>
+    <span class="tag">Timon 钱包</span>
+    <span class="tag">尼区低价订阅</span>
+    <span class="tag">eSIM 工具卡</span>
+  </div>
+</header>
+
+<!-- TOC -->
+<nav class="toc">
+  <h2>目录</h2>
+  <ol start="0" style="list-style:none;counter-reset:toc -1;">
+    <li style="margin-bottom:0.8rem;"><a href="#quickstart" style="color:var(--green);font-weight:700;">&#9733; 快速上手：从零到 Claude Code 可用</a></li>
+    <li><a href="proxy_server_guide.html" style="color:var(--accent);">▶ 代理服务器搭建与运维（独立文档）</a></li>
+    <li><a href="#subscribe">Claude 付费订阅方案</a></li>
+    <li><a href="#timon">Timon 钱包详解</a></li>
+    <li><a href="esim_write_guide.html" style="color:var(--accent);">▶ eSIM 工具卡写号教程（独立文档）</a></li>
+    <li><a href="#claude-code-config">Claude Code 终端代理配置</a></li>
+  </ol>
+</nav>
+
+<!-- Quick Start -->
+<section id="quickstart" style="border-color:var(--green);">
+  <h2 style="border-bottom-color:var(--green);">&#9733; 快速上手：从零到 Claude Code 可用</h2>
+  <p>以下是按时间顺序整理的完整执行清单。每步标注了预计耗时和详细说明的跳转链接，方便快速定位。</p>
+
+  <h3>全链路执行清单</h3>
+  <table>
+    <tr><th>步骤</th><th>操作</th><th>耗时</th><th>前置条件</th><th>详细</th></tr>
+    <tr>
+      <td><strong>1</strong></td>
+      <td>
+        <strong>闲鱼联系商家，先开 MTN eSIM</strong><br>
+        跟商家说明分两步：<strong>先开通 MTN 号 + eSIM，Timon 注册稍后进行</strong>。确认收到：MTN 手机号、eSIM 二维码。
+      </td>
+      <td>1-2 天</td>
+      <td>无</td>
+      <td><a href="#timon">第 7 章</a></td>
+    </tr>
+    <tr>
+      <td><strong>2</strong></td>
+      <td>
+        <strong>eSTK 白卡写卡 + 保号</strong><br>
+        淘宝买 eSTK 白卡（~¥24）+ USB-C 读卡器（~¥25）→ 电脑安装 MiniLPA/EasyLPAC → 读卡器写入 MTN 号 → 插入手机验证能收短信 → MyMTN App 开通保号。<br>
+        <em>（eSTK + 读卡器可在等商家出 eSIM 期间先下单，同步到货节省时间）</em>
+      </td>
+      <td>1-3 天（等快递）</td>
+      <td>步骤 1</td>
+      <td><a href="esim_write_guide.html">eSIM 写号教程</a></td>
+    </tr>
+    <tr>
+      <td><strong>3</strong></td>
+      <td>
+        <strong>注册 Gmail</strong><br>
+        用国内手机号注册全新 Gmail 即可。Google 账号本身没有区域锁定，区域由首次登录 Google Play 时的 IP 和付款方式决定。
+      </td>
+      <td>5 分钟</td>
+      <td>无</td>
+      <td><a href="#subscribe">第 6 章</a></td>
+    </tr>
+    <tr>
+      <td><strong>4</strong></td>
+      <td>
+        <strong>商家注册 Timon + 入金 + 开卡</strong><br>
+        把步骤 3 的 Gmail 给商家 → 商家注册 Timon → 你登录后改密码、开 2FA → OKX 买 USDT（专用小额银行卡）→ 链上转到 Timon → 兑换 USD → 开 Visa/Mastercard（$5）→ 充值到卡。
+      </td>
+      <td>1-2 小时</td>
+      <td>步骤 3</td>
+      <td><a href="#timon">第 7 章</a></td>
+    </tr>
+    <tr>
+      <td><strong>5</strong></td>
+      <td>
+        <strong>注册 AWS + 创建 Lightsail 实例</strong><br>
+        AWS 注册（<strong>用国内信用卡</strong>，不用 Timon 卡）→ 创建 Oregon 区 $5 实例 → 分配静态 IP → 配置防火墙。
+      </td>
+      <td>30 分钟</td>
+      <td>国内信用卡</td>
+      <td><a href="proxy_server_guide.html#lightsail">代理指南第 2 章</a></td>
+    </tr>
+    <tr>
+      <td><strong>6</strong></td>
+      <td>
+        <strong>搭建 Xray + WARP</strong><br>
+        SSH 登录 Lightsail → Xray-script 一键安装 XHTTP Reality → 安装 WARP → jq 添加分流路由。
+      </td>
+      <td>30 分钟</td>
+      <td>步骤 5</td>
+      <td><a href="proxy_server_guide.html#xray">代理指南第 3-5 章</a></td>
+    </tr>
+    <tr>
+      <td><strong>7</strong></td>
+      <td>
+        <strong>安装客户端 + 扫码添加节点</strong><br>
+        Mac 安装 V2rayN / 手机安装 V2rayNG → SSH 连服务器运行管理菜单 → 终端显示二维码 → 扫码导入节点 → 终端配置 <code>HTTPS_PROXY</code>。
+      </td>
+      <td>15 分钟</td>
+      <td>步骤 6</td>
+      <td><a href="proxy_server_guide.html#client">代理指南第 6 章</a></td>
+    </tr>
+    <tr>
+      <td><strong>8</strong></td>
+      <td>
+        <strong>订阅 Claude Pro</strong><br>
+        美区 Google Play + 国内双币信用卡内购订阅（$19.99/月），或网页端 claude.ai 用 Timon 卡订阅。<br>
+        <em>尼区 Google Play 无低价优惠且付款风控严格（IP 地区不一致会拦截），不推荐。想要低价需走尼区 App Store（需 iPhone/iPad）。</em>
+      </td>
+      <td>15 分钟</td>
+      <td>步骤 4 + 步骤 6</td>
+      <td><a href="#subscribe">第 6 章</a></td>
+    </tr>
+    <tr>
+      <td><strong>9</strong></td>
+      <td>
+        <strong>登录 Claude Code</strong><br>
+        终端运行 <code>claude</code> → OAuth 登录（浏览器弹出 claude.ai 授权页面）→ 授权完成 → 开始使用。
+      </td>
+      <td>2 分钟</td>
+      <td>步骤 7 + 步骤 8</td>
+      <td><a href="#claude-code-config">第 11 章</a></td>
+    </tr>
+  </table>
+
+  <div class="callout info">
+    <div class="callout-title">总耗时预估</div>
+    排除等快递（eSTK 卡 + 读卡器 + Timon 商家处理）的时间，<strong>实际动手操作约 4-5 小时</strong>。建议分两天完成：第一天搞定步骤 1-4（支付侧），第二天搞定步骤 5-9（代理侧）。
+  </div>
+
+  <h3>风险清单与缓解措施</h3>
+  <table>
+    <tr><th>风险</th><th>等级</th><th>缓解措施</th></tr>
+    <tr>
+      <td>Timon 账号安全</td>
+      <td><span class="badge green">低</span></td>
+      <td>已用自己邮箱注册，改密码 + 开 2FA + 踢多余设备</td>
+    </tr>
+    <tr>
+      <td>USDT 买入冻卡</td>
+      <td><span class="badge yellow">中</span></td>
+      <td>用专用小额银行卡，只选 OKX 认证商家，单次 ¥500 以内</td>
+    </tr>
+    <tr>
+      <td>Claude 封号</td>
+      <td><span class="badge yellow">中</span></td>
+      <td>Timon 卡不存大额（够 1-2 月）；封号后退款→注销旧卡→开新卡→新账号</td>
+    </tr>
+    <tr>
+      <td>Google Play 尼区可行性</td>
+      <td><span class="badge yellow">未验证</span></td>
+      <td>先尝试；不行则走 Apple（需 iPad）或网页端 claude.ai 直接订阅</td>
+    </tr>
+    <tr>
+      <td>Lightsail IP 被墙</td>
+      <td><span class="badge green">低</span></td>
+      <td>重新分配静态 IP（免费），做好快照备份</td>
+    </tr>
+    <tr>
+      <td>MTN 号码回收</td>
+      <td><span class="badge green">极低</span></td>
+      <td>已开 1 年保号（¥16），到期前续费即可，eSIM 二维码多处备份</td>
+    </tr>
+    <tr>
+      <td>Claude Code 指纹泄露</td>
+      <td><span class="badge yellow">中</span></td>
+      <td>TZ/LANG 伪装 + 关闭遥测 + 始终走代理</td>
+    </tr>
+  </table>
+
+  <h3>月度成本汇总</h3>
+  <table>
+    <tr><th>项目</th><th>月费</th><th>备注</th></tr>
+    <tr><td>AWS Lightsail</td><td>$5</td><td>前 3 个月免费（$5 plan）</td></tr>
+    <tr><td>Cloudflare WARP</td><td>$0</td><td>免费</td></tr>
+    <tr><td>Claude Pro 订阅（尼区）</td><td>~¥88</td><td>约 $12；美区价 $20</td></tr>
+    <tr><td>MTN 保号</td><td>~¥1.3</td><td>¥16 / 12 个月，可忽略</td></tr>
+    <tr><td>住宅 IP（可选）</td><td>$3-5</td><td>WARP 被风控时才需要</td></tr>
+    <tr><td colspan="3" style="border-top:2px solid var(--surface-2);"></td></tr>
+    <tr><td><strong>基础方案总计</strong></td><td><strong>~¥124/月</strong></td><td>Lightsail $5 + Claude ¥88</td></tr>
+    <tr><td><strong>含住宅 IP 方案</strong></td><td><strong>~¥150/月</strong></td><td>+ 住宅 IP $3-5</td></tr>
+  </table>
+  <p style="font-size:0.85rem;color:var(--text-dim);">* 一次性费用：Timon 账号 ¥100-200 + eSTK+读卡器 ¥49 + Timon 开卡 $5 ≈ ¥200-300</p>
+
+  <h3>初始投入清单（一次性）</h3>
+  <table>
+    <tr><th>项目</th><th>费用</th></tr>
+    <tr><td>闲鱼 Timon 账号注册服务</td><td>¥100-200</td></tr>
+    <tr><td>eSTK 白卡 + USB-C 读卡器</td><td>~¥49</td></tr>
+    <tr><td>Timon Visa/Mastercard 开卡费</td><td>$5（约 ¥36）</td></tr>
+    <tr><td>MTN 1 年保号（MyMTN App）</td><td>¥16</td></tr>
+    <tr><td><strong>合计</strong></td><td><strong>¥200-300</strong></td></tr>
+  </table>
+</section>
+
+<!-- 代理搭建引用 -->
+<section style="border-color:var(--accent);">
+  <h2 style="border-bottom-color:var(--accent);">代理服务器搭建</h2>
+  <p>代理服务器的搭建、配置与运维（AWS Lightsail + Xray + WARP + 住宅 IP + 安全加固）已拆为独立文档：</p>
+  <p style="font-size:1.1rem;"><strong><a href="proxy_server_guide.html" style="color:var(--accent);">→ 代理服务器搭建与运维指南</a></strong></p>
+  <p style="color:var(--text-dim);font-size:0.9rem;">包含：整体架构 · Lightsail 购买与优化 · Xray XHTTP Reality 一键搭建 · WARP 出口 · 分流路由 · 客户端配置 · 住宅 IP 方案 · 安全与 geodata 更新踩坑修复</p>
+</section>
+
+
+
+<!-- 6. Subscription -->
+<section id="subscribe">
+  <h2><span class="num">1</span> Claude 付费订阅方案</h2>
+
+  <p>核心思路：利用尼日利亚区应用商店的<strong>区域低价</strong>（Claude Pro 约 ¥88/月 vs 美区 ¥145/月），通过 Timon 钱包的 Visa 卡支付，应用商店代扣降低风控风险。</p>
+
+  <div class="callout success">
+    <div class="callout-title">Google Play 内购 Claude 已验证可行</div>
+    多位国内用户实测：Claude Android App 支持 Google Play 内购订阅 Pro/Max。API 端点 <code>claude.ai/api/google-play-iap/purchase</code> 已确认存在。订阅后 Claude Code 直接可用（共享同一订阅额度，不需额外付费）。
+  </div>
+
+  <div class="cards">
+    <div class="card recommended">
+      <div class="card-title">尼区 App Store + Timon 卡（低价首选）</div>
+      <div class="card-body">
+        <p>通过尼区 Apple ID + Timon Visa 卡，在 Claude iOS App 内购订阅。<strong>唯一有低价优惠的渠道。</strong></p>
+        <table>
+          <tr><td>前置条件</td><td>iPhone/iPad + 尼区 Apple ID + Timon 卡</td></tr>
+          <tr><td>价格</td><td><strong>约 ¥88/月（Pro）</strong>，已大量验证</td></tr>
+          <tr><td>开卡费</td><td>$5（Timon Ace 卡）</td></tr>
+        </table>
+        <p><strong>操作路径：</strong></p>
+        <ol style="margin:0.5rem 0 0 1rem;">
+          <li>创建尼区 Apple ID（或切换现有 Apple ID 到尼区：设置 → 媒体与购买 → 国家/地区 → Nigeria）</li>
+          <li>付款方式添加 Timon Visa/Mastercard</li>
+          <li>App Store 搜索 Claude → 下载 App</li>
+          <li>打开 Claude App → 登录 → Upgrade → 选 Pro → App Store 弹出支付确认 → 完成</li>
+        </ol>
+        <p><strong>创建尼区 Apple ID 注意事项：</strong></p>
+        <ul style="margin:0.5rem 0 0 1rem;">
+          <li><strong>不需要挂代理</strong>，国内网络直连即可在 <code>account.apple.com</code> 创建</li>
+          <li><strong>国内手机号和国内邮箱（如 163）都可以用</strong>，创建时国家/地区选 Nigeria 即可</li>
+          <li>同一手机号关联 Apple ID 数量有上限（约 2 个），超出会提示「此时无法创建你的账户」</li>
+          <li>遇到无法创建的提示，联系 <a href="https://support.apple.com/contact" style="color:var(--accent);">Apple 在线客服</a>（选 Apple ID → 创建 → 在线聊天），客服可协助解除限制</li>
+        </ul>
+        <p><strong>注意：</strong>首次大额支付可能被拦截，需拨打 Apple 客服说明情况，等待约三天后再试。Apple ID 区域随时可改，灵活度高于 Google Play。</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">美区 Google Play + 国内双币卡（无苹果设备时）</div>
+      <div class="card-body">
+        <p>用美区 Google 账号 + <strong>国内 Visa/Mastercard 双币信用卡</strong>直接绑定 Google Play 内购。已被多人实测成功。</p>
+        <table>
+          <tr><td>前置条件</td><td>安卓手机 + 美区 Google 账号 + 国内 Visa/Mastercard 信用卡</td></tr>
+          <tr><td>价格</td><td>$19.99/月（美区原价，约 ¥145）</td></tr>
+          <tr><td>额外费用</td><td>无开卡费，直接用已有的国内双币卡</td></tr>
+        </table>
+        <p><strong>操作要点：</strong></p>
+        <ul>
+          <li>Google Play 绑卡时地址填美国免税州地址（Oregon / Delaware）</li>
+          <li>登录 Google Play 时需挂美国 IP，付款方式地区和 IP 必须一致</li>
+          <li>仅支持 Visa / Mastercard，银联标识的卡不行</li>
+        </ul>
+        <p><strong>优势：</strong>不需要 Timon 卡，不需要 USDT 入金，流程最简单。<br><strong>劣势：</strong>没有低价优势，按美区原价 $19.99/月。</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">美区 App Store 礼品卡（最简单后备方案）</div>
+      <div class="card-body">
+        <p>美区 Apple ID + 美区礼品卡，在 Claude iOS App 内购订阅。<strong>不需要虚拟信用卡，不需要 PayPal。</strong></p>
+        <ul>
+          <li>淘宝搜"美区 App Store 礼品卡"，买 $20 面额</li>
+          <li>美区 Apple ID 兑换礼品卡余额</li>
+          <li>Claude App 内购订阅 Pro（$19.99/月，美区原价）</li>
+        </ul>
+        <p><strong>优势</strong>：零门槛，几分钟搞定，不需要折腾虚拟卡。<br><strong>劣势</strong>：美区原价 $19.99，没有尼区低价优势；余额用不完无法提现。</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">美区 PayPal + 国内全币种卡（网页/App Store 通用）</div>
+      <div class="card-body">
+        <p>注册美区 PayPal（需美国电话号），绑定国内 Visa/Mastercard 全币种卡。可用于美区 Apple ID 付款方式，也可直接在 claude.ai 网页端订阅。</p>
+        <table>
+          <tr><td>前置条件</td><td>美国电话卡（Red Pocket / Tello）+ 国内全币种 Visa/Mastercard</td></tr>
+          <tr><td>价格</td><td>$19.99/月（美区原价）</td></tr>
+          <tr><td>优势</td><td>一个 PayPal 通吃所有美区支付场景，长期复用</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">虚拟信用卡（网页端订阅）</div>
+      <div class="card-body">
+        <p>在 claude.ai 网页端用美国 BIN 虚拟卡直接订阅（Stripe 支付）。</p>
+        <table>
+          <tr><td><strong>BinGoCard</strong></td><td>$20/5年，美国 BIN，支持支付宝/云闪付，仍在运营（2026.06）</td></tr>
+          <tr><td><del>WildCard</del></td><td><span class="badge red">已停服</span>（2026 年 3 月）</td></tr>
+          <tr><td><del>Dupay</del></td><td><span class="badge red">已跑路</span></td></tr>
+          <tr><td>Wise</td><td>护照认证，银行级 BIN 信誉好，大陆可能被拒</td></tr>
+        </table>
+        <p style="font-size:0.85rem;color:var(--text-dim);">虚拟卡行业跑路率极高，随用随充，卡上不留余额。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout danger">
+    <div class="callout-title">实测结论：尼区 Google Play 不推荐</div>
+    <p>尼区 Google Play 存在两个问题：<strong>1）Claude 定价无低价优惠</strong>（NGN 33,500/月 ≈ $21，和美区同价）；<strong>2）付款风控严格</strong>——当 Timon 卡地址为尼日利亚但代理 IP 为日本/美国时，Google Play 会警告地区不一致并拦截付款。不推荐走这条路径。</p>
+  </div>
+
+  <h3>Google Play vs App Store 订阅对比</h3>
+  <table>
+    <tr><th>维度</th><th>Google Play</th><th>App Store</th></tr>
+    <tr><td>需要的设备</td><td>安卓手机（小米即可）</td><td>iPhone / iPad</td></tr>
+    <tr><td>国内双币卡直绑</td><td><span class="badge green">支持</span>（美区/新加坡区实测可行）</td><td><span class="badge red">不支持</span>（需礼品卡或 Timon 卡）</td></tr>
+    <tr><td>尼区低价</td><td><span class="badge red">无优惠</span>（实测 NGN 33,500/月 ≈ $21，和美区同价）</td><td><span class="badge green">已验证</span>（Pro ~¥88/月）</td></tr>
+    <tr><td>平台抽成</td><td>15-30%</td><td>30%</td></tr>
+    <tr><td>验证成熟度</td><td>中（有成功案例但尼区较少）</td><td>高（大量成功案例）</td></tr>
+  </table>
+
+  <div class="callout danger">
+    <div class="callout-title">实测结论：Google Play 尼区 Claude 没有低价优惠</div>
+    <p>2026 年 6 月实测，尼区 Google Play Claude 定价如下，和美区基本持平，<strong>不存在区域低价</strong>：</p>
+    <table>
+      <tr><th>计划</th><th>尼区 Google Play</th><th>美区 Google Play</th><th>尼区 App Store</th></tr>
+      <tr><td>Pro（月付）</td><td>NGN 33,500（≈$21）</td><td>$19.99</td><td>~¥88（≈$12）</td></tr>
+      <tr><td>Pro（年付）</td><td>NGN 361,800（≈$226，省10%）</td><td>—</td><td>—</td></tr>
+      <tr><td>Max 5x（月付）</td><td>NGN 209,375（≈$131）</td><td>$99.99</td><td>—</td></tr>
+      <tr><td>Max 20x（月付）</td><td>NGN 418,750（≈$262）</td><td>$199.99</td><td>—</td></tr>
+    </table>
+    <p><strong>结论：想要尼区低价必须走 Apple App Store，Google Play 尼区没有价格优势。</strong>如果没有 iPhone/iPad，直接用美区 Google Play + 国内双币卡订阅是最简单的方案（$19.99/月）。</p>
+  </div>
+
+  <div class="callout success">
+    <div class="callout-title">重要概念：低价订阅是「渠道」决定的，不是 Claude 账号决定的</div>
+    <p>Claude 账号本身<strong>没有区域概念</strong>。Claude 不知道也不关心你付了多少钱——它只知道你订阅了 Pro。价格差异完全由<strong>应用商店的区域</strong>决定：</p>
+    <ul style="margin:0.5rem 0 0 1rem;">
+      <li>尼区 App Store → 尼区低价（Pro ~¥88/月）</li>
+      <li>尼区 Google Play → <strong>无优惠</strong>（Pro NGN 33,500 ≈ $21，和美区同价）</li>
+      <li>美区 Google Play / App Store → 美区价格（$19.99/月）</li>
+      <li>claude.ai 网页端 → 统一 $19.99/月</li>
+    </ul>
+    <p>所以「注册 Claude 账号」和「订阅付费」是两件独立的事。你可以用日本 IP 注册 Claude 账号，然后通过尼区 Google Play 内购订阅 Pro，完全没有冲突。</p>
+  </div>
+
+  <h3>Google Play 区域锁定机制</h3>
+  <p>Google Play 的区域设定规则比较严格，操作前务必了解：</p>
+  <table>
+    <tr><th>规则</th><th>说明</th></tr>
+    <tr><td>区域何时锁定</td><td><strong>首次登录 Google Play 时</strong>，根据当前 IP + 付款方式地址确定区域</td></tr>
+    <tr><td>能否修改</td><td>可以，但<strong>一年只能改一次</strong></td></tr>
+    <tr><td>修改条件</td><td>需要添加对应区域的付款方式（卡或银行账户），且商店余额/礼品卡需清零</td></tr>
+    <tr><td>IP 要求</td><td>首次登录和切换区域时需要对应地区的 IP，日常使用不强制</td></tr>
+  </table>
+
+  <div class="callout danger">
+    <div class="callout-title">操作顺序很重要</div>
+    <p>如果你计划走尼区低价：<strong>在 Timon 卡到手之前，不要用该 Google 账号登录 Google Play</strong>。一旦用美国/日本 IP 首次登录，区域就被锁定，改回尼区要等一年。</p>
+    <p>正确顺序：拿到 Timon 卡 → 挂对应 IP → 首次登录 Google Play → 添加 Timon 卡（地址填尼日利亚）→ 区域锁定尼区。</p>
+  </div>
+
+  <div class="callout info">
+    <div class="callout-title">建议：新卡绑定后先做几笔小额消费再订阅</div>
+    Google Play 绑定新卡后直接订阅 $19.99 的服务可能触发风控。建议先买一两个小额付费 App（$1-3），等扣款成功后过两三天再订阅 Claude，降低被拦截的概率。
+  </div>
+
+  <h3>Apple ID 区域 vs Google Play 区域</h3>
+  <table>
+    <tr><th>维度</th><th>Google Play</th><th>Apple ID</th></tr>
+    <tr><td>区域锁定</td><td>首次登录时锁定，一年只能改一次</td><td><strong>随时可改</strong>（设置 → 媒体与购买 → 国家/地区）</td></tr>
+    <tr><td>切换条件</td><td>需要对应区域的付款方式</td><td>需要对应区域的付款方式，且余额清零</td></tr>
+    <tr><td>设备要求</td><td>安卓手机</td><td>iPhone / iPad</td></tr>
+    <tr><td>灵活度</td><td><span class="badge yellow">低</span></td><td><span class="badge green">高</span></td></tr>
+  </table>
+  <p>如果你同时有安卓和 iOS 设备，建议把 Google Play 账号留给更确定的区域（或暂不登录），用 Apple ID 灵活切换区域来订阅。</p>
+
+  <h3>核心优势：为什么用 Timon 卡而不是礼品卡</h3>
+  <table>
+    <tr><th>维度</th><th>Timon Visa 卡</th><th>尼区礼品卡</th></tr>
+    <tr><td>封号资金回收</td><td><span class="badge green">退回 Visa 卡，钱能拿回来</span></td><td><span class="badge red">余额锁在被封账户，无法取回</span></td></tr>
+    <tr><td>重开成本</td><td>注销旧卡 → 新开一张 $5</td><td>需重新购买礼品卡</td></tr>
+    <tr><td>连坐风险</td><td>换新卡 + 新账号，完全隔离</td><td>同一批礼品卡可能被关联</td></tr>
+    <tr><td>操作复杂度</td><td>中（需 eSIM + Timon）</td><td>低（买卡兑换即可）</td></tr>
+  </table>
+
+  <div class="callout info">
+    <div class="callout-title">封号后的恢复策略</div>
+
+    <h4>第一步：止损（立即操作）</h4>
+    <ol style="margin:0.5rem 0 0 1rem;">
+      <li><strong>取消自动续费</strong>：iPhone 设置 → Apple ID → 订阅 → 找到 Claude → 取消续订，防止下个计费周期继续扣款</li>
+      <li><strong>申请退款</strong>（退款渠道取决于你的订阅方式，详见下方退款指南）</li>
+      <li><strong>Timon 卡余额转出</strong>：卡上不留大额资金。被封账号关联的卡信息可能被标记，后续该卡再订阅有连坐风险</li>
+    </ol>
+
+    <h4>第二步：等待申诉 / 并行准备新账号</h4>
+    <p>Claude 封号申诉通常回复较慢（官方提示 7 个工作日，实际可能更久）。建议<strong>不要干等</strong>，和申诉并行准备新账号：</p>
+    <ol style="margin:0.5rem 0 0 1rem;">
+      <li>确认退款已到账</li>
+      <li>在 Timon 中<strong>注销被封的 Visa 卡</strong></li>
+      <li>重新开一张<strong>新 Visa 卡</strong>（$5 开卡费）</li>
+      <li>注册<strong>新 Gmail</strong></li>
+      <li>新尼区 Apple ID（或切换现有 Apple ID 区域）→ 绑定新 Timon 卡</li>
+      <li>注册<strong>新 Claude 账号</strong>（新邮箱）→ 重新订阅</li>
+    </ol>
+    <p>关键隔离点：<strong>新卡号 + 新邮箱 + 新 Claude 账号</strong>，和被封的旧账号没有任何关联。申诉成功是 bonus，不成功也不耽误使用。</p>
+  </div>
+
+  <div class="callout warn">
+    <div class="callout-title">Claude 订阅退款详细指南</div>
+    <p>退款渠道取决于你的订阅方式。Anthropic 官方政策：<strong>除服务条款明确规定或法律要求外，所有付款不可退款</strong>。但不同渠道有各自的退款路径：</p>
+
+    <h4>通过 App Store（iOS）订阅</h4>
+    <p>Anthropic 官方说明：订阅从 Apple App Store 启动的，付款由 Apple 处理，Anthropic 无法退款，需联系 <strong>Apple Support</strong> 申请退款。</p>
+    <p style="font-size:0.85rem;color:var(--text-dim);">以下为 Apple 通用退款操作 + 社区实测经验（非 Anthropic 官方指引）：</p>
+    <ol style="margin:0.5rem 0 0 1rem;">
+      <li>访问 <code>reportaproblem.apple.com</code>，登录订阅时的 Apple ID</li>
+      <li>选择「<strong>I'd like to</strong>」→「<strong>Request a refund</strong>」</li>
+      <li>退款理由选「<strong>其他 / Other</strong>」或「<strong>The app doesn't work as expected</strong>」</li>
+      <li>找到 Claude 订阅的扣款记录，点击选中</li>
+      <li>补充说明（建议英文），写清封号时间和未使用的订阅期限，参考模板：<br>
+        <code style="font-size:0.8rem;color:var(--text-dim);background:var(--bg);padding:0.3rem 0.5rem;display:block;margin-top:0.3rem;white-space:normal;">On [封号日期], Anthropic suspended my account without explanation, even though my subscription doesn't expire until [到期日期]. I'm requesting a refund for the unused portion of my subscription.</code>
+      </li>
+      <li>提交后等待 Apple 审核，退款通常 <strong>3-5 个工作日</strong>到原付款方式（Timon 卡）</li>
+    </ol>
+    <p style="font-size:0.85rem;color:var(--text-dim);margin-top:0.5rem;"><strong>社区经验总结：</strong></p>
+    <ul style="margin:0.3rem 0 0 1rem;font-size:0.85rem;color:var(--text-dim);">
+      <li>首次退款大概率成功，多次退款成功率递减（有用户反馈第二次被 Apple 拒绝）</li>
+      <li>申请退款必须在购买后 <strong>90 天内</strong></li>
+      <li>非美区（尼区、土区等）App Store 也支持退款申请，流程相同</li>
+      <li>不要把退款当作"免费试用"的后路——Apple 会记录退款历史，频繁退款会影响账号信誉</li>
+    </ul>
+    <p style="font-size:0.85rem;color:var(--text-dim);">信源：<a href="https://blog.csdn.net/qq_32483009/article/details/157440954" style="color:var(--accent);">CSDN — Claude 账号被封后申请退款</a> · <a href="https://blog.csdn.net/lulu1216544078/article/details/159489883" style="color:var(--accent);">CSDN — Claude 被封退款申诉重开全流程</a></p>
+
+    <h4>退款已批准但 Timon 卡未到账</h4>
+    <p>Apple 在 <code>reportaproblem.apple.com</code> 显示 <strong>"Refunded"</strong> 后,Timon 卡上迟迟没有入账——这是<strong>正常现象</strong>,不需要重新提交申请。</p>
+
+    <p><strong>"Refunded" 只代表 Apple 侧已处理完毕</strong>,资金实际需要经过以下链路才能到达你的卡:</p>
+    <table>
+      <tr><th>步骤</th><th>环节</th><th>耗时</th></tr>
+      <tr><td>1</td><td>Apple 标记退款完成,通知你</td><td>即时</td></tr>
+      <tr><td>2</td><td>Apple 的收单银行发出退款指令</td><td>1-2 个工作日</td></tr>
+      <tr><td>3</td><td>Visa / Mastercard 国际清算网络中转</td><td>2-4 个工作日</td></tr>
+      <tr><td>4</td><td>Timon 发卡行（尼日利亚）接收并入账</td><td>1-3 个工作日</td></tr>
+      <tr><td colspan="2"><strong>全程总计</strong></td><td><strong>5-10 个工作日</strong>（排除周末和公共假日）</td></tr>
+    </table>
+
+    <p>尼日利亚预付卡（Timon）比美国本土银行卡慢 3-5 天是常态,因为多了一层国际清算中转。</p>
+
+    <p><strong>不需要做的事:</strong></p>
+    <ul style="margin:0.5rem 0 0 1rem;">
+      <li><strong>不要重新提交退款申请</strong>——系统会提示"已处理"或"重复请求"</li>
+      <li><strong>不要在 10 个工作日之前联系客服</strong>——这段等待是正常流程,客服也只会让你继续等</li>
+    </ul>
+
+    <p><strong>排查清单（等待期间可自行检查）:</strong></p>
+    <ul style="margin:0.5rem 0 0 1rem;">
+      <li>打开 Timon App → Transactions,看有没有一笔 <code>APPLE.COM/BILL</code> 或 <code>APL*APPLE</code> 的正数金额（可能显示为 pending）</li>
+      <li>确认 Timon 卡状态为 Active（未冻结/未注销）——如果退款发出时卡已注销,资金会被退回 Apple</li>
+      <li>检查 Apple ID 余额（设置 → Apple ID → 媒体与购买 → 查看余额）——极少数情况退款会退到 Apple ID 余额而非原卡</li>
+      <li>确认退款金额——按比例退款可能只有 $2-5,金额很小容易忽略</li>
+    </ul>
+
+    <p><strong>超过 10 个工作日仍未到账的升级操作:</strong></p>
+    <ol style="margin:0.5rem 0 0 1rem;">
+      <li>联系 Apple 在线客服（<code>reportaproblem.apple.com</code> → 选择那笔退款 → "I haven't received my refund"）</li>
+      <li>要求 Apple 提供退款的 <strong>ARN（Acquirer Reference Number）</strong></li>
+      <li>拿 ARN 联系 Timon 客服,让他们在 Visa 网络中追踪这笔资金具体停在哪一环</li>
+      <li>如果 Timon 确认未收到,提供 ARN 让 Apple 重新发起退款或换其他退款方式</li>
+    </ol>
+
+    <p style="font-size:0.85rem;color:var(--text-dim);">* 实测参考：2026 年 6 月尼区 App Store Claude Pro 退款,Apple 6 月 25 日标记 "Refunded",Timon 卡预计 7 月 1-7 日之间到账。</p>
+
+    <h4>通过 Google Play（Android）订阅</h4>
+    <ul style="margin:0.5rem 0 0 1rem;">
+      <li><strong>活跃订阅</strong>：可联系 Anthropic 客服检查退款资格，客服确认后处理</li>
+      <li><strong>已取消的历史订阅</strong>：Anthropic 无法退款，需联系 <a href="https://support.google.com/googleplay/answer/2479637" style="color:var(--accent);">Google 支持</a></li>
+    </ul>
+
+    <h4>通过 claude.ai 网页端订阅</h4>
+    <ol style="margin:0.5rem 0 0 1rem;">
+      <li>登录 claude.ai → 左下角点击你的名字/头像</li>
+      <li>选择 <strong>Get help</strong> → 打开右侧聊天窗口</li>
+      <li>点击 <strong>Send us a message</strong> → <strong>Accept</strong> → <strong>Claude Refund Request</strong></li>
+      <li>选择退款原因 → 系统检查退款资格 → 符合条件则在线完成退款</li>
+    </ol>
+
+    <h4>无法登录被封账号怎么办</h4>
+    <p>用另一个邮箱联系 <a href="https://support.anthropic.com" style="color:var(--accent);">Anthropic 客服</a>，并抄送（CC）被封账号的注册邮箱，说明需要取消订阅并退款。</p>
+
+    <h4>特殊情况</h4>
+    <table>
+      <tr><th>情况</th><th>退款可行性</th></tr>
+      <tr><td>欧盟/英国用户</td><td>购买后 14 天内可退款（按使用量比例扣除），在 Settings 页面可操作</td></tr>
+      <tr><td>银行争议（Dispute）中</td><td>Anthropic 无法处理退款，需等争议结束或撤回银行争议后由 Anthropic 退款</td></tr>
+      <tr><td>迁移到 Team/Enterprise</td><td>个人 Pro/Max 订阅自动取消，按比例退款</td></tr>
+    </table>
+
+    <p style="font-size:0.85rem;color:var(--text-dim);">信源：<a href="https://support.claude.com/en/articles/12386328-requesting-a-refund-for-a-paid-claude-plan" style="color:var(--accent);">Claude Help Center — Requesting a refund for a paid Claude plan</a></p>
+  </div>
+
+  <h3>价格参考</h3>
+  <table>
+    <tr><th>计划</th><th>美区 App Store</th><th>尼区 App Store</th><th>美区 Google Play</th><th>尼区 Google Play</th></tr>
+    <tr><td>Pro</td><td>¥145/月</td><td>¥88/月</td><td>¥145/月</td><td>≈¥150/月（无优惠）</td></tr>
+    <tr><td>Max 5</td><td>¥725/月</td><td>¥580/月</td><td>¥725/月</td><td>≈¥940/月（无优惠）</td></tr>
+    <tr><td>Max 20</td><td>¥1450/月</td><td>¥1160/月</td><td>¥1450/月</td><td>≈¥1880/月（无优惠）</td></tr>
+  </table>
+  <p style="font-size:0.85rem;color:var(--text-dim);">* 尼区 App Store 价格受奈拉汇率波动影响，每日小幅变动，大方向稳定。</p>
+  <p style="font-size:0.85rem;color:var(--text-dim);">* <strong>尼区 Google Play 实测无低价优惠</strong>（2026 年 6 月验证），Pro 定价 NGN 33,500/月 ≈ $21，和美区基本持平。想要低价必须走尼区 App Store。</p>
+  <p style="font-size:0.85rem;color:var(--text-dim);">* Claude Code 不需要单独付费，订阅 Pro/Max 后终端运行 <code>claude</code> 登录同一账号即可使用，和网页端共享订阅额度。</p>
+  <p style="font-size:0.85rem;color:var(--text-dim);">* 全球各区 App Store 实时价格查询工具：<a href="https://appstoreprice.org/zh/apps/6448311069" style="color:var(--accent);">AppStorePrice（Claude 各区定价）</a> · <a href="https://app.vbr.me/" style="color:var(--accent);">VBR.me（全球 App Store 价格对比）</a></p>
+</section>
+
+<!-- 7. Timon Wallet -->
+<section id="timon">
+  <h2><span class="num">2</span> Timon 钱包详解</h2>
+
+  <h3>基本信息</h3>
+  <p>Timon（usetimon.com）是尼日利亚的电子钱包，受尼日利亚央行 (CBN) 监管。相比同类产品 gomoney，Timon 限额更高（2500 USD）且支持 USDT 入金。</p>
+
+  <h3>可开卡类型</h3>
+  <table>
+    <tr><th>卡名</th><th>类型</th><th>货币</th><th>费用</th><th>限额</th><th>用途</th></tr>
+    <tr><td>Blue Debit</td><td>实体卡 (Afrigo)</td><td>NGN</td><td>免费</td><td>₦10M/月</td><td>尼日利亚本地 POS，不支持线上支付</td></tr>
+    <tr><td>Blue Prepaid</td><td>实体卡 (Visa)</td><td>USD</td><td>—</td><td>$20,000/月</td><td>全球旅行线下消费</td></tr>
+    <tr><td><strong>Blue Prepaid</strong></td><td><strong>虚拟卡 (Visa)</strong></td><td><strong>USD</strong></td><td>—</td><td><strong>$10,000/季，$2,500/笔</strong></td><td><strong>线上订阅、Google Play Store</strong></td></tr>
+    <tr><td><strong>Black Debit</strong></td><td><strong>虚拟卡 (Mastercard)</strong></td><td><strong>USD</strong></td><td><strong>$5/年</strong></td><td><strong>$25,000/月，$10,000/笔</strong></td><td><strong>全球网站支付、Apple Pay、Google Pay</strong></td></tr>
+    <tr><td>Blue Debit</td><td>虚拟卡 (Verve)</td><td>NGN</td><td>免费</td><td>₦10,000/月</td><td>尼日利亚本地网站</td></tr>
+  </table>
+
+  <div class="callout info">
+    <div class="callout-title">推荐开哪张卡</div>
+    <strong>Black Debit 虚拟美元卡 (Mastercard)</strong>：$5/年，限额最高，支持 Apple Pay 和 Google Pay，BIN 前缀 <code>4173 9601</code>（文中提到的 Ace 卡即此类型）。一张卡可同时用于 Claude 订阅 + AWS Lightsail 支付。
+  </div>
+
+  <h3>入金方式</h3>
+
+  <h4>推荐：USDT 入金（最适合国内用户）</h4>
+  <p>Timon 官方支持稳定币兑换（stablecoin conversion），可直接用 USDT 充值。</p>
+
+  <div class="arch-diagram" style="text-align:left; line-height: 2.2;">
+<span class="node">支付宝 / 银行卡</span>
+    <span class="arrow">│</span>  <span class="label">C2C 交易（欧易 OKX / 币安）</span>
+    <span class="arrow">▼</span>
+<span class="node">购入 USDT</span>
+    <span class="arrow">│</span>  <span class="label">链上提币，选 TRC20（手续费最低 ~1 USDT）</span>
+    <span class="arrow">▼</span>
+<span class="node">Timon 钱包 USDT 地址</span>
+    <span class="arrow">│</span>  <span class="label">App 内兑换</span>
+    <span class="arrow">▼</span>
+<span class="node">Timon USD 钱包余额</span>
+    <span class="arrow">│</span>  <span class="label">手动 Top up</span>
+    <span class="arrow">▼</span>
+<span class="node">Timon Visa / Mastercard 卡</span>  <span class="label">→ 可消费</span></div>
+
+  <div class="callout warn">
+    <div class="callout-title">入金注意事项</div>
+    <ul style="margin:0.5rem 0 0 1rem;">
+      <li><strong>先小额测试</strong>：第一次转 5-10 USDT 验证链路通畅，再转大额</li>
+      <li><strong>选 TRC20 链</strong>：手续费最低（约 1 USDT），到账几分钟</li>
+      <li><strong>汇率损耗</strong>：整个链路约 2-3%（C2C 买入溢价 + 链上手续费 + Timon 内部兑换汇差）</li>
+      <li>欧易注册需实名认证（身份证即可），C2C 买 USDT 支持支付宝/微信/银行卡</li>
+    </ul>
+  </div>
+
+  <h3>办理步骤</h3>
+  <ol class="steps">
+    <li>
+      <strong>闲鱼购买 Timon 账号</strong>（约 ¥100-200）：商家提供 Timon 账号密码、Gmail 邮箱、尼日利亚 MTN 手机号、eSIM 二维码、密码锁
+    </li>
+    <li>
+      <strong>写入 eSIM</strong>：用 eSTK 白卡 + 读卡器将尼日利亚号码写入实体卡（详见下节）
+    </li>
+    <li>
+      <strong>登录 Timon</strong>：使用邮箱登录，短信验证码用 eSTK 白卡接收
+    </li>
+    <li>
+      <strong>安全加固</strong>：踢出 Gmail 和 Timon 的多余设备登录，开启 2FA，防止商家找回
+    </li>
+    <li>
+      <strong>入金</strong>：通过 USDT 向钱包充值
+    </li>
+    <li>
+      <strong>开卡</strong>：选择 Timon Ace Visa 卡，开卡费 $5
+    </li>
+    <li>
+      <strong>绑定 App Store</strong>：尼区 Apple ID 添加 Timon Ace Visa 卡为支付方式
+    </li>
+    <li>
+      <strong>订阅 Claude</strong>：Claude App 内购
+    </li>
+  </ol>
+</section>
+
+<!-- eSIM 引用 -->
+<section style="border-color:var(--purple);">
+  <h2 style="border-bottom-color:var(--purple);"><span class="num">3</span> eSIM 工具卡写号</h2>
+  <p>eSIM 白卡选购、写卡工具、eSTK 写号步骤、MTN 保号等内容已拆为独立文档：</p>
+  <p style="font-size:1.1rem;"><strong><a href="esim_write_guide.html" style="color:var(--purple);">→ eSIM 工具卡写号教程</a></strong></p>
+  <p style="color:var(--text-dim);font-size:0.9rem;">包含：为什么需要工具卡 · eSTK / 9eSIM 白卡对比 · 读卡器 vs App 直写 · 写号步骤图解 · 多号码管理 · MTN 保号（MyMTN App ₦3,500/年）· 设备分工建议</p>
+</section>
+
+
+
+<!-- 11. Claude Code Config -->
+<section id="claude-code-config">
+  <h2><span class="num">4</span> Claude Code 终端代理配置</h2>
+
+  <p>代理搭建、客户端连通、Claude 订阅全部完成后，最后一步是让终端的 Claude Code CLI 走代理。Claude Code 支持标准的 <code>HTTPS_PROXY</code> 环境变量。</p>
+
+  <p>本节给一套已经在本机实测可用的脚本 <code>~/.claude-env.sh</code>，把<strong>代理配置</strong>、<strong>时区/Locale 伪装</strong>、<strong>跨境连通性自检</strong>合三为一，封装成三个命令：</p>
+  <table>
+    <tr><th>命令</th><th>作用</th></tr>
+    <tr><td><code>claude-env</code></td><td>激活美西环境（代理 + TZ + Locale + NO_PROXY），一行切换</td></tr>
+    <tr><td><code>claude-env-check [US]</code></td><td>跑 5 项自检（IP/时区/Locale/DNS/跨境连通性），PASS/FAIL 一目了然</td></tr>
+    <tr><td><code>claude-env-off</code></td><td>关闭代理并还原中文 Locale，回到日常环境</td></tr>
+  </table>
+
+  <h3>确认本地代理端口</h3>
+  <p>V2rayN 默认监听端口：</p>
+  <table>
+    <tr><th>客户端</th><th>SOCKS5 端口</th><th>HTTP 端口</th></tr>
+    <tr><td>V2rayN (Mac)</td><td>10808</td><td>10809</td></tr>
+  </table>
+  <p>下文脚本默认走 <code>socks5h://127.0.0.1:10808</code>。如果你的 V2rayN 同时开了 HTTP 和 SOCKS5 双端口，也可以改为 HTTP 端口；只开了 SOCKS5 一个口的情况推荐 <code>socks5h://</code>，<strong>能把 DNS 一起走代理，避免 DNS 泄漏到本地</strong>。</p>
+
+  <h3>安装步骤</h3>
+  <ol class="steps">
+    <li>
+      <strong>把脚本写到家目录</strong>：新建 <code>~/.claude-env.sh</code>，粘贴下方完整代码
+    </li>
+    <li>
+      <strong>赋予执行权限</strong>：
+      <pre style="margin:0.4rem 0;"><code><span class="cmd">chmod</span> +x ~/.claude-env.sh</code></pre>
+    </li>
+    <li>
+      <strong>注册到 zsh</strong>：在 <code>~/.zshrc</code> 末尾追加一行：
+      <pre style="margin:0.4rem 0;"><code>[ -f <span class="str">"$HOME/.claude-env.sh"</span> ] && <span class="cmd">source</span> <span class="str">"$HOME/.claude-env.sh"</span></code></pre>
+    </li>
+    <li>
+      <strong>重载</strong>：<code>exec zsh</code> 或开一个新终端，<code>claude-env</code> 等三个命令就可用了
+    </li>
+  </ol>
+
+  <div class="callout info">
+    <div class="callout-title">设计决策：注册函数 ≠ 自动激活</div>
+    <p>这套脚本在 <code>.zshrc</code> 里 source 后<strong>只注册三个函数，不会自动改任何环境变量</strong>。每次新开终端是"干净"状态，需要时手动 <code>claude-env</code> 切到美西模式。</p>
+    <p>反例：如果在 <code>.zshrc</code> 里直接 <code>export HTTP_PROXY=...</code>，所有终端命令（<code>git clone</code> 内网仓库、<code>brew install</code>、<code>curl</code> 公司接口）都会走代理，且终端启动时还要 <code>curl ipinfo.io</code> 拖慢几秒。</p>
+  </div>
+
+  <h3>完整脚本 <code>~/.claude-env.sh</code></h3>
+  <pre><code><span class="comment">#!/bin/bash</span>
+<span class="comment"># Claude Code 环境配置 + 一致性自检</span>
+<span class="comment"># 安装: 在 ~/.zshrc 末尾加 `source ~/.claude-env.sh`</span>
+<span class="comment"># 使用(按需手动调用,不会自动激活):</span>
+<span class="comment">#   claude-env              激活美西环境(代理/时区/Locale)</span>
+<span class="comment">#   claude-env-check [US]   一致性自检</span>
+<span class="comment">#   claude-env-off          关闭代理并还原 Locale</span>
+
+<span class="cmd">claude-env</span>() {
+    <span class="cmd">export</span> <span class="key">HTTP_PROXY</span>=<span class="str">"socks5h://127.0.0.1:10808"</span>
+    <span class="cmd">export</span> <span class="key">HTTPS_PROXY</span>=<span class="str">"socks5h://127.0.0.1:10808"</span>
+    <span class="cmd">export</span> <span class="key">ALL_PROXY</span>=<span class="str">"socks5h://127.0.0.1:10808"</span>
+    <span class="cmd">export</span> <span class="key">NO_PROXY</span>=<span class="str">"localhost,127.0.0.1,::1,.local,.alibaba-inc.com,.aliyun-inc.com"</span>
+    <span class="cmd">export</span> <span class="key">TZ</span>=<span class="str">"America/Los_Angeles"</span>
+    <span class="cmd">export</span> <span class="key">LANG</span>=<span class="str">"en_US.UTF-8"</span>
+    <span class="cmd">export</span> <span class="key">LC_ALL</span>=<span class="str">"en_US.UTF-8"</span>
+    <span class="cmd">echo</span> <span class="str">"✅ Claude 环境已激活 (代理=10808, TZ=PST, Locale=en_US)"</span>
+}
+
+<span class="cmd">claude-env-off</span>() {
+    <span class="cmd">unset</span> HTTP_PROXY HTTPS_PROXY ALL_PROXY NO_PROXY TZ LC_ALL
+    <span class="cmd">export</span> <span class="key">LANG</span>=<span class="str">"zh_CN.UTF-8"</span>
+    <span class="cmd">echo</span> <span class="str">"✅ 已关闭 Claude 环境"</span>
+}
+
+<span class="cmd">claude-env-check</span>() {
+    <span class="cmd">local</span> EXPECT_COUNTRY=<span class="str">"${1:-US}"</span>
+    <span class="cmd">local</span> GREEN=<span class="str">'\033[0;32m'</span> RED=<span class="str">'\033[0;31m'</span> YELLOW=<span class="str">'\033[0;33m'</span> NC=<span class="str">'\033[0m'</span>
+    <span class="cmd">local</span> pass_p=<span class="str">"${GREEN}[PASS]${NC}"</span> fail_p=<span class="str">"${RED}[FAIL]${NC}"</span> warn_p=<span class="str">"${YELLOW}[WARN]${NC}"</span>
+
+    <span class="cmd">echo</span> <span class="str">"===== 环境一致性检查 (期望地区: $EXPECT_COUNTRY) ====="</span>
+
+    <span class="comment"># 1. IP 出口</span>
+    <span class="cmd">echo</span>
+    <span class="cmd">echo</span> <span class="str">"1. IP 出口国家:"</span>
+    <span class="cmd">local</span> IP_JSON COUNTRY
+    IP_JSON=$(<span class="cmd">curl</span> -s --max-time 8 https://ipinfo.io/json)
+    <span class="cmd">echo</span> <span class="str">"$IP_JSON"</span> | <span class="cmd">grep</span> -E <span class="str">'"ip"|"country"|"city"|"org"'</span>
+    COUNTRY=$(<span class="cmd">echo</span> <span class="str">"$IP_JSON"</span> | <span class="cmd">grep</span> <span class="str">'"country"'</span> | <span class="cmd">sed</span> -E <span class="str">'s/.*"country": *"([^"]+)".*/\1/'</span>)
+    <span class="cmd">if</span> [ <span class="str">"$COUNTRY"</span> = <span class="str">"$EXPECT_COUNTRY"</span> ]; <span class="cmd">then</span>
+        <span class="cmd">echo</span> -e <span class="str">"   $pass_p IP 国家 = $COUNTRY"</span>
+    <span class="cmd">else</span>
+        <span class="cmd">echo</span> -e <span class="str">"   $fail_p IP 国家 = ${COUNTRY:-未知}, 期望 $EXPECT_COUNTRY (非 $EXPECT_COUNTRY 易触发 403)"</span>
+    <span class="cmd">fi</span>
+
+    <span class="comment"># 2. 时区</span>
+    <span class="cmd">echo</span>
+    <span class="cmd">echo</span> <span class="str">"2. 系统时区:"</span>
+    <span class="cmd">local</span> TZ_ABBR TZ_OFF
+    TZ_ABBR=$(<span class="cmd">date</span> +%Z)
+    TZ_OFF=$(<span class="cmd">date</span> +%z)
+    <span class="cmd">echo</span> <span class="str">"   当前时区: $TZ_ABBR (UTC$TZ_OFF)"</span>
+    <span class="cmd">echo</span> <span class="str">"   当前时间: $(date)"</span>
+    <span class="cmd">case</span> <span class="str">"$EXPECT_COUNTRY"</span> <span class="cmd">in</span>
+        US)
+            <span class="cmd">if</span> <span class="cmd">echo</span> <span class="str">"$TZ_ABBR"</span> | <span class="cmd">grep</span> -qE <span class="str">'^(PST|PDT|EST|EDT|CST|CDT|MST|MDT|HST|AKST|AKDT)$'</span> && [ <span class="str">"$TZ_OFF"</span> != <span class="str">"+0800"</span> ]; <span class="cmd">then</span>
+                <span class="cmd">echo</span> -e <span class="str">"   $pass_p 时区 $TZ_ABBR 属于美国时区"</span>
+            <span class="cmd">else</span>
+                <span class="cmd">echo</span> -e <span class="str">"   $fail_p 时区 $TZ_ABBR ($TZ_OFF) 不像美国时区, CST+0800 会被交叉验证"</span>
+            <span class="cmd">fi</span>
+            ;;
+        *)
+            <span class="cmd">echo</span> -e <span class="str">"   $warn_p 未配置 $EXPECT_COUNTRY 的时区白名单, 请人工核对"</span>
+            ;;
+    <span class="cmd">esac</span>
+
+    <span class="comment"># 3. Locale</span>
+    <span class="cmd">echo</span>
+    <span class="cmd">echo</span> <span class="str">"3. 系统 Locale:"</span>
+    <span class="cmd">echo</span> <span class="str">"   LANG=$LANG"</span>
+    <span class="cmd">echo</span> <span class="str">"   LC_ALL=${LC_ALL:-未设置}"</span>
+    <span class="cmd">local</span> LOCALE_VAL=<span class="str">"${LC_ALL:-$LANG}"</span>
+    <span class="cmd">case</span> <span class="str">"$EXPECT_COUNTRY"</span> <span class="cmd">in</span>
+        US)
+            <span class="cmd">if</span> <span class="cmd">echo</span> <span class="str">"$LOCALE_VAL"</span> | <span class="cmd">grep</span> -qi <span class="str">'^en_US'</span>; <span class="cmd">then</span>
+                <span class="cmd">echo</span> -e <span class="str">"   $pass_p Locale = $LOCALE_VAL"</span>
+            <span class="cmd">elif</span> <span class="cmd">echo</span> <span class="str">"$LOCALE_VAL"</span> | <span class="cmd">grep</span> -qi <span class="str">'^zh'</span>; <span class="cmd">then</span>
+                <span class="cmd">echo</span> -e <span class="str">"   $fail_p Locale = $LOCALE_VAL, zh_* 会作为辅助判定依据"</span>
+            <span class="cmd">else</span>
+                <span class="cmd">echo</span> -e <span class="str">"   $warn_p Locale = $LOCALE_VAL, 建议改为 en_US.UTF-8"</span>
+            <span class="cmd">fi</span>
+            ;;
+        *)
+            <span class="cmd">echo</span> -e <span class="str">"   $warn_p 未配置 $EXPECT_COUNTRY 的 Locale 白名单, 请人工核对"</span>
+            ;;
+    <span class="cmd">esac</span>
+
+    <span class="comment"># 4. DNS 泄漏</span>
+    <span class="cmd">echo</span>
+    <span class="cmd">echo</span> <span class="str">"4. DNS 泄漏检查:"</span>
+    <span class="cmd">local</span> DNS_OUT DNS_SERVER
+    DNS_OUT=$(<span class="cmd">nslookup</span> api.anthropic.com 2>/dev/null | <span class="cmd">head</span> -5)
+    <span class="cmd">echo</span> <span class="str">"$DNS_OUT"</span>
+    DNS_SERVER=$(<span class="cmd">echo</span> <span class="str">"$DNS_OUT"</span> | <span class="cmd">grep</span> -i <span class="str">'^Server'</span> | <span class="cmd">awk</span> <span class="str">'{print $2}'</span>)
+    <span class="cmd">if</span> [ -z <span class="str">"$DNS_SERVER"</span> ]; <span class="cmd">then</span>
+        <span class="cmd">echo</span> -e <span class="str">"   $warn_p 未能解析 DNS 服务器地址"</span>
+    <span class="cmd">elif</span> <span class="cmd">echo</span> <span class="str">"$DNS_SERVER"</span> | <span class="cmd">grep</span> -qE <span class="str">'^(114\.114\.|223\.[56]\.|119\.29\.|180\.76\.|211\.|1\.2\.4\.8)'</span>; <span class="cmd">then</span>
+        <span class="cmd">echo</span> -e <span class="str">"   $fail_p DNS=$DNS_SERVER 是中国大陆 DNS, 可能泄漏真实位置"</span>
+    <span class="cmd">else</span>
+        <span class="cmd">echo</span> -e <span class="str">"   $pass_p DNS=$DNS_SERVER (非已知国内 DNS)"</span>
+    <span class="cmd">fi</span>
+
+    <span class="comment"># 5. 跨境连通性 (不带凭证, 不触发风控)</span>
+    <span class="cmd">echo</span>
+    <span class="cmd">echo</span> <span class="str">"5. 跨境连通性 (api.anthropic.com):"</span>
+    <span class="cmd">local</span> PROBE_CODE
+    PROBE_CODE=$(<span class="cmd">curl</span> -s -o /dev/null -w <span class="str">"%{http_code}"</span> --max-time 8 https://api.anthropic.com/ 2>/dev/null)
+    <span class="cmd">case</span> <span class="str">"$PROBE_CODE"</span> <span class="cmd">in</span>
+        200|301|302|307|308|400|401|403|404|405)
+            <span class="cmd">echo</span> -e <span class="str">"   $pass_p 网络层通畅 (HTTP $PROBE_CODE), Anthropic 服务器可达"</span>
+            ;;
+        000|<span class="str">""</span>)
+            <span class="cmd">echo</span> -e <span class="str">"   $fail_p 连接失败/超时, 代理未生效或节点不通"</span>
+            ;;
+        5*)
+            <span class="cmd">echo</span> -e <span class="str">"   $warn_p HTTP $PROBE_CODE (服务器侧问题, 网络通道本身正常)"</span>
+            ;;
+        *)
+            <span class="cmd">echo</span> -e <span class="str">"   $warn_p HTTP $PROBE_CODE (非典型状态)"</span>
+            ;;
+    <span class="cmd">esac</span>
+
+    <span class="cmd">echo</span>
+    <span class="cmd">echo</span> <span class="str">"============================="</span>
+}</code></pre>
+
+  <h3>典型使用流程</h3>
+  <pre><code><span class="comment"># 切到美西模式</span>
+<span class="cmd">claude-env</span>
+<span class="comment"># ✅ Claude 环境已激活 (代理=10808, TZ=PST, Locale=en_US)</span>
+
+<span class="comment"># 跑一次自检, 确认 5 项全 PASS</span>
+<span class="cmd">claude-env-check</span>
+
+<span class="comment"># 启动 Claude Code</span>
+<span class="cmd">claude</span>
+
+<span class="comment"># 用完关闭</span>
+<span class="cmd">claude-env-off</span></code></pre>
+
+  <h3>自检 5 项的语义</h3>
+  <table>
+    <tr><th>检查项</th><th>探测方法</th><th>合格信号</th><th>风险解读</th></tr>
+    <tr>
+      <td>1. IP 出口国家</td>
+      <td><code>ipinfo.io/json</code> 返回的 country 字段</td>
+      <td><code>US</code></td>
+      <td>非 US 直接触发 403</td>
+    </tr>
+    <tr>
+      <td>2. 系统时区</td>
+      <td><code>date +%Z</code></td>
+      <td>PST/PDT/EST 等美国时区</td>
+      <td><code>CST+0800</code> 会被风控交叉验证</td>
+    </tr>
+    <tr>
+      <td>3. 系统 Locale</td>
+      <td><code>$LC_ALL</code> / <code>$LANG</code></td>
+      <td><code>en_US.UTF-8</code></td>
+      <td><code>zh_CN</code> 作为辅助判定依据</td>
+    </tr>
+    <tr>
+      <td>4. DNS 泄漏</td>
+      <td><code>nslookup api.anthropic.com</code> 看 Server 字段</td>
+      <td>非中国大陆 DNS</td>
+      <td>114/阿里/腾讯 DNS 会暴露真实位置</td>
+    </tr>
+    <tr>
+      <td>5. 跨境连通性</td>
+      <td><code>curl https://api.anthropic.com/</code> 看 HTTP code</td>
+      <td>200~404 任一</td>
+      <td>000/超时 = 代理失效</td>
+    </tr>
+  </table>
+
+  <div class="callout info">
+    <div class="callout-title">为什么探测目标用 <code>api.anthropic.com</code></div>
+    <p>这是 Claude Code 真正要访问的服务器，能直接验证"网络层是否打通到目标"。<strong>未认证请求会被服务器返回 404</strong>——这个 404 没有 Cloudflare challenge、不带任何账号关联、不消耗任何风控配额，是最干净的网络层信号。</p>
+    <p>对比其他常见探测目标：</p>
+    <ul style="margin:0.5rem 0 0 1rem;">
+      <li><code>ipinfo.io</code>：国内能直连，<strong>测不出代理是否打穿 GFW</strong></li>
+      <li><code>google.com</code>：国内被墙，但许多公司内网/移动数据有特殊路由，基准不稳</li>
+      <li><code>claude.ai</code>：是 OAuth 登录目标，<strong>反复探测可能让出口 IP 被打标</strong>，不适合做基准</li>
+      <li><code>chatgpt.com</code>：Cloudflare 强力防 bot，curl 必返 <code>HTTP/2 403, cf-mitigated: challenge</code>，看似失败实则代理是通的，容易误判</li>
+    </ul>
+  </div>
+
+  <div class="callout warn">
+    <div class="callout-title">易踩的几个坑</div>
+    <ul style="margin:0.5rem 0 0 1rem;">
+      <li>
+        <strong>必须 <code>source</code>，不能直接执行</strong>：<code>./~/.claude-env.sh</code> 跑完会启动子 shell，变量在子 shell 退出后丢失。在 <code>.zshrc</code> 里用 <code>source</code> 加载，函数才会注入到当前 shell。
+      </li>
+      <li>
+        <strong>SOCKS5h vs SOCKS5 的差别在 DNS</strong>：<code>socks5://</code> 会让 curl 在本地解析域名再走代理（DNS 仍可能泄漏），<code>socks5h://</code> 把域名直接交给代理服务器解析。能用 <code>socks5h://</code> 就用，<strong>少数老版 Node.js 库不识别 <code>socks5h://</code></strong>，遇到 <code>Invalid protocol</code> 错误改回 <code>socks5://</code> 即可。
+      </li>
+      <li>
+        <strong>NO_PROXY 务必加白阿里内网</strong>：脚本中已包含 <code>.alibaba-inc.com,.aliyun-inc.com</code>。如果不在阿里，按需替换为你公司的内网域名后缀；遗漏会导致内网 Git/包管理走代理后失败。
+      </li>
+      <li>
+        <strong>第 4 项 DNS 检查的局限</strong>：用了 <code>socks5h://</code> 后，Claude Code 的真实 DNS 走代理隧道，但 <code>nslookup</code> 命令只看系统 resolver。所以这一项 FAIL 不一定代表真泄漏，仅作系统层参考。
+      </li>
+      <li>
+        <strong>新开终端会回到日常环境</strong>：脚本只注册函数不自动激活。新 tab 里再次需要时手动 <code>claude-env</code> 一次。
+      </li>
+    </ul>
+  </div>
+
+  <h3>Claude Code 需要访问的域名</h3>
+  <p>确保以下域名都走代理（不在 <code>NO_PROXY</code> 中排除）：</p>
+  <table>
+    <tr><th>域名</th><th>用途</th></tr>
+    <tr><td><code>api.anthropic.com</code></td><td>主 API 端点（消息、会话、OAuth）</td></tr>
+    <tr><td><code>downloads.claude.ai</code></td><td>自动更新、插件下载</td></tr>
+    <tr><td><code>claude.ai</code></td><td>OAuth 登录授权页面</td></tr>
+    <tr><td><code>status.anthropic.com</code></td><td>服务状态检查</td></tr>
+    <tr><td><code>mcp-proxy.anthropic.com</code></td><td>远程 MCP 服务器连接</td></tr>
+    <tr><td><code>statsigapi.net</code></td><td>功能开关（Feature Flags）</td></tr>
+  </table>
+
+  <h3>关于指纹伪装</h3>
+  <p>Claude Code 的遥测数据会发送时区、语言、操作系统等信息。<code>claude-env</code> 已经把以下三项处理掉：</p>
+  <table>
+    <tr><th>配置项</th><th>脚本里的设置</th><th>说明</th></tr>
+    <tr><td>时区</td><td><code>TZ="America/Los_Angeles"</code></td><td>伪装为美西时区，和 Lightsail Oregon 一致</td></tr>
+    <tr><td>语言</td><td><code>LANG="en_US.UTF-8"</code></td><td>系统语言设为美式英文</td></tr>
+    <tr><td>Locale 强覆盖</td><td><code>LC_ALL="en_US.UTF-8"</code></td><td>盖住任何 zh_* 残留</td></tr>
+  </table>
+  <p>额外可选的加固项（不强制）：</p>
+  <pre><code><span class="comment"># 关闭遥测（可选）</span>
+<span class="cmd">claude</span> config set --global telemetryEnabled false
+
+<span class="comment"># 精简模式: 禁用后台同步等附加请求（可选）</span>
+<span class="cmd">claude</span> --bare</code></pre>
+
+  <div class="callout info">
+    <div class="callout-title">这些 export 只影响当前会话</div>
+    通过 <code>claude-env</code> 设置的环境变量仅作用于当前终端，不会改变系统全局设置，关闭终端或执行 <code>claude-env-off</code> 后恢复，<strong>不影响其他 GUI 应用</strong>。
+  </div>
+
+  <h3>OAuth 登录</h3>
+  <pre><code><span class="comment"># 确保代理已激活</span>
+<span class="cmd">claude-env</span>
+
+<span class="comment"># 首次运行 Claude Code，触发 OAuth 登录</span>
+<span class="cmd">claude</span>
+
+<span class="comment"># 浏览器会自动打开 claude.ai 授权页面</span>
+<span class="comment"># 用你的 Claude Pro 订阅账号登录并授权</span>
+<span class="comment"># 授权完成后回到终端，即可使用</span></code></pre>
+
+  <div class="callout warn">
+    <div class="callout-title">OAuth 登录时浏览器也需要走代理</div>
+    授权页面在 <code>claude.ai</code>，需要确保<strong>浏览器也通过代理访问</strong>。V2rayN 开启系统代理后浏览器自动走代理。
+  </div>
+</section>
+
+<footer>
+  <p>整理于 2026 年 6 月 · 仅供个人学习与技术参考</p>
+</footer>
+
+</div>
+
+</body>
+</html>
