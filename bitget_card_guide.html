@@ -188,6 +188,7 @@
         <li><a href="#apple">美区 Apple 实测</a></li>
         <li><a href="#gift-cards">礼品卡与 Google Pay</a></li>
         <li><a href="#wise">PayPal 与 Wise</a></li>
+        <li><a href="#neverless">Neverless 入金</a></li>
         <li><a href="#ledger">实测记录</a></li>
         <li><a href="#routine">稳妥使用习惯</a></li>
         <li><a href="#sources">官方资料</a></li>
@@ -422,8 +423,51 @@
       <p><code>Can my Wise personal account receive a USD/EUR bank transfer from [exact Bitget legal entity], if both accounts are in my legal name? Is that entity an accepted cryptocurrency platform for incoming transfers?</code></p>
     </section>
 
+    <section id="neverless">
+      <h2><span class="num">8</span>Bitget Card 向 Neverless 入金</h2>
+      <p><strong>Bitget 卡不能像银行账户一样向 Neverless 发起银行转账。</strong>它只能在 Neverless 提供 Apple Pay / Google Pay 入金入口时，作为钱包中的底层支付卡尝试充值；另一条完全不同的路径，是从 Bitget 交易账户向 Neverless 进行 USDT / USDC 链上转账。</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>路径</th><th>可行性</th><th>成本与风险</th></tr></thead>
+          <tbody>
+            <tr><td>Bitget Card → Apple Pay / Google Pay → Neverless</td><td><span class="risk mid">可以小额尝试</span></td><td>Neverless 支持 EUR / USD 钱包入金，但金融或加密账户充值可能被 Bitget 发卡方风控拒绝</td></tr>
+            <tr><td>Bitget Card → Neverless 银行账户</td><td><span class="risk high">不能直接完成</span></td><td>支付卡没有 ACH、SEPA 或 SWIFT 汇款能力</td></tr>
+            <tr><td>Bitget USDT / USDC → Neverless 链上地址</td><td><span class="risk low">优先推荐</span></td><td>Neverless 端链上充值费为零；需承担 Bitget 提币费或网络费</td></tr>
+            <tr><td>Bitget 法币账户 → Neverless 银行转账</td><td><span class="risk mid">取决于账户通道</span></td><td>不是卡片功能；USD SWIFT 在 Neverless 端公开费用为 30 USD，小额通常不划算</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>使用 Apple Pay / Google Pay 测试</h3>
+      <ol class="checklist">
+        <li><strong>确认 Neverless 当前向你的账户显示钱包入金。</strong>公开价格页支持 Apple Pay / Google Pay，但具体入口、币种和限额仍可能因国家、账户与合规状态而不同。</li>
+        <li><strong>确认 Bitget 卡确实已加入对应钱包。</strong>Google Pay 或 Apple Pay 只负责令牌化，不会改变卡片 BIN、发行地区或交易类别。</li>
+        <li><strong>留足授权余额。</strong>Bitget 可能临时冻结交易金额的 120%，因此卡片可用余额应至少覆盖充值金额的 120%，并额外考虑交易费和换汇波动。</li>
+        <li><strong>只做一笔 10–20 USD 的本人实名测试。</strong>Neverless 与 Bitget 的姓名和账户资料应一致；失败一次后先查两端记录，不要连续重复提交。</li>
+      </ol>
+
+      <div class="callout info">
+        <strong>Neverless 公布的钱包入金费用</strong>
+        Apple Pay / Google Pay 的前 3 笔、累计不超过 1,000 USD 目前显示为零平台费用，之后为 2.49%；发卡方仍可能另外收取换汇费用。具体费用以 Neverless App 最终确认页为准。
+      </div>
+
+      <h3>更推荐：USDT / USDC 链上转账</h3>
+      <ol class="checklist">
+        <li><strong>在 Neverless 打开 Deposit / Blockchain transfer。</strong>选择 USDT 或 USDC，并记录它明确支持的网络、充值地址、最低金额及 Memo / Tag 要求。</li>
+        <li><strong>在 Bitget 发起链上提现。</strong>币种和网络必须与 Neverless 完全一致；“都是 USDT”并不代表不同网络之间可以互转。</li>
+        <li><strong>先转最小可接受测试金额。</strong>核对地址首尾字符和网络后提交，并保存 TxID。</li>
+        <li><strong>测试到账后再转剩余金额。</strong>链上交易确认后通常不可撤销，地址或网络填错可能无法追回。</li>
+      </ol>
+
+      <div class="callout warn">
+        <strong>投资账户不等于银行存款</strong>
+        Neverless 的客户协议说明其并非吸收存款的银行机构，相关账户和投资存在市场、托管、第三方平台及合规审核风险。不要因为入金方便就把大额长期闲置资金集中存放在其中。
+      </div>
+    </section>
+
     <section id="ledger">
-      <h2><span class="num">8</span>本次真实测试记录</h2>
+      <h2><span class="num">9</span>本次真实测试记录</h2>
       <div class="table-wrap">
         <table>
           <thead><tr><th>测试</th><th>结果</th><th>可确认的结论</th></tr></thead>
@@ -441,7 +485,7 @@
     </section>
 
     <section id="routine">
-      <h2><span class="num">9</span>推荐的日常使用习惯</h2>
+      <h2><span class="num">10</span>推荐的日常使用习惯</h2>
       <ul>
         <li>卡内只保留近期消费需要的小额稳定币，不把 Bitget Card 当储蓄账户。</li>
         <li>给卡片设置合理限额和即时通知；不用时冻结，订阅扣款日前再确认余额。</li>
@@ -459,10 +503,12 @@
     </section>
 
     <section id="sources">
-      <h2><span class="num">10</span>官方资料与核查入口</h2>
+      <h2><span class="num">11</span>官方资料与核查入口</h2>
       <ul class="source-list">
         <li><a href="https://support.apple.com/en-us/118244" target="_blank" rel="noopener">Apple：How apps, content, and subscriptions are billed</a>：账户余额、主要付款方式、备用付款方式和重试顺序。</li>
         <li><a href="https://support.apple.com/zh-cn/118429?device-type=iphone" target="_blank" rel="noopener">Apple：为 Apple 账户添加付款方式</a>：调整“付款与配送”列表的扣费顺序。</li>
+        <li><a href="https://neverless.com/en_EAA/pricing" target="_blank" rel="noopener">Neverless Pricing</a>：Apple Pay / Google Pay、银行转账及链上充值支持与费用。</li>
+        <li><a href="https://neverless.com/en_GB/legal/terms" target="_blank" rel="noopener">Neverless Client Agreement</a>：链上转账、资金机制、限制及账户风险说明。</li>
         <li><a href="https://www.bitget.com/support/articles/12560603840909" target="_blank" rel="noopener">Bitget Card Eligibility and Application Process</a>：OTC 账户扣款、USDT、Google Pay 与 Wise 支持情况。</li>
         <li><a href="https://www.bitget.com/support/articles/12560603820724" target="_blank" rel="noopener">Managing Your Bitget Card</a>：120% 授权冻结、拒付和退款说明。</li>
         <li><a href="https://www.bitget.com/support/articles/12560603803519" target="_blank" rel="noopener">Bitget Card Fee Schedule and Spending Limit</a>：标准卡交易费、换汇费与限额。</li>
