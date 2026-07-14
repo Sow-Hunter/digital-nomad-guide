@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="Bitget Card 充值、支付、拒付排查，以及 Apple、PayPal、礼品卡、Codashop 与 Wise 的实测使用手册。">
+  <title>Bitget Card 使用手册：充值、支付与风控排查</title>
+  <style>
+    :root {
+      --bg: #07120f;
+      --surface: #0d1d19;
+      --surface-2: #132923;
+      --border: #24483e;
+      --text: #e8f5f0;
+      --muted: #91aaa1;
+      --brand: #00f0b5;
+      --brand-2: #5fffd6;
+      --blue: #5bc0ff;
+      --yellow: #ffd166;
+      --orange: #ff9f43;
+      --red: #ff6b7a;
+      --green: #5ce1a1;
+      --shadow: 0 18px 55px rgba(0, 0, 0, 0.24);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 15% -5%, rgba(0, 240, 181, 0.13), transparent 26rem),
+        radial-gradient(circle at 90% 10%, rgba(91, 192, 255, 0.08), transparent 30rem),
+        var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      line-height: 1.72;
+    }
+
+    a { color: var(--brand-2); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    a:hover { color: #fff; }
+    code {
+      padding: 0.12rem 0.38rem;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      background: #081612;
+      color: var(--brand-2);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.88em;
+    }
+
+    .container { width: min(980px, calc(100% - 2rem)); margin: 0 auto; }
+    .hero {
+      position: relative;
+      overflow: hidden;
+      margin: 2rem auto 1.25rem;
+      padding: 3.5rem 3rem;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      background: linear-gradient(145deg, rgba(19, 41, 35, 0.96), rgba(7, 18, 15, 0.98));
+      box-shadow: var(--shadow);
+    }
+    .hero::after {
+      content: "B";
+      position: absolute;
+      right: -1rem;
+      bottom: -7.5rem;
+      color: rgba(0, 240, 181, 0.045);
+      font-size: 22rem;
+      font-weight: 900;
+      line-height: 1;
+      pointer-events: none;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      margin-bottom: 1rem;
+      padding: 0.3rem 0.75rem;
+      border: 1px solid rgba(0, 240, 181, 0.4);
+      border-radius: 999px;
+      background: rgba(0, 240, 181, 0.08);
+      color: var(--brand-2);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    h1 { max-width: 760px; margin: 0; font-size: clamp(2rem, 5vw, 3.45rem); line-height: 1.12; letter-spacing: -0.04em; }
+    .lead { max-width: 760px; margin: 1rem 0 0; color: var(--muted); font-size: 1.06rem; }
+    .meta { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1.35rem; }
+    .pill { padding: 0.28rem 0.7rem; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); background: rgba(7,18,15,.65); font-size: 0.78rem; }
+
+    nav, section {
+      margin-bottom: 1.25rem;
+      padding: 1.65rem;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: rgba(13, 29, 25, 0.94);
+      box-shadow: 0 10px 35px rgba(0,0,0,.12);
+    }
+    nav h2 { margin-top: 0; font-size: 0.86rem; color: var(--muted); letter-spacing: .12em; text-transform: uppercase; }
+    .toc { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .45rem 1.2rem; padding: 0; margin: 0; list-style: none; }
+    .toc a { display: block; padding: .38rem .55rem; border-radius: 7px; color: var(--text); text-decoration: none; }
+    .toc a:hover { background: var(--surface-2); color: var(--brand-2); }
+
+    section > h2 { display: flex; align-items: center; gap: .7rem; margin: 0 0 1.1rem; padding-bottom: .8rem; border-bottom: 1px solid var(--border); font-size: 1.42rem; }
+    .num { display: inline-grid; flex: 0 0 auto; width: 2rem; height: 2rem; place-items: center; border-radius: 8px; background: var(--brand); color: #03231a; font-size: .82rem; font-weight: 900; }
+    h3 { margin: 1.55rem 0 .65rem; color: var(--brand-2); font-size: 1.05rem; }
+    p { margin: .65rem 0; }
+    ul, ol { padding-left: 1.35rem; }
+    li + li { margin-top: .35rem; }
+
+    .callout { margin: 1rem 0; padding: 1rem 1.1rem; border: 1px solid; border-left-width: 4px; border-radius: 10px; background: rgba(0,0,0,.14); }
+    .callout strong:first-child { display: block; margin-bottom: .2rem; }
+    .callout.info { border-color: rgba(91,192,255,.55); background: rgba(91,192,255,.06); }
+    .callout.ok { border-color: rgba(92,225,161,.55); background: rgba(92,225,161,.06); }
+    .callout.warn { border-color: rgba(255,209,102,.6); background: rgba(255,209,102,.06); }
+    .callout.danger { border-color: rgba(255,107,122,.62); background: rgba(255,107,122,.065); }
+
+    .cards { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: .85rem; margin: 1rem 0; }
+    .card { padding: 1rem; border: 1px solid var(--border); border-radius: 12px; background: rgba(7,18,15,.72); }
+    .card h3 { margin: 0 0 .4rem; }
+    .card p { color: var(--muted); font-size: .9rem; }
+
+    .table-wrap { overflow-x: auto; margin: 1rem 0; border: 1px solid var(--border); border-radius: 10px; }
+    table { width: 100%; min-width: 670px; border-collapse: collapse; font-size: .9rem; }
+    th, td { padding: .72rem .8rem; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+    th { background: var(--surface-2); color: var(--muted); font-size: .76rem; letter-spacing: .04em; text-transform: uppercase; }
+    tr:last-child td { border-bottom: 0; }
+    tbody tr:hover { background: rgba(0,240,181,.025); }
+    .risk, .state { display: inline-block; white-space: nowrap; padding: .12rem .48rem; border-radius: 999px; font-size: .72rem; font-weight: 700; }
+    .low, .success { background: rgba(92,225,161,.13); color: var(--green); }
+    .mid, .pending { background: rgba(255,209,102,.13); color: var(--yellow); }
+    .high, .failed { background: rgba(255,107,122,.13); color: var(--red); }
+    .unknown { background: rgba(91,192,255,.13); color: var(--blue); }
+
+    .flow { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: .55rem; align-items: center; margin: 1rem 0; }
+    .flow > div { min-height: 7rem; display: grid; place-items: center; padding: .8rem; border: 1px solid var(--border); border-radius: 12px; background: #081612; text-align: center; }
+    .arrow { color: var(--brand); font-size: 1.4rem; }
+    .checklist { list-style: none; padding: 0; counter-reset: check; }
+    .checklist li { position: relative; min-height: 2rem; padding-left: 2.3rem; }
+    .checklist li::before { counter-increment: check; content: counter(check); position: absolute; left: 0; top: .03rem; display: grid; width: 1.55rem; height: 1.55rem; place-items: center; border-radius: 50%; background: var(--surface-2); color: var(--brand-2); font-size: .72rem; font-weight: 800; }
+    details { margin: .65rem 0; padding: .8rem .9rem; border: 1px solid var(--border); border-radius: 9px; background: rgba(7,18,15,.62); }
+    summary { cursor: pointer; color: var(--brand-2); font-weight: 700; }
+    .source-list { font-size: .88rem; }
+    .source-list li { margin-bottom: .55rem; }
+    footer { padding: 2rem 0 3rem; color: var(--muted); text-align: center; font-size: .82rem; }
+
+    @media (max-width: 760px) {
+      .container { width: min(100% - 1rem, 980px); }
+      .hero { margin-top: .5rem; padding: 2.2rem 1.35rem; border-radius: 16px; }
+      nav, section { padding: 1.15rem; border-radius: 12px; }
+      .toc, .cards { grid-template-columns: 1fr; }
+      .flow { grid-template-columns: 1fr; }
+      .arrow { transform: rotate(90deg); justify-self: center; }
+    }
+    @media print {
+      :root { --bg:#fff; --surface:#fff; --surface-2:#f3f7f5; --border:#cbd8d3; --text:#17211e; --muted:#4d625a; --brand:#008f70; --brand-2:#007a60; }
+      body { background:#fff; }
+      .hero, nav, section { box-shadow:none; break-inside:avoid; }
+      a { color:#006b55; }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <header class="hero">
+      <div class="eyebrow">Bitget Card Field Guide</div>
+      <h1>Bitget Card 使用手册</h1>
+      <p class="lead">从 USDT / USDC 充值、OTC 账户扣款，到 Apple、PayPal、礼品卡、Codashop 与 Wise 的拒付分析。重点不是“多试几个网站”，而是先判断这张卡适合哪一类交易。</p>
+      <div class="meta">
+        <span class="pill">更新：2026-07-14</span>
+        <span class="pill">标准卡 / 亚太卡</span>
+        <span class="pill">真实测试 + 官方规则</span>
+        <span class="pill">非银行账户</span>
+      </div>
+    </header>
+
+    <nav aria-label="目录">
+      <h2>目录</h2>
+      <ol class="toc">
+        <li><a href="#conclusion">先看结论</a></li>
+        <li><a href="#mechanism">卡片机制</a></li>
+        <li><a href="#funding">充值与入卡</a></li>
+        <li><a href="#good-uses">适合支付什么</a></li>
+        <li><a href="#declines">拒付排查</a></li>
+        <li><a href="#apple">美区 Apple 实测</a></li>
+        <li><a href="#gift-cards">礼品卡与 Google Pay</a></li>
+        <li><a href="#wise">PayPal 与 Wise</a></li>
+        <li><a href="#ledger">实测记录</a></li>
+        <li><a href="#routine">稳妥使用习惯</a></li>
+        <li><a href="#sources">官方资料</a></li>
+      </ol>
+    </nav>
+
+    <section id="conclusion">
+      <h2><span class="num">0</span>先看结论</h2>
+      <div class="cards">
+        <article class="card">
+          <h3>它更像消费卡</h3>
+          <p>适合普通 Visa 商户的商品、服务和订阅，不是用来转账、套现或给金融账户充值的美元银行账户。</p>
+        </article>
+        <article class="card">
+          <h3>“能绑卡”不等于“能扣款”</h3>
+          <p>Apple、PayPal 等平台可能先接受卡片资料，真正消费时才综合检查 BIN、地区、3DS、商户类别和账户风险。</p>
+        </article>
+        <article class="card">
+          <h3>数字价值类最容易失败</h3>
+          <p>礼品卡、游戏点数、钱包充值、汇款和金融账户入金更接近储值或准现金，商户和发卡侧都会更谨慎。</p>
+        </article>
+      </div>
+
+      <div class="callout danger">
+        <strong>不要连续重复尝试</strong>
+        同一商户短时间多次失败，通常只会叠加商户侧与发卡侧的风险标记。Codashop 官方也明确提示，多次尝试可能触发自动风控。一次失败后先查错误码、余额和卡片发行地区，原因未解决前不要反复点支付。
+      </div>
+
+      <p><strong>针对目前这张卡的建议：</strong>保留它做普通线上消费和已经验证成功的订阅；美区 App Store 继续使用 Apple Account 余额。不要把 Wise、PayPal 入金或购买礼品卡当作这张卡的核心用途。</p>
+    </section>
+
+    <section id="mechanism">
+      <h2><span class="num">1</span>先理解卡片机制</h2>
+      <p>Bitget Card 页面显示的 USD 通常是卡组织的计价或结算单位，不等于一个可通过 ACH / SWIFT 汇出的美元银行存款。</p>
+      <div class="flow" aria-label="Bitget Card 扣款流程">
+        <div><strong>商户请款</strong><br><small>USD 或当地货币</small></div>
+        <span class="arrow">→</span>
+        <div><strong>Visa 换算</strong><br><small>转为卡片结算币</small></div>
+        <span class="arrow">→</span>
+        <div><strong>Bitget 扣款</strong><br><small>OTC 账户 USDT / USDC</small></div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>版本</th><th>主要扣款资产</th><th>你需要确认的地方</th></tr></thead>
+          <tbody>
+            <tr><td>标准 Bitget Card</td><td>官方资料目前写明从 OTC 账户扣 USDT</td><td>卡片页、OTC 账户和交易详情</td></tr>
+            <tr><td>Bitget Card（Asia Pacific）</td><td>亚太版官方资料写明使用 USDC</td><td>不要根据别人的教程假设自己的版本也扣 USDT</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout warn">
+        <strong>授权时需要额外余额</strong>
+        Bitget 官方说明，交易授权时可能临时冻结订单金额的 120%。标准卡资料还列出 0.9% 交易费；若涉及非结算币种，还可能有额外换汇成本。账户只有约 10 美元等值资产时，不要尝试支付接近 10 美元的订单：名义上余额足够，授权阶段仍可能失败。
+      </div>
+    </section>
+
+    <section id="funding">
+      <h2><span class="num">2</span>从交易所充值到卡片</h2>
+      <ol class="checklist">
+        <li><strong>先确认卡片版本。</strong>在 Bitget 卡片页确认实际支持并扣除的是 USDT 还是 USDC。</li>
+        <li><strong>在 Bitget 获取充值地址。</strong>币种和网络必须与转出平台完全一致，例如同为 USDT-TRC20 或同为 USDT-ERC20；不要只看币种名称。</li>
+        <li><strong>从欧易等平台小额测试。</strong>核对地址、网络、最低到账金额和手续费后，先转一笔可承受的小额。</li>
+        <li><strong>等待链上确认和 Bitget 入账。</strong>未到账前不要重复转账；保存提现记录和 TxID。</li>
+        <li><strong>转入卡片对应的 OTC 账户。</strong>资金停留在现货或资金账户时，卡片未必能够直接使用；以卡片页显示的可用余额为准。</li>
+        <li><strong>留出授权缓冲。</strong>建议至少预留订单金额的 25%，另考虑交易费和汇率变化。</li>
+      </ol>
+
+      <div class="callout info">
+        <strong>网络选错不是“慢一点”，而是可能丢币</strong>
+        充值前同时核对币种、网络、地址和 Memo / Tag 要求。不要根据截图手填地址，也不要把不同链上名称相同的稳定币视为同一资产。
+      </div>
+    </section>
+
+    <section id="good-uses">
+      <h2><span class="num">3</span>这张卡更适合支付什么</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>用途</th><th>建议</th><th>原因</th></tr></thead>
+          <tbody>
+            <tr><td>普通电商实物</td><td><span class="risk low">优先</span></td><td>标准 Visa 商品消费，通常比储值或金融类交易自然</td></tr>
+            <tr><td>SaaS、云服务、流媒体</td><td><span class="risk low">可尝试</span></td><td>真实持续服务；前提是商户接受该卡发行地区和 3DS</td></tr>
+            <tr><td>线下 Google Pay / Visa 消费</td><td><span class="risk low">可尝试</span></td><td>标准卡官方列出 Google Pay 等受支持钱包，但仍取决于卡版本和地区</td></tr>
+            <tr><td>iCloud+ 等已成功的订阅</td><td><span class="risk low">保留</span></td><td>个人实测已经成功，不必为了“统一支付方式”主动更换</td></tr>
+            <tr><td>游戏点数、礼品卡、充值码</td><td><span class="risk mid">谨慎</span></td><td>高欺诈和转售风险，常被归为数字价值或储值</td></tr>
+            <tr><td>Wise / Revolut 等账户入金</td><td><span class="risk high">不建议</span></td><td>金融、汇款或账户充值类交易；Bitget 还明确写明不支持 Wise</td></tr>
+            <tr><td>P2P 收款、套现、代付</td><td><span class="risk high">避免</span></td><td>合规、资金来源和第三方付款风险明显高于普通消费</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Google Pay 只是把底层卡片令牌化，并不会把非美国发行的卡变成美国银行卡，也不会改变商户类别。它能改善卡号暴露和部分验证体验，但不是绕过地区或风控规则的工具。</p>
+    </section>
+
+    <section id="declines">
+      <h2><span class="num">4</span>支付失败时按这个顺序排查</h2>
+      <ol class="checklist">
+        <li><strong>看可用余额，不只看总资产。</strong>确认资金在卡片实际扣款的 OTC 账户，并覆盖 120% 授权冻结、手续费和汇率缓冲。</li>
+        <li><strong>看错误发生在哪一侧。</strong>Bitget 交易记录完全没有授权请求，常见于商户在请求到达发卡方前就拦截；出现 declined / reversed 则更可能已经到达卡网络或发卡侧。</li>
+        <li><strong>检查卡状态和限额。</strong>确认没有冻结、过期、日限额或风控限制。</li>
+        <li><strong>检查 3DS。</strong>是否弹出 OTP / App 确认；浏览器拦截弹窗、号码不可用或验证超时都可能失败。</li>
+        <li><strong>检查地区一致性。</strong>商户站点国家、卡片 BIN 发行地、真实账单地址和服务可用地区是否相容。只填写一个美国 ZIP Code 并不能改变卡片发行国。</li>
+        <li><strong>识别商户类型。</strong>礼品卡、数字点数、账户充值、汇款和加密货币相关交易应预期更高失败率。</li>
+        <li><strong>停止重复尝试。</strong>记录时间、金额、商户、错误码和卡号后四位，隔日或客服确认后再决定是否重试。</li>
+      </ol>
+
+      <details>
+        <summary>Codashop 为什么也会失败？</summary>
+        <p>Codashop 美国站明确要求使用美国发行的卡，并会检查 CVC、关联 ZIP Code 和 OTP；错误 704 表示发卡方或卡服务商拒绝，312 / 750 / 751 则与安全检查相关。如果 Bitget 卡的 BIN 不是美国，即使能打开美国站、使用 Google Pay 或填写美国 ZIP Code，也可能直接失败。</p>
+        <p>此外，如果你的卡片可用余额只有约 10 美元，而订单接近 10 美元，Bitget 的 120% 授权冻结也足以造成余额不足。应先查 Codashop 错误码和 Bitget 交易记录，不要立刻换浏览器连续重试。</p>
+      </details>
+
+      <details>
+        <summary>应该联系谁？</summary>
+        <p>商户未看到付款请求：先联系商户；Bitget 交易记录出现拒付：向 Bitget 提供商户、金额、时间、币种、错误信息和卡号后四位。官方资料列出的卡片联系邮箱为 <code>card@bitget.com</code>。</p>
+      </details>
+    </section>
+
+    <section id="apple">
+      <h2><span class="num">5</span>美区 Apple ID：当前现象怎么解释</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>现象</th><th>更合理的解释</th><th>不要过度推断</th></tr></thead>
+          <tbody>
+            <tr><td>美区 PayPal 可以绑定，但 App Store 扣款失败</td><td>绑定阶段与实际扣款阶段不是同一套检查；实际支付还会检查 PayPal 资金来源、地区和账户风险</td><td>“绑定成功”不能证明付款方式已经被完整认可</td></tr>
+            <tr><td>Bitget 卡可以订阅 iCloud+，但买 App 失败</td><td>订阅、数字内容和不同商户描述可能走不同授权与风控路径</td><td>不能据此认定整张卡已被 Apple 全场景接受</td></tr>
+            <tr><td>礼品卡充值 20 美元后，一开始仍失败，次日能买两个游戏</td><td>账户余额同步、订单风险冷却或账户信任状态更新都可能造成延迟</td><td>无法仅凭这一现象确定 Apple 内部的具体风控规则</td></tr>
+            <tr><td>上一个账号约 72 小时后被判违规</td><td>可能涉及账户、地区、付款来源或行为模式的综合判断</td><td>没有 Apple 的具体通知，不能把封禁单独归因于 PayPal 或某一次付款</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout ok">
+        <strong>当前最稳的做法</strong>
+        既然 Apple Account 余额已经能购买游戏，就继续把它作为 App Store 数字内容的主要支付方式；Bitget 卡只保留给已经成功的 iCloud+ 或其他普通商户。不要在同一 Apple ID 上轮流添加多张新卡、PayPal 并连续重试。
+      </div>
+
+      <ul>
+        <li>Apple ID 国家/地区、真实居住与账单资料应保持准确，不建议伪造地址或用 VPN 制造地区一致的假象。</li>
+        <li>兑换礼品卡后若余额已到账但仍暂时失败，先等待账户同步；不要把短时失败变成密集支付尝试。</li>
+        <li>Apple Account 余额通常优先用于符合条件的购买，但部分订阅或服务仍可能要求保留有效付款方式。</li>
+        <li>只从 Apple 或可信授权渠道购买礼品卡，拒绝明显低于面值、要求代充或来历不明的卡密。</li>
+      </ul>
+    </section>
+
+    <section id="gift-cards">
+      <h2><span class="num">6</span>礼品卡渠道与 Google Pay</h2>
+      <p>这轮测试得到的实际结论是：<strong>不存在一个同时满足“接受 Bitget 卡、零附加费、稳定出售美区 Apple 礼品卡”的通用渠道。</strong>礼品卡本身利润薄、欺诈率高，手续费或严格风控往往不可避免。</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>渠道</th><th>本次观察</th><th>判断</th></tr></thead>
+          <tbody>
+            <tr><td>Bitrefill</td><td>主要面向加密货币支付，使用卡片有约 1 美元额外成本</td><td><span class="risk mid">可用性优先</span> 不适合小额追求最低费</td></tr>
+            <tr><td>Dundle</td><td>显示约 1.99 美元附加费</td><td><span class="risk mid">费用偏高</span></td></tr>
+            <tr><td>Coinsbee</td><td>支持 Bitget Wallet 的展示更接近加密货币钱包支付；页面体验不佳</td><td><span class="risk unknown">需逐单确认</span></td></tr>
+            <tr><td>DoctorSIM</td><td>显示 Service fee 2.04 USD，并要求 ZIP Code</td><td><span class="risk mid">小额不划算</span></td></tr>
+            <tr><td>Codashop US</td><td>Bitget 卡支付失败</td><td><span class="risk high">不再重试</span> 先确认 BIN、错误码和余额缓冲</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="color:var(--muted);font-size:.84rem;">以上费用和体验为 2026 年 7 月本次实际观察，不代表平台长期固定价格；下单前以结算页为准。</p>
+
+      <div class="callout warn">
+        <strong>ZIP Code 应该填什么？</strong>
+        应填写发卡资料中真实关联的账单邮编，而不是为了通过美国站验证随意找一个 ZIP Code。若 Bitget 卡没有美国账单地址或不是美国发行，填写美国 ZIP 也不会改变 BIN，反而可能造成资料不一致。
+      </div>
+
+      <p>使用 Google Pay 结账只是在商户支持时替代直接输入卡号。底层仍是同一张 Bitget 卡，BIN、可用余额、商户类别和发行方限制不会消失。因此，直接刷卡失败的礼品卡商户，不应期待换成 Google Pay 就一定成功。</p>
+    </section>
+
+    <section id="wise">
+      <h2><span class="num">7</span>PayPal 与 Wise：三条路径要分开</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>路径</th><th>可行性</th><th>风险判断</th></tr></thead>
+          <tbody>
+            <tr><td>Bitget Card → PayPal / Wise 卡充值</td><td>可能在绑卡阶段通过，但实际扣款失败；Bitget 明确写明不支持 Wise</td><td><span class="risk high">不建议</span></td></tr>
+            <tr><td>Bitget 法币账户 → Wise 同名银行信息</td><td>部分 Bitget 用户可使用 USD SWIFT 提现，但 Wise 是否接受取决于实际汇款实体及其风险政策</td><td><span class="risk mid">先书面确认</span></td></tr>
+            <tr><td>Bitget P2P 买家 → Wise</td><td>Wise 明确不接受个人因 P2P 加密货币交易支付的款项</td><td><span class="risk high">避免</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>为什么“同名”仍然不够</h3>
+      <p>同名只能帮助满足账户所有人匹配要求，不能改变资金来自加密货币平台这一事实。Wise 的公开政策要求相关平台在英国或欧盟受监管，并且仍由 Wise 自行判断是否符合风险偏好；它还明确列出部分大型平台的款项也无法接受。</p>
+
+      <div class="callout danger">
+        <strong>不要通过备注、拆单或第三方中转隐藏资金来源</strong>
+        如果确实需要从 Bitget 法币提现到 Wise，应先向 Wise 提供 Bitget 提现确认页上显示的完整法律实体名称，取得书面确认，并保存交易、兑换、提现和资金来源记录。未确认前不要测试大额。
+      </div>
+
+      <p>可直接复制给 Wise 客服的问题：</p>
+      <p><code>Can my Wise personal account receive a USD/EUR bank transfer from [exact Bitget legal entity], if both accounts are in my legal name? Is that entity an accepted cryptocurrency platform for incoming transfers?</code></p>
+    </section>
+
+    <section id="ledger">
+      <h2><span class="num">8</span>本次真实测试记录</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>测试</th><th>结果</th><th>可确认的结论</th></tr></thead>
+          <tbody>
+            <tr><td>美区 Apple ID 绑定美区 PayPal</td><td><span class="state success">绑定成功</span> <span class="state failed">支付失败</span></td><td>付款方式保存成功与交易授权成功是两回事</td></tr>
+            <tr><td>Bitget 卡绑定 Apple</td><td><span class="state success">iCloud+ 成功</span> <span class="state failed">App Store 失败</span></td><td>不同 Apple 产品可能有不同的交易路径与风控结果</td></tr>
+            <tr><td>美区 Apple 礼品卡 20 USD</td><td><span class="state pending">首日失败</span> <span class="state success">次日购入两款游戏</span></td><td>账户余额方案在该账号上已实测可行；存在同步或冷却时间</td></tr>
+            <tr><td>PayPal / Apple 官方购买礼品卡</td><td><span class="state failed">失败</span></td><td>Bitget 卡不适合作为该场景的稳定来源</td></tr>
+            <tr><td>Codashop US</td><td><span class="state failed">失败</span></td><td>优先排查美国发行卡要求、120% 余额缓冲和安全错误码</td></tr>
+            <tr><td>Wise</td><td><span class="state unknown">未作为推荐路线继续</span></td><td>官方规则与账户风险不支持把它当常规出金通道</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>这张表只记录“发生了什么”，不声称知道平台内部风控的唯一原因。今后测试新商户时，也应按同样方式记录：日期、站点国家、金额、币种、余额、3DS、错误码、Bitget 是否出现授权记录，以及最终是否退款。</p>
+    </section>
+
+    <section id="routine">
+      <h2><span class="num">9</span>推荐的日常使用习惯</h2>
+      <ul>
+        <li>卡内只保留近期消费需要的小额稳定币，不把 Bitget Card 当储蓄账户。</li>
+        <li>给卡片设置合理限额和即时通知；不用时冻结，订阅扣款日前再确认余额。</li>
+        <li>首次测试新商户选择低金额真实消费，并确保余额覆盖至少 120% 授权。</li>
+        <li>始终使用真实姓名、居住地和账单资料；不伪造 ZIP Code，不把 VPN 当作支付地区证明。</li>
+        <li>拒付一次就先排查；不要连续换浏览器、换钱包、换地址重复轰炸同一交易。</li>
+        <li>保存链上充值 TxID、兑换记录、订单和退款凭证，便于解释资金来源或处理争议。</li>
+        <li>对礼品卡和金融入金接受一个现实：手续费往往是风险处理成本。为了省 1–2 美元承担关户或资金冻结风险并不划算。</li>
+      </ul>
+
+      <div class="callout ok">
+        <strong>当前最佳组合</strong>
+        普通国际消费和已经验证成功的订阅使用 Bitget Card；美区 App Store 使用已验证可消费的 Apple Account 余额；Wise 使用本人名下传统银行账户转入。让每种工具做它最擅长的事，比强行打通所有资金路径更稳定。
+      </div>
+    </section>
+
+    <section id="sources">
+      <h2><span class="num">10</span>官方资料与核查入口</h2>
+      <ul class="source-list">
+        <li><a href="https://www.bitget.com/support/articles/12560603840909" target="_blank" rel="noopener">Bitget Card Eligibility and Application Process</a>：OTC 账户扣款、USDT、Google Pay 与 Wise 支持情况。</li>
+        <li><a href="https://www.bitget.com/support/articles/12560603820724" target="_blank" rel="noopener">Managing Your Bitget Card</a>：120% 授权冻结、拒付和退款说明。</li>
+        <li><a href="https://www.bitget.com/support/articles/12560603803519" target="_blank" rel="noopener">Bitget Card Fee Schedule and Spending Limit</a>：标准卡交易费、换汇费与限额。</li>
+        <li><a href="https://www.bitget.com/support/articles/12560603881035" target="_blank" rel="noopener">Bitget Card Transaction Safety (Asia Pacific)</a>：亚太卡 USDC 结算与常见拒付原因。</li>
+        <li><a href="https://www.bitget.com/zh-CN/support/articles/12560603843507" target="_blank" rel="noopener">Bitget USD SWIFT 充值与提现</a>：同名银行账户和可用范围。</li>
+        <li><a href="https://wise.com/help/articles/2932118/incompatible-accounts-and-payments/vZgTcR2W3y.woff2" target="_blank" rel="noopener">Wise：Incompatible accounts and payments</a>：加密货币平台入账条件。</li>
+        <li><a href="https://wise.com/uk/help/articles/2v3OMcg97Z7gObSifJbjsu/understanding-wises-position-on-cryptocurrency" target="_blank" rel="noopener">Wise 对加密货币的立场</a>：P2P 收款、拒付与关户风险。</li>
+        <li><a href="https://us.support.codashop.com/hc/en-us/articles/4405767317775-Error-704-While-Making-A-Purchase" target="_blank" rel="noopener">Codashop US：Error 704</a>：美国发行卡、ZIP Code、OTP 与多次尝试。</li>
+        <li><a href="https://us.support.codashop.com/hc/en-us/articles/10426270596751-Card-Payment-Error-Codes" target="_blank" rel="noopener">Codashop US：Card Payment Error Codes</a>：312、403、410、704、706、711、750、751。</li>
+      </ul>
+      <p style="color:var(--muted);font-size:.84rem;">产品、费率、可用国家和风控政策会变化。执行资金操作前，重新打开对应官方页面核对当日规则。本手册基于公开资料和个人测试整理，不构成金融、法律或税务建议。</p>
+    </section>
+
+    <footer>
+      <p>Digital Nomad Guide · Bitget Card 使用手册 · 2026</p>
+    </footer>
+  </main>
+</body>
+</html>
