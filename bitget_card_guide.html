@@ -272,6 +272,7 @@
           <tbody>
             <tr><td>普通电商实物</td><td><span class="risk low">优先</span></td><td>标准 Visa 商品消费，通常比储值或金融类交易自然</td></tr>
             <tr><td>SaaS、云服务、流媒体</td><td><span class="risk low">可尝试</span></td><td>真实持续服务；前提是商户接受该卡发行地区和 3DS</td></tr>
+            <tr><td>Google Play 内购订阅 Claude Pro</td><td><span class="risk low">已实测成功</span></td><td>Bitget 卡添加为 Google Play 付款方式后，首次开通 Claude Pro 流程顺利</td></tr>
             <tr><td>线下 Google Pay / Visa 消费</td><td><span class="risk low">可尝试</span></td><td>标准卡官方列出 Google Pay 等受支持钱包，但仍取决于卡版本和地区</td></tr>
             <tr><td>iCloud+ 等已成功的订阅</td><td><span class="risk low">保留</span></td><td>个人实测已经成功，不必为了“统一支付方式”主动更换</td></tr>
             <tr><td>游戏点数、礼品卡、充值码</td><td><span class="risk mid">谨慎</span></td><td>高欺诈和转售风险，常被归为数字价值或储值</td></tr>
@@ -281,6 +282,12 @@
         </table>
       </div>
 
+      <div class="callout ok">
+        <strong>Google Play 内购：当前最顺利的实测场景之一</strong>
+        本次将 Bitget 卡直接添加到 Google Play 付款方式后，已成功通过 Claude App 开通 Claude Pro，过程中没有遇到美区 App Store、PayPal、礼品卡和 Codashop 那类明显拒付。建议保留当前账户地区、账单资料和付款方式状态，并在首次自动续费前确认 OTC 可用余额覆盖订阅金额的 120% 以上及可能的税费、汇率与手续费。
+      </div>
+
+      <p><strong>Google Play 与 Google Pay 不是同一条支付路径：</strong>前者是 Android 应用商店的应用内购买与订阅计费系统，后者是保存并令牌化银行卡的支付钱包。Google Play 首次订阅成功，不代表所有 Google Pay 商户或所有应用内商品都会接受同一张卡；自动续费仍需继续观察。</p>
       <p>Google Pay 只是把底层卡片令牌化，并不会把非美国发行的卡变成美国银行卡，也不会改变商户类别。它能改善卡号暴露和部分验证体验，但不是绕过地区或风控规则的工具。</p>
     </section>
 
@@ -474,6 +481,7 @@
           <tbody>
             <tr><td>美区 Apple ID 绑定美区 PayPal</td><td><span class="state success">绑定成功</span> <span class="state failed">支付失败</span></td><td>付款方式保存成功与交易授权成功是两回事</td></tr>
             <tr><td>Bitget 卡绑定 Apple</td><td><span class="state success">iCloud+ 成功</span> <span class="state failed">App Store 失败</span></td><td>不同 Apple 产品可能有不同的交易路径与风控结果</td></tr>
+            <tr><td>Bitget 卡添加到 Google Play 并订阅 Claude Pro</td><td><span class="state success">首次订阅成功</span></td><td>Google Play 应用内订阅在当前账户与卡片组合下流程顺利；自动续费仍待验证</td></tr>
             <tr><td>美区 Apple 礼品卡 20 USD</td><td><span class="state pending">首日失败</span> <span class="state success">次日购入两款游戏</span></td><td>账户余额方案在该账号上已实测可行；存在同步或冷却时间</td></tr>
             <tr><td>PayPal / Apple 官方购买礼品卡</td><td><span class="state failed">失败</span></td><td>Bitget 卡不适合作为该场景的稳定来源</td></tr>
             <tr><td>Codashop US</td><td><span class="state failed">失败</span></td><td>优先排查美国发行卡要求、120% 余额缓冲和安全错误码</td></tr>
