@@ -437,6 +437,7 @@
     <li><a href="#arch">整体架构方案</a></li>
     <li><a href="#lightsail">Lightsail 注册与购买</a></li>
     <li><a href="#xray">Xray VLESS-XHTTP-Reality 搭建（一键脚本）</a></li>
+    <li><a href="#ss-chain">Oregon Shadowsocks 链式入口（可选）</a></li>
     <li><a href="#warp">Cloudflare WARP 出口配置</a></li>
     <li><a href="#routing">Xray 分流路由配置</a></li>
     <li><a href="#client">本地客户端配置（V2rayN / V2rayNG）</a></li>
@@ -730,6 +731,176 @@ Custom  TCP   443   <span class="cmd">✓</span></code></pre>
 </section>
 
 
+
+<!-- 3.5 Shadowsocks chain entry -->
+<section id="ss-chain">
+  <h2><span class="num">3.5</span> Oregon Shadowsocks 链式入口（可选）</h2>
+
+  <div class="callout warn">
+    <div class="callout-title">定位：链式备用入口，不替代 Reality 主入口</div>
+    保留现有 <code>443 / VLESS + XHTTP + Reality</code> 主入口，用于直连抗 DPI 和日常主通道；新增 <code>TCP 18443 / Shadowsocks 2022-blake3-aes-128-gcm</code> 只作为链式代理的兼容性备用入口。实测 Xray <code>26.3.27</code> 已对 Shadowsocks 输出 deprecated 警告，因此不要把它作为长期唯一入口。
+  </div>
+
+  <h3>适用链路</h3>
+  <div class="arch-diagram" style="text-align:left; line-height: 2;">
+<span class="node">中国本地网络 / Android v2rayNG</span>
+    <span class="arrow">│</span>  <span class="label">机场节点协议（外层加密，具体取决于机场配置）</span>
+    <span class="arrow">▼</span>
+<span class="node">香港机场前置</span>
+    <span class="arrow">│</span>  <span class="label">TCP 转发到 &lt;OREGON_IP&gt;:18443</span>
+    <span class="arrow">▼</span>
+<span class="node">Oregon ss-chain 入站</span>  <span class="label">Shadowsocks 2022-blake3-aes-128-gcm</span>
+    <span class="arrow">│</span>
+    <span class="arrow">├──</span> 普通网站 ──→ <span class="node">direct</span>
+    <span class="arrow">│</span>
+    <span class="arrow">└──</span> Claude / Anthropic ──→ <span class="node">WARP</span>
+                                  <span class="arrow">│</span>
+                                  <span class="arrow">▼</span>
+                             <span class="node">目标站点</span></div>
+
+  <h3>敏感信息占位符</h3>
+  <p>文档、提交和截图中只允许出现占位符，禁止写入真实密码、SSH 私钥、机场订阅专属域名或客户端敏感配置。</p>
+  <table>
+    <tr><th>占位符</th><th>含义</th></tr>
+    <tr><td><code>&lt;OREGON_IP&gt;</code></td><td>Oregon Lightsail 公网 IP</td></tr>
+    <tr><td><code>&lt;SS2022_PASSWORD&gt;</code></td><td>Shadowsocks 2022 密码，使用随机强密码</td></tr>
+    <tr><td><code>&lt;HK_RELAY_NODE&gt;</code></td><td>香港机场前置节点名称，不填写真实订阅域名</td></tr>
+    <tr><td><code>&lt;HK_RELAY_PROTOCOL&gt;</code> / <code>&lt;HK_RELAY_HOST&gt;</code> / <code>&lt;HK_RELAY_PORT&gt;</code></td><td>香港前置节点协议、主机和端口占位符，禁止替换为真实订阅专属域名后提交</td></tr>
+    <tr><td><code>&lt;BACKUP_FILE&gt;</code></td><td>回滚用配置备份路径</td></tr>
+  </table>
+
+  <h3>1. 备份现有 Xray 配置</h3>
+  <pre><code>sudo install -d -m 700 /usr/local/etc/xray/backups
+BACKUP="/usr/local/etc/xray/backups/config.$(date +%Y%m%d-%H%M%S).json"
+sudo cp -a /usr/local/etc/xray/config.json "$BACKUP"
+echo "$BACKUP"</code></pre>
+
+  <h3>2. 添加 Shadowsocks 入站</h3>
+  <p>在 <code>inbounds</code> 数组中新增一个 <code>tag</code> 为 <code>ss-chain</code> 的入站。下面命令只展示结构，执行前务必把 <code>&lt;SS2022_PASSWORD&gt;</code> 换成服务器本地生成的强密码，禁止把真实密码提交到仓库。</p>
+  <pre><code>sudo jq '.inbounds += [{
+  "tag": "ss-chain",
+  "listen": "0.0.0.0",
+  "port": 18443,
+  "protocol": "shadowsocks",
+  "settings": {
+    "method": "2022-blake3-aes-128-gcm",
+    "password": "&lt;SS2022_PASSWORD&gt;",
+    "network": "tcp"
+  }
+}]' /usr/local/etc/xray/config.json | sudo tee /tmp/xray.config.json &gt; /dev/null
+sudo mv /tmp/xray.config.json /usr/local/etc/xray/config.json
+sudo chown root:root /usr/local/etc/xray/config.json
+sudo chmod 600 /usr/local/etc/xray/config.json</code></pre>
+
+  <div class="callout info">
+    <div class="callout-title">为什么只开 TCP 18443</div>
+    当前用途是 v2rayNG 链式代理的第二跳，主要承载网页、Claude/Anthropic 等 TCP 流量；不开 UDP 可以减少暴露面和排障复杂度。如后续确有 UDP 需求，再单独评估。
+  </div>
+
+  <h3>3. 校验配置并重启</h3>
+  <pre><code>sudo jq empty /usr/local/etc/xray/config.json
+sudo xray -test -config /usr/local/etc/xray/config.json
+sudo systemctl restart xray
+sudo systemctl status xray --no-pager
+sudo ss -tlnp | grep 18443</code></pre>
+
+  <h3>4. Lightsail 防火墙</h3>
+  <p>在 AWS Lightsail 控制台进入实例 → Networking → IPv4 Firewall，保留原有 <code>Custom TCP 443</code>，新增：</p>
+  <pre><code>Custom  TCP  18443  ✓</code></pre>
+  <p>如果实例启用了 IPv6，也在 IPv6 Firewall 中添加同样的 <code>TCP 18443</code>。如能确定香港前置出口 IP 段，可在系统防火墙或云防火墙上进一步限制来源。</p>
+
+  <h3>5. Android v2rayNG 链式配置要点</h3>
+  <ol class="steps">
+    <li>导入并确认 <code>&lt;HK_RELAY_NODE&gt;</code> 单独可用。</li>
+    <li>新增 Oregon Shadowsocks 节点：地址 <code>&lt;OREGON_IP&gt;</code>，端口 <code>18443</code>，加密 <code>2022-blake3-aes-128-gcm</code>，密码 <code>&lt;SS2022_PASSWORD&gt;</code>。</li>
+    <li>在 v2rayNG 链式代理配置中，将香港节点设为前置，把 Oregon Shadowsocks 设为后置出口。</li>
+    <li>导出或查看生成配置，确认 Oregon outbound 存在 <code>dialerProxy</code> 指向香港前置 outbound；只有这样才能证明 Oregon 的拨号经由前置节点。</li>
+  </ol>
+
+  <h3>6. 链式代理配置细节：生成配置应该长什么样</h3>
+  <p>链式代理的关键不是“同时导入两个节点”，而是让 Oregon Shadowsocks outbound 的拨号过程通过香港前置 outbound。生成配置中应能看到类似下面的关系：Oregon outbound 带有 <code>dialerProxy</code>，其值指向香港前置 outbound 的 <code>tag</code>。</p>
+  <pre><code class="json">{
+  "outbounds": [
+    {
+      "tag": "hk-relay",
+      "protocol": "&lt;HK_RELAY_PROTOCOL&gt;",
+      "settings": {
+        "servers": [
+          {
+            "address": "&lt;HK_RELAY_HOST&gt;",
+            "port": 443
+          }
+        ]
+      }
+    },
+    {
+      "tag": "oregon-ss-chain",
+      "protocol": "shadowsocks",
+      "settings": {
+        "servers": [
+          {
+            "address": "&lt;OREGON_IP&gt;",
+            "port": 18443,
+            "method": "2022-blake3-aes-128-gcm",
+            "password": "&lt;SS2022_PASSWORD&gt;"
+          }
+        ]
+      },
+      "streamSettings": {
+        "sockopt": {
+          "dialerProxy": "hk-relay"
+        }
+      }
+    }
+  ]
+}</code></pre>
+  <ul>
+    <li><code>&lt;HK_RELAY_PROTOCOL&gt;</code>、<code>&lt;HK_RELAY_HOST&gt;</code>、<code>&lt;HK_RELAY_PORT&gt;</code> 只能使用占位符或公开示例值，不要提交真实机场协议、订阅域名或节点域名。</li>
+    <li>如果导出的配置里只有两个并列 outbound，但 Oregon outbound 没有 <code>dialerProxy</code> 指向香港前置，就不能证明链式已经生效。</li>
+    <li>如果 v2rayNG UI 无法查看完整 JSON，可用服务端 <code>ss-chain</code> access log 的来源 IP 作为实际链路证据。</li>
+  </ul>
+
+  <h3>7. 验证方法</h3>
+  <table>
+    <tr><th>验证项</th><th>方法</th><th>判断</th></tr>
+    <tr><td>Oregon 出口</td><td>访问 IP 检测网站</td><td>显示美国 IP 只能证明最终出口在 Oregon/WARP，不能单独证明经过香港前置</td></tr>
+    <tr><td>前置中转生效</td><td><code>sudo tail -f /var/log/xray/access.log</code></td><td><code>ss-chain</code> 入站来源 IP 应是香港前置网络或其出口 NAT，而不是本地移动/蜂窝 IP</td></tr>
+    <tr><td>服务端分流</td><td>访问普通网站和 Claude/Anthropic</td><td>普通网站走 Oregon direct；Claude/Anthropic 命中服务端 WARP 规则</td></tr>
+    <tr><td>客户端链式</td><td>检查 v2rayNG 生成配置</td><td>Oregon outbound 的 <code>dialerProxy</code> 指向香港前置 outbound</td></tr>
+  </table>
+
+  <div class="callout warn">
+    <div class="callout-title">智能入口 / IEPL 不要只看 IP 地理库</div>
+    机场的智能入口域名、IEPL 专线入口 DNS、节点物理位置、出口 NAT IP 可能分别位于不同城市或国家。IP 检测网站显示的地理位置只能作为参考，不能单独证明链路没有经过香港前置；关键证据是 Oregon 服务端 <code>ss-chain</code> 入站日志中的来源 IP。
+  </div>
+
+  <h3>8. 加密边界</h3>
+  <ul>
+    <li>长入口域名本身不是“加密协议”，它只是机场用于调度入口的域名。</li>
+    <li>中国本地网络到香港前置的外层加密取决于机场节点协议和配置。</li>
+    <li>香港前置到 Oregon 的内层是 Shadowsocks 2022，流量内容本身已加密。</li>
+    <li>前置节点能看到你在连接 <code>&lt;OREGON_IP&gt;:18443</code>，也能观察连接时长、流量大小等特征，但不能读取 Shadowsocks 内层明文。</li>
+  </ul>
+
+  <h3>9. 回滚</h3>
+  <pre><code># 使用备份恢复
+sudo cp -a &lt;BACKUP_FILE&gt; /usr/local/etc/xray/config.json
+sudo chown root:root /usr/local/etc/xray/config.json
+sudo chmod 600 /usr/local/etc/xray/config.json
+sudo xray -test -config /usr/local/etc/xray/config.json
+sudo systemctl restart xray
+
+# Lightsail 控制台删除 Custom TCP 18443
+# 确认端口不再监听
+sudo ss -tlnp | grep 18443 || true</code></pre>
+
+  <div class="callout success">
+    <div class="callout-title">已验证结果记录</div>
+    Oregon SS <code>18443</code> 可连接；普通网站走 Oregon direct；Claude/Anthropic 走服务端 WARP；Android v2rayNG 使用香港前置后页面访问和美国出口正常；服务端日志确认请求来自前置网络并进入 <code>ss-chain</code>。
+  </div>
+</section>
+
+
 <!-- 4. WARP -->
 <section id="warp">
   <h2><span class="num">4</span> Cloudflare WARP 出口配置</h2>
@@ -887,6 +1058,35 @@ Custom  TCP   443   <span class="cmd">✓</span></code></pre>
 
   <p>服务端搭好后，本地需要安装代理客户端连接。macOS 使用 <strong>V2rayN</strong>，Android 使用 <strong>V2rayNG</strong>，底层都是 Xray-core 内核，原生支持 XHTTP Reality 协议。</p>
 
+  <h3>客户端代理机制速览</h3>
+  <p>本指南已合并原 <code>v2ray_proxy_guide.html</code> 的客户端机制说明。理解客户端到服务端的完整链路时，把流量拆成三层最清楚：</p>
+  <div class="arch-diagram" style="text-align:left; line-height: 2;">
+<span class="node">应用流量</span>
+    <span class="arrow">│</span>
+    <span class="arrow">▼</span>
+<span class="node">第 1 层：流量捕获</span>  <span class="label">V2rayN 系统代理 / Tun；Android v2rayNG VPN API</span>
+    <span class="arrow">│</span>
+    <span class="arrow">▼</span>
+<span class="node">第 2 层：客户端路由</span>  <span class="label">绕过大陆 / 全局 / 黑名单 / 自定义规则</span>
+    <span class="arrow">│</span>
+    <span class="arrow">▼</span>
+<span class="node">第 3 层：客户端出站节点</span>  <span class="label">Reality 主入口，或香港前置 → Oregon SS 链式入口</span>
+    <span class="arrow">│</span>
+    <span class="arrow">▼</span>
+<span class="node">Oregon 服务端路由</span>  <span class="label">普通网站 direct；Claude/Anthropic/OpenAI 走 WARP/住宅代理</span></div>
+
+  <table>
+    <tr><th>平台</th><th>捕获方式</th><th>适用场景</th><th>注意事项</th></tr>
+    <tr><td>V2rayN 系统代理</td><td>本地 HTTP/SOCKS5 端口（常见为 <code>10809</code>/<code>10808</code>）</td><td>浏览器、遵守系统代理的桌面 App</td><td>终端、游戏、部分 App 可能不走系统代理</td></tr>
+    <tr><td>V2rayN Tun 模式</td><td>虚拟网卡捕获系统流量</td><td>需要全局代理、终端工具、游戏、SSH 等</td><td>需要管理员权限；不要和其他 VPN/Tun 工具互相抢路由</td></tr>
+    <tr><td>v2rayNG Android</td><td>Android VPN API</td><td>移动端全局或分应用代理</td><td>Android 没有桌面端那种系统代理开关；分应用代理发生在流量进入 VPN 之前</td></tr>
+  </table>
+
+  <div class="callout info">
+    <div class="callout-title">客户端路由和服务端分流是两级路由</div>
+    客户端路由决定“流量是否进入代理、走哪个客户端出站”；Oregon 服务端路由决定“进入服务器后的流量从 direct、WARP 还是住宅代理出去”。例如访问 Claude：客户端把域名流量发给 Oregon，服务端再匹配 AI 服务规则并走 WARP。
+  </div>
+
   <h3>安装客户端</h3>
   <table>
     <tr><th>平台</th><th>客户端</th><th>下载</th></tr>
@@ -927,6 +1127,23 @@ Custom  TCP   443   <span class="cmd">✓</span></code></pre>
     <tr><td>V2rayNG (Android)</td><td>左侧菜单 → 设置 → 预定义规则 → 选「绕过局域网及大陆地址」</td><td>同上</td></tr>
   </table>
   <p>选择「绕过大陆」后，ChatGPT、Claude、YouTube、Google、Telegram 等海外服务自动走代理，不需要手动添加域名规则。</p>
+
+  <h3>终端程序与 Claude Code</h3>
+  <p>终端命令行程序是否自动走代理，取决于第 1 层捕获方式：</p>
+  <table>
+    <tr><th>模式</th><th>终端是否自动走代理</th><th>建议</th></tr>
+    <tr><td>Tun / Android VPN</td><td><span class="badge green">自动走</span></td><td>适合 Claude Code、curl、git、npm 等需要统一代理的场景</td></tr>
+    <tr><td>系统代理</td><td><span class="badge red">通常不自动走</span></td><td>需要手动设置 <code>HTTPS_PROXY</code> / <code>HTTP_PROXY</code></td></tr>
+  </table>
+  <pre><code>export HTTPS_PROXY="http://127.0.0.1:10809"
+export HTTP_PROXY="http://127.0.0.1:10809"
+
+# 关闭
+unset HTTPS_PROXY HTTP_PROXY</code></pre>
+  <div class="callout warn">
+    <div class="callout-title">不要用 ping 判断代理是否正常</div>
+    <code>ping</code> 使用 ICMP，不受 <code>HTTP_PROXY</code>/<code>HTTPS_PROXY</code> 环境变量影响。测试代理应使用 <code>curl -I https://www.google.com</code> 或目标服务自己的连通性测试。
+  </div>
 
   <h3>连接不通排查</h3>
   <table>
