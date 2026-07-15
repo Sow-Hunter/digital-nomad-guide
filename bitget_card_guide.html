@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="dark">
-  <meta name="description" content="Bitget Card 充值、支付、拒付排查，以及 Apple、PayPal、礼品卡、Codashop 与 Wise 的实测使用手册。">
-  <title>Bitget Card 使用手册：充值、支付与风控排查</title>
+  <meta name="description" content="Bitget Card 支付、Google Play 与 Claude 订阅、退款、拒付和地区风控的证据化实测手册。">
+  <title>Bitget Card 使用与争议手册：Google Play、Claude、退款和风控</title>
   <style>
     :root {
       --bg: #07120f;
@@ -145,6 +145,22 @@
     summary { cursor: pointer; color: var(--brand-2); font-weight: 700; }
     .source-list { font-size: .88rem; }
     .source-list li { margin-bottom: .55rem; }
+    .legend { display: flex; flex-wrap: wrap; gap: .5rem; margin: .8rem 0 1rem; }
+    .evidence { display: inline-flex; align-items: center; gap: .38rem; padding: .2rem .58rem; border: 1px solid var(--border); border-radius: 999px; font-size: .74rem; font-weight: 750; }
+    .ev-p { color: var(--green); background: rgba(92,225,161,.08); }
+    .ev-a { color: var(--blue); background: rgba(91,192,255,.08); }
+    .ev-b { color: var(--brand-2); background: rgba(0,240,181,.07); }
+    .ev-c { color: var(--yellow); background: rgba(255,209,102,.07); }
+    .ev-u { color: var(--red); background: rgba(255,107,122,.07); }
+    .timeline { display: grid; gap: .75rem; margin: 1rem 0; }
+    .timeline-item { display: grid; grid-template-columns: 7rem 1fr; gap: 1rem; padding: .9rem 1rem; border: 1px solid var(--border); border-radius: 10px; background: rgba(7,18,15,.62); }
+    .timeline-item time { color: var(--brand-2); font-size: .8rem; font-weight: 800; }
+    .timeline-item p { margin: 0; }
+    .template { overflow-x: auto; margin: .8rem 0; padding: 1rem; border: 1px solid var(--border); border-radius: 9px; background: #06100d; color: #d7eee6; white-space: pre-wrap; font: .84rem/1.65 "SFMono-Regular", Consolas, monospace; }
+    .source-group { margin-top: 1.35rem; }
+    .source-group h3 { margin-bottom: .45rem; }
+    .muted { color: var(--muted); }
+    .nowrap { white-space: nowrap; }
     footer { padding: 2rem 0 3rem; color: var(--muted); text-align: center; font-size: .82rem; }
 
     @media (max-width: 760px) {
@@ -154,6 +170,7 @@
       .toc, .cards { grid-template-columns: 1fr; }
       .flow { grid-template-columns: 1fr; }
       .arrow { transform: rotate(90deg); justify-self: center; }
+      .timeline-item { grid-template-columns: 1fr; gap: .25rem; }
     }
     @media print {
       :root { --bg:#fff; --surface:#fff; --surface-2:#f3f7f5; --border:#cbd8d3; --text:#17211e; --muted:#4d625a; --brand:#008f70; --brand-2:#007a60; }
@@ -166,372 +183,526 @@
 <body>
   <main class="container">
     <header class="hero">
-      <div class="eyebrow">Bitget Card Field Guide</div>
-      <h1>Bitget Card 使用手册</h1>
-      <p class="lead">从 USDT / USDC 充值、OTC 账户扣款，到 Apple、PayPal、礼品卡、Codashop 与 Wise 的拒付分析。重点不是“多试几个网站”，而是先判断这张卡适合哪一类交易。</p>
+      <div class="eyebrow">Evidence-led Bitget Card Field Guide</div>
+      <h1>Bitget Card 使用与争议手册</h1>
+      <p class="lead">围绕真实支付结果整理：Bitget 卡充值与授权、Google Play / Claude 订阅、封禁申诉、退款与拒付，以及 Apple、礼品卡、Wise、Neverless 等场景。实践事实优先保留，公开资料与实践冲突时并列展示，不把时间先后误写成因果关系。</p>
       <div class="meta">
-        <span class="pill">更新：2026-07-14</span>
-        <span class="pill">标准卡 / 亚太卡</span>
-        <span class="pill">真实测试 + 官方规则</span>
-        <span class="pill">非银行账户</span>
+        <span class="pill">更新：2026-07-15</span>
+        <span class="pill">实践记录 + 官方规则 + 公开报道</span>
+        <span class="pill">标准卡 / 亚太卡分开</span>
+        <span class="pill">动态资料核验：2026-07-15</span>
       </div>
     </header>
 
     <nav aria-label="目录">
       <h2>目录</h2>
       <ol class="toc">
-        <li><a href="#conclusion">先看结论</a></li>
-        <li><a href="#mechanism">卡片机制</a></li>
-        <li><a href="#funding">充值与入卡</a></li>
-        <li><a href="#good-uses">适合支付什么</a></li>
-        <li><a href="#declines">拒付排查</a></li>
-        <li><a href="#apple">美区 Apple 实测</a></li>
-        <li><a href="#gift-cards">礼品卡与 Google Pay</a></li>
-        <li><a href="#wise">PayPal 与 Wise</a></li>
-        <li><a href="#neverless">Neverless 入金</a></li>
-        <li><a href="#ledger">实测记录</a></li>
-        <li><a href="#routine">稳妥使用习惯</a></li>
-        <li><a href="#sources">官方资料</a></li>
+        <li><a href="#incident">本次 Claude 事件</a></li>
+        <li><a href="#evidence">证据等级与矛盾表</a></li>
+        <li><a href="#products">先识别卡片版本</a></li>
+        <li><a href="#play-claude">Google Play 与 Claude 边界</a></li>
+        <li><a href="#refund">退款、申诉与拒付</a></li>
+        <li><a href="#mechanism">充值、授权与清算</a></li>
+        <li><a href="#fit">商户场景适配</a></li>
+        <li><a href="#declines">失败排查</a></li>
+        <li><a href="#apple-wallets">Apple、礼品卡与钱包</a></li>
+        <li><a href="#finance-routes">Wise 与 Neverless</a></li>
+        <li><a href="#ledger">个人实测账本</a></li>
+        <li><a href="#routine">日常使用纪律</a></li>
+        <li><a href="#sources">资料索引</a></li>
       </ol>
     </nav>
 
-    <section id="conclusion">
-      <h2><span class="num">0</span>先看结论</h2>
+    <section id="incident">
+      <h2><span class="num">0</span>本次 Claude 事件：先处理，再判断原因</h2>
       <div class="cards">
         <article class="card">
-          <h3>它更像消费卡</h3>
-          <p>适合普通 Visa 商户的商品、服务和订阅，不是用来转账、套现或给金融账户充值的美元银行账户。</p>
+          <h3><span class="evidence ev-p">P 本人实践</span></h3>
+          <p>Bitget 卡已添加到 Google Play，并成功完成 Claude Pro 首次订阅付款。</p>
         </article>
         <article class="card">
-          <h3>“能绑卡”不等于“能扣款”</h3>
-          <p>Apple、PayPal 等平台可能先接受卡片资料，真正消费时才综合检查 BIN、地区、3DS、商户类别和账户风险。</p>
+          <h3><span class="evidence ev-p">P 本人实践</span></h3>
+          <p>付款后不久，关联的 Claude 账号被封禁，已购买服务无法正常使用。</p>
         </article>
         <article class="card">
-          <h3>数字价值类最容易失败</h3>
-          <p>礼品卡、游戏点数、钱包充值、汇款和金融账户入金更接近储值或准现金，商户和发卡侧都会更谨慎。</p>
+          <h3><span class="evidence ev-u">U 原因未知</span></h3>
+          <p>现有证据只能证明时间先后，不能证明 Bitget 卡或 Google Play 付款导致封禁。</p>
         </article>
       </div>
 
       <div class="callout danger">
-        <strong>不要连续重复尝试</strong>
-        同一商户短时间多次失败，通常只会叠加商户侧与发卡侧的风险标记。Codashop 官方也明确提示，多次尝试可能触发自动风控。一次失败后先查错误码、余额和卡片发行地区，原因未解决前不要反复点支付。
+        <strong>更新后的结论：不能再把这次交易写成“完整成功”</strong>
+        支付层确实成功，但服务访问层随后失败。更准确的状态是“Google Play 扣款成功；Claude 账号随后被封；退款、申诉与封禁原因待确认”。这也说明付款授权成功不等于账号持续符合服务地区、年龄、使用政策或消费者条款。
       </div>
 
-      <p><strong>针对目前这张卡的建议：</strong>保留它做普通线上消费和已经验证成功的订阅；美区 App Store 继续使用 Apple Account 余额。不要把 Wise、PayPal 入金或购买礼品卡当作这张卡的核心用途。</p>
+      <h3>现在按这个顺序操作</h3>
+      <ol class="checklist">
+        <li><strong>马上取消 Google Play 自动续费。</strong>取消只阻止未来扣款，不等于退还本期费用；卸载 Claude 也不会取消订阅。使用 <a href="https://support.google.com/googleplay/answer/7018481?hl=zh-Hans" target="_blank" rel="noopener">Google Play 官方订阅管理说明</a>。</li>
+        <li><strong>固定证据。</strong>保存 <code>GPA-…</code> 订单号、Google Play 收据、Bitget 交易最终状态、扣款时间、封禁时间与原始提示、账号邮箱、申诉编号和所有客服沟通。</li>
+        <li><strong>购买未满 48 小时，先向 Google Play 申请退款。</strong>官方表述是“可能有资格”，并非保证批准。使用 <a href="https://support.google.com/googleplay/workflow/9813244?hl=zh-Hans" target="_blank" rel="noopener">Google Play 退款入口</a>。</li>
+        <li><strong>超过 48 小时或 Google 拒绝后，先看订阅状态。</strong>Android 订阅仍为 active 时，联系 Anthropic Support 检查退款资格；已 inactive 的历史 Play 付款联系 Google Support。若无法登录，在 Claude 帮助中心选择 <code>I can't login</code>；若需从另一邮箱联系，应注明并按官方指引抄送原账号邮箱。</li>
+        <li><strong>退款与封禁申诉分别提交。</strong>被封账号登录后的受限页面提供申诉入口；申诉不会自动退款，退款也不会自动解封。</li>
+        <li><strong>不要同时发起商户退款和卡组织拒付。</strong>Anthropic 明确表示，银行卡争议 pending 时不能处理退款。只有正常退款路径失败且材料充分时，才考虑 Bitget 卡争议。</li>
+      </ol>
+
+      <div class="callout info">
+        <strong>先确认是不是 Google Play Billing</strong>
+        如果订单显示在 Google Play 的“付款与订阅 / 预算和订单记录”中，并有 <code>GPA-…</code> 订单号，可按 Google Play Billing 处理。若没有 Play 订单记录，则可能使用了其他计费系统，退款责任边界会不同。
+      </div>
+
+      <h3>建议保存的事件时间线</h3>
+      <div class="timeline">
+        <div class="timeline-item"><time>2026-07-14</time><p>文档已记录：Bitget 卡通过 Google Play 成功开通 Claude Pro。具体订单时间与 <code>GPA-…</code> 待补。</p></div>
+        <div class="timeline-item"><time>2026-07-15</time><p>本人补充：Claude 账号已被封禁。具体封禁时间、通知原文与申诉状态待补。</p></div>
+        <div class="timeline-item"><time>待更新</time><p>Google 退款决定、Anthropic 支持回复、Bitget 退款入账或争议结果均只记录原始事实。</p></div>
+      </div>
+    </section>
+
+    <section id="evidence">
+      <h2><span class="num">1</span>如何读这份文档：证据等级与矛盾备注</h2>
+      <div class="legend" aria-label="证据等级">
+        <span class="evidence ev-p">P 本人实践</span>
+        <span class="evidence ev-a">A 条款 / 监管 / 平台规则</span>
+        <span class="evidence ev-b">B 官方帮助 / 产品资料</span>
+        <span class="evidence ev-c">C 媒体 / 社区公开经验</span>
+        <span class="evidence ev-u">U 未知 / 待验证</span>
+      </div>
+      <ul>
+        <li><strong>P 对“这一次发生了什么”优先。</strong>它不能自动推广到所有卡、所有账号或所有地区，也不能单独证明封禁原因。</li>
+        <li><strong>A 与 B 用于解释平台公开规则。</strong>帮助页可能按地区、卡版本或更新时间出现差异，因此文档保留冲突而不擅自合并。</li>
+        <li><strong>C 只说明他人也报告过类似现象。</strong>社区帖、媒体报道不能替代个案申诉结果，也不能证明共同原因。</li>
+      </ul>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>主题</th><th>本人实践 / 一份公开说法</th><th>另一份公开说法</th><th>矛盾备注</th></tr></thead>
+          <tbody>
+            <tr><td>Bitget 虚拟卡能否用于 Google Play</td><td><span class="evidence ev-p">P</span> 本次已绑卡并完成付款</td><td><span class="evidence ev-a">A</span> Google Play 多地区帮助页把 Virtual Credit Cards（VCC）列为不支持</td><td>无法确认 Google 将这张 Bitget 卡归类为 VCC、虚拟借记卡、预付卡还是普通 Visa。实践证明本笔交易通过，不证明普遍支持。</td></tr>
+            <tr><td>Google Pay 与 Google Play</td><td><span class="evidence ev-b">B</span> Bitget 明确写明支持绑定 Google Pay</td><td><span class="evidence ev-a">A</span> Google Play 是应用商店计费；Google Pay 是钱包 / 令牌化支付</td><td>支持 Google Pay 不能推导出支持所有 Google Play 订单，反之亦然。</td></tr>
+            <tr><td>付款后封禁</td><td><span class="evidence ev-p">P</span> 两件事时间上相邻</td><td><span class="evidence ev-a">A</span> Anthropic 公开列出的封禁原因是 Usage Policy、从不支持位置创建账号、Consumer Terms、年龄等，未列 Bitget 卡</td><td>目前没有直接因果证据；以申诉回复和原始通知为准。</td></tr>
+            <tr><td>付款信息是否给 Anthropic</td><td><span class="evidence ev-a">A</span> Google 称 Play Billing 的付款信息保存在 Google 账号，不分享给应用开发者</td><td><span class="evidence ev-a">A</span> Android Publisher API 仍向开发者提供订单、订阅状态及账单地区代码等字段</td><td>缺乏“Anthropic 直接识别底层卡为 Bitget 并封号”的公开依据，也不能断言不存在任何间接风控信号。</td></tr>
+            <tr><td>Android 退款找谁</td><td><span class="evidence ev-a">A</span> Google：48 小时内找 Google，之后联系开发者</td><td><span class="evidence ev-b">B</span> Anthropic：active Android 订阅由其检查资格；inactive 历史 Play 付款找 Google</td><td>这是按时间与订阅状态交叉的双渠道规则，不应简化成唯一入口。</td></tr>
+            <tr><td>Bitget 退款时间</td><td><span class="evidence ev-b">B</span> APAC Transaction Safety 写商户通常最多 7 个工作日</td><td><span class="evidence ev-b">B</span> APAC / 标准卡管理页写最多 14 个工作日</td><td>按更保守的 14 个工作日管理预期；阶段可能分别指商户处理和卡端最终入账。</td></tr>
+            <tr><td>退款到账</td><td><span class="evidence ev-a">A</span> Google：银行卡通常 3–5 个工作日，偶尔最长 10 个工作日</td><td><span class="evidence ev-b">B</span> Bitget：可能最长 14 个工作日，且金额受费用 / 汇率影响</td><td>Google 批准不等于 Bitget OTC 账户立刻可见；应保存退款状态并按较长窗口等待。</td></tr>
+            <tr><td>Visa 广泛可用</td><td><span class="evidence ev-b">B</span> Bitget 宣传覆盖 180+ 国家和地区的 Visa 商户</td><td><span class="evidence ev-a">A</span> 商户、发卡方与平台均可基于地区、交易类型和风控拒绝</td><td>“Visa 覆盖”是网络范围，不是每笔交易的接受保证。</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="products">
+      <h2><span class="num">2</span>先识别卡片版本，避免把规则混在一起</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>产品</th><th>核心特征</th><th>本手册中的称呼</th><th>不要混用的地方</th></tr></thead>
+          <tbody>
+            <tr><td>Bitget Card 标准 / 既有项目</td><td>Visa；官方资料写 OTC 账户扣 USDT；邀请制 / VIP 资格</td><td>“标准卡”</td><td>争议调查费 50 USDT；有 12 个月不活跃费等规则</td></tr>
+            <tr><td>Bitget Card（Asia Pacific）</td><td>2026 年上线；Visa；DCS Card Centre 发卡；OTC 账户扣 USDC</td><td>“APAC 卡”</td><td>争议费 35 USDC，胜诉后退；费率、限额和实体卡状态不同</td></tr>
+            <tr><td>Bitget Wallet Card</td><td>属于 Bitget Wallet 的另一套卡产品，部分地区 / 版本涉及不同卡组织</td><td>不纳入下列费率</td><td>不能用交易所 App 内 Bitget Card 的 USDT / USDC、发卡行和争议规则套用</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout info">
+        <strong>四项信息足以快速识别</strong>
+        查看开卡日期、卡片页扣款资产（USDT 或 USDC）、条款中的发卡机构，以及争议费显示 50 USDT 还是 35 USDC。以本人 App 和适用条款为准，不按他人截图猜版本。
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>项目</th><th>标准卡公开资料</th><th>APAC 卡公开资料</th></tr></thead>
+          <tbody>
+            <tr><td>扣款资产</td><td>OTC 账户 USDT</td><td>OTC 账户 USDC</td></tr>
+            <tr><td>卡片计价</td><td>USD</td><td>USD</td></tr>
+            <tr><td>交易费</td><td>0.9%</td><td>0.9%</td></tr>
+            <tr><td>非 USD 换汇费</td><td>公开费率页列 1% + Visa 汇率</td><td>公开费率页列 1% + Visa 汇率</td></tr>
+            <tr><td>授权缓冲</td><td>通常显示订单额的 120%</td><td>通常显示订单额的 120%</td></tr>
+            <tr><td>退款资产</td><td>退回 OTC 账户 USDT</td><td>退回 OTC 账户 USDC</td></tr>
+            <tr><td>争议费用</td><td>50 USDT 调查费</td><td>35 USDC；争议成功后退还</td></tr>
+            <tr><td>不活跃费</td><td>12 个月无持卡人发起交易后每月 1 USD</td><td>公开费率页写无</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="muted">促销、VIP 权益与卡片批次可能减免部分费用；执行前以本人 App、当前费率页和适用条款三者为准。</p>
+    </section>
+
+    <section id="play-claude">
+      <h2><span class="num">3</span>Google Play 支付成功，与 Claude 账号资格是两套判断</h2>
+      <div class="flow" aria-label="Google Play 订阅与 Claude 账号访问边界">
+        <div><strong>Bitget / Visa</strong><br><small>卡片授权、稳定币扣款、退款入账</small></div>
+        <span class="arrow">→</span>
+        <div><strong>Google Play Billing</strong><br><small>订单、订阅、付款资料和退款入口</small></div>
+        <span class="arrow">→</span>
+        <div><strong>Anthropic / Claude</strong><br><small>服务权益、账号政策、封禁与申诉</small></div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>层级</th><th>可以确认什么</th><th>不能据此确认什么</th></tr></thead>
+          <tbody>
+            <tr><td>Bitget / Visa</td><td>授权是否到达、pending / settled / reversed / refunded、卡片版本和底层资产</td><td>Claude 账号是否符合支持地区或 Usage Policy</td></tr>
+            <tr><td>Google Play</td><td>是否有 <code>GPA-…</code>、订单状态、订阅是否 active、付款资料是否有验证告警</td><td>Anthropic 具体为何封禁账号</td></tr>
+            <tr><td>Anthropic</td><td>服务权益、账号限制、申诉结果和其可处理的退款资格</td><td>若为 Play Billing，公开资料不支持其直接获得底层完整卡号或 Bitget 卡身份</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout ok">
+        <strong>对“是不是付款渠道的问题”的最严谨回答</strong>
+        目前没有公开证据证明 Bitget 卡导致 Claude 封禁。若有 <code>GPA-…</code> 并确认使用 Google Play Billing，Google 明确表示付款信息不会分享给应用开发者；这削弱了“Anthropic 直接看到 Bitget 卡并据此封号”的推测。仍需核对订单地区、Google 付款资料、Claude 登录位置、年龄 / 身份验证、账号行为与封禁通知，不能据此断言付款完全无关。
+      </div>
+
+      <h3>Anthropic 申诉页公开列出的封禁原因</h3>
+      <ul>
+        <li>重复违反 <a href="https://www.anthropic.com/legal/aup" target="_blank" rel="noopener">Usage Policy</a>。</li>
+        <li>从 <a href="https://www.anthropic.com/supported-countries" target="_blank" rel="noopener">不支持的位置</a>创建账号。</li>
+        <li>违反 <a href="https://www.anthropic.com/legal/consumer-terms" target="_blank" rel="noopener">Consumer Terms</a>。</li>
+      </ul>
+      <p>另据消费者条款和身份验证资料，用户须年满 18 岁并满足适用的身份验证要求；不符合这些访问资格也可能导致服务受限，但它们并非上述申诉页同一列表中的封禁原因。</p>
+      <p>截至本次核验，Claude.ai 支持地区列表包含 Taiwan，但未列出 China、Hong Kong、Macao。若账号创建或实际使用地点属于未列地区，官方资料明确把“不支持位置创建账号”列为封禁原因；这仍只是条件性风险，不能代替对本账号的申诉结论。</p>
+      <p>Claude 会话管理页显示其可基于 IP 展示大致位置；官方错误排查也建议登录问题时关闭 VPN，但没有公开规则证明“使用 VPN 本身必然封号”。不要伪造地区资料，也不要用新账号绕过封禁。</p>
+
+      <h3>Google Play、Google Pay 与备选计费不要混淆</h3>
+      <ul>
+        <li><strong>Google Play Billing：</strong>应用内数字服务的订单与订阅系统；订单通常有 <code>GPA-…</code>。</li>
+        <li><strong>Google Pay：</strong>银行卡钱包与令牌化支付；支持绑卡不等于 Play 商店接受所有订单。</li>
+        <li><strong>备选计费：</strong>部分地区的应用可能提供其他结算系统；若选择该系统，订单不会由 Google Play 管理。</li>
+      </ul>
+    </section>
+
+    <section id="refund">
+      <h2><span class="num">4</span>取消、退款、封禁申诉与 chargeback 是四件事</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>动作</th><th>解决什么</th><th>不解决什么</th><th>当前入口</th></tr></thead>
+          <tbody>
+            <tr><td>取消订阅</td><td>停止下一账期续费</td><td>不会自动退还本期费用，也不会解封</td><td>Google Play 订阅中心</td></tr>
+            <tr><td>申请退款</td><td>请求退回已付订阅费用</td><td>不自动恢复账号</td><td>48 小时内优先 Google；active Android 订阅可由 Anthropic 检查资格</td></tr>
+            <tr><td>封禁申诉</td><td>请求复核账号限制</td><td>不自动退款或取消续费</td><td>登录被封账号后的受限页面</td></tr>
+            <tr><td>卡片争议 / chargeback</td><td>在商户路径失败后由卡组织调查交易争议</td><td>不保证胜诉；可能产生调查费，并阻止 Anthropic 同时退款</td><td>Bitget Support / <code>card@bitget.com</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>退款决策表</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>当前状态</th><th>优先动作</th><th>注意</th></tr></thead>
+          <tbody>
+            <tr><td>购买未满 48 小时</td><td>Google Play 官方退款入口</td><td>“可能有资格”，不是无条件退款；本人购买不要选“未经授权”</td></tr>
+            <tr><td>超过 48 小时，Android 订阅仍 active</td><td>联系 Anthropic Support，选择 Claude Refund Request / I can't login</td><td>提供订单、账号和封禁证据，由其检查资格</td></tr>
+            <tr><td>订阅已 inactive，申请历史 Play 付款</td><td>联系 Google Support</td><td>Anthropic 明确表示其不能处理此类历史 Play Store 付款</td></tr>
+            <tr><td>无法登录原 Claude 账号</td><td>Claude Help Center 右下角消息入口 → I can't login</td><td>可用另一邮箱联系，并注明 / 抄送原账号邮箱</td></tr>
+            <tr><td>银行或 Bitget 争议已 pending</td><td>在银行争议与 Anthropic 退款二者中选一条继续</td><td>Anthropic 表示争议期间不能处理退款</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>预计时间与退款去向</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>阶段</th><th>公开时间</th><th>如何理解</th></tr></thead>
+          <tbody>
+            <tr><td>Google 作出退款决定</td><td>通常 1–4 天</td><td>决定时间不等于卡端到账时间</td></tr>
+            <tr><td>Google 批准后的信用 / 借记卡退款</td><td>通常 3–5 个工作日；发卡方影响时最长约 10 个工作日</td><td>原则上原路退回付款卡</td></tr>
+            <tr><td>Bitget 卡退款</td><td>不同帮助页分别写最多 7 或 14 个工作日</td><td>按 14 个工作日保守等待；标准卡回 USDT，APAC 卡回 USDC</td></tr>
+            <tr><td>120% 授权多余部分释放</td><td>清算后通常立即，部分情况最长约 7 个工作日</td><td>这是授权缓冲释放，不是商户退款</td></tr>
+            <tr><td>长期未清算 pending</td><td>APAC 帮助页写最长约 30 天后释放</td><td>在释放前保留交易截图，不要重复付款</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout warn">
+        <strong>原路退款不一定等于原金额稳定币</strong>
+        Google 通常退回原付款方式；Bitget 再按对应卡项目退回 OTC 账户的 USDT 或 USDC。原交易费可能不退，且换汇时间不同可能造成小额差异。若 Google 已显示 Refunded 而 Bitget 14 个工作日后仍未到账，再带订单号和退款凭证联系 Bitget；如能取得 ARN，也一并提供。
+      </div>
+
+      <h3>Google Play 退款理由模板</h3>
+      <pre class="template">我通过 Google Play 购买了 Claude Pro 订阅（订单号：GPA-________）。付款后，关联的 Claude 账号被停用，导致我无法使用已购买的订阅服务。我已取消自动续费，并申请退还本次订阅费用。该购买由我本人完成，并非未经授权交易。</pre>
+
+      <h3>Anthropic 支持模板</h3>
+      <pre class="template">Subject: Android subscription refund request after account suspension
+
+Claude account email: ________
+Google Play order ID: GPA-________
+Purchase date and amount: ________
+Account suspension date/message: ________
+
+I purchased Claude Pro through Google Play on Android. The account was suspended shortly afterward, so I cannot use the paid service. I have canceled renewal. Please check my refund eligibility and cancel/refund the active Android subscription. This is separate from my account appeal.</pre>
+
+      <h3>最后手段：Bitget 卡争议</h3>
+      <ul>
+        <li>先证明已向 Google / Anthropic 申请解决，并保存拒绝、无回复或退款承诺未履行的材料。</li>
+        <li>APAC 卡公开规则：仅成功交易、通常须在 90 天内提出；初次回复约 3–5 个工作日；35 USDC，胜诉后退。</li>
+        <li>标准卡费率页列出 50 USDT 调查费；不要把 APAC 的 35 USDC 套到标准卡。</li>
+        <li>提交订单、取消证明、服务不可用截图、商户沟通、退款状态、交易时间 / 金额 / 币种和卡号后四位。</li>
+      </ul>
     </section>
 
     <section id="mechanism">
-      <h2><span class="num">1</span>先理解卡片机制</h2>
-      <p>Bitget Card 页面显示的 USD 通常是卡组织的计价或结算单位，不等于一个可通过 ACH / SWIFT 汇出的美元银行存款。</p>
+      <h2><span class="num">5</span>充值、授权、清算与退款的完整生命周期</h2>
+      <p>Bitget Card 是加密资产支持的支付卡，不是带 ACH / SEPA / SWIFT 能力的美元银行账户。卡面或页面显示 USD，通常只是卡片计价 / 结算单位。</p>
       <div class="flow" aria-label="Bitget Card 扣款流程">
         <div><strong>商户请款</strong><br><small>USD 或当地货币</small></div>
         <span class="arrow">→</span>
-        <div><strong>Visa 换算</strong><br><small>转为卡片结算币</small></div>
+        <div><strong>Visa / 发卡方授权</strong><br><small>可能预留订单额 120%</small></div>
         <span class="arrow">→</span>
-        <div><strong>Bitget 扣款</strong><br><small>OTC 账户 USDT / USDC</small></div>
+        <div><strong>Bitget OTC 扣款</strong><br><small>标准卡 USDT / APAC 卡 USDC</small></div>
       </div>
 
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>版本</th><th>主要扣款资产</th><th>你需要确认的地方</th></tr></thead>
-          <tbody>
-            <tr><td>标准 Bitget Card</td><td>官方资料目前写明从 OTC 账户扣 USDT</td><td>卡片页、OTC 账户和交易详情</td></tr>
-            <tr><td>Bitget Card（Asia Pacific）</td><td>亚太版官方资料写明使用 USDC</td><td>不要根据别人的教程假设自己的版本也扣 USDT</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="callout warn">
-        <strong>授权时需要额外余额</strong>
-        Bitget 官方说明，交易授权时可能临时冻结订单金额的 120%。标准卡资料还列出 0.9% 交易费；若涉及非结算币种，还可能有额外换汇成本。账户只有约 10 美元等值资产时，不要尝试支付接近 10 美元的订单：名义上余额足够，授权阶段仍可能失败。
-      </div>
-    </section>
-
-    <section id="funding">
-      <h2><span class="num">2</span>从交易所充值到卡片</h2>
       <ol class="checklist">
-        <li><strong>先确认卡片版本。</strong>在 Bitget 卡片页确认实际支持并扣除的是 USDT 还是 USDC。</li>
-        <li><strong>在 Bitget 获取充值地址。</strong>币种和网络必须与转出平台完全一致，例如同为 USDT-TRC20 或同为 USDT-ERC20；不要只看币种名称。</li>
-        <li><strong>从欧易等平台小额测试。</strong>核对地址、网络、最低到账金额和手续费后，先转一笔可承受的小额。</li>
-        <li><strong>等待链上确认和 Bitget 入账。</strong>未到账前不要重复转账；保存提现记录和 TxID。</li>
-        <li><strong>转入卡片对应的 OTC 账户。</strong>资金停留在现货或资金账户时，卡片未必能够直接使用；以卡片页显示的可用余额为准。</li>
-        <li><strong>留出授权缓冲。</strong>建议至少预留订单金额的 25%，另考虑交易费和汇率变化。</li>
+        <li><strong>确认卡片版本和扣款资产。</strong>在卡片页确认 USDT 或 USDC，资金必须位于实际可扣的 OTC 账户。</li>
+        <li><strong>链上入金时四项完全一致。</strong>币种、网络、地址、Memo / Tag 任一错误都可能导致无法追回；先做可承受的小额测试并保存 TxID。</li>
+        <li><strong>按订单额乘以 1.2 理解授权缓冲。</strong>20 USD 订单可能临时占用约 24 USD 等值资产；账户只放 20 USD 可能在授权阶段失败。</li>
+        <li><strong>另留交易费、税费和汇率空间。</strong>0.9% 交易费、非 USD 1% 换汇费、销售税和结算日汇率都可能让最终金额变化。</li>
+        <li><strong>区分 pending、settled、reversed、refunded。</strong>授权冻结不是最终扣款，reversed 不是商户退款，Google 显示退款也不代表 Bitget 已入账。</li>
       </ol>
 
-      <div class="callout info">
-        <strong>网络选错不是“慢一点”，而是可能丢币</strong>
-        充值前同时核对币种、网络、地址和 Memo / Tag 要求。不要根据截图手填地址，也不要把不同链上名称相同的稳定币视为同一资产。
-      </div>
-    </section>
-
-    <section id="good-uses">
-      <h2><span class="num">3</span>这张卡更适合支付什么</h2>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>用途</th><th>建议</th><th>原因</th></tr></thead>
+          <thead><tr><th>状态</th><th>通常表示</th><th>正确动作</th></tr></thead>
           <tbody>
-            <tr><td>普通电商实物</td><td><span class="risk low">优先</span></td><td>标准 Visa 商品消费，通常比储值或金融类交易自然</td></tr>
-            <tr><td>SaaS、云服务、流媒体</td><td><span class="risk low">可尝试</span></td><td>真实持续服务；前提是商户接受该卡发行地区和 3DS</td></tr>
-            <tr><td>Google Play 内购订阅 Claude Pro</td><td><span class="risk low">已实测成功</span></td><td>Bitget 卡添加为 Google Play 付款方式后，首次开通 Claude Pro 流程顺利</td></tr>
-            <tr><td>线下 Google Pay / Visa 消费</td><td><span class="risk low">可尝试</span></td><td>标准卡官方列出 Google Pay 等受支持钱包，但仍取决于卡版本和地区</td></tr>
-            <tr><td>iCloud+ 等已成功的订阅</td><td><span class="risk low">保留</span></td><td>个人实测已经成功，不必为了“统一支付方式”主动更换</td></tr>
-            <tr><td>游戏点数、礼品卡、充值码</td><td><span class="risk mid">谨慎</span></td><td>高欺诈和转售风险，常被归为数字价值或储值</td></tr>
-            <tr><td>Wise / Revolut 等账户入金</td><td><span class="risk high">不建议</span></td><td>金融、汇款或账户充值类交易；Bitget 还明确写明不支持 Wise</td></tr>
-            <tr><td>P2P 收款、套现、代付</td><td><span class="risk high">避免</span></td><td>合规、资金来源和第三方付款风险明显高于普通消费</td></tr>
+            <tr><td>Pending / Authorized</td><td>额度已预留，商户尚未最终清算</td><td>等待，不要重复付款；记录授权金额是否为约 120%</td></tr>
+            <tr><td>Settled / Completed</td><td>交易已清算，最终扣款成立</td><td>核对交易费、汇率和商户描述</td></tr>
+            <tr><td>Reversed / Voided</td><td>授权撤销，预留资金将释放</td><td>按 7 个工作日窗口观察，不要把它当退款申请</td></tr>
+            <tr><td>Refunded</td><td>商户或 Google 已发起退款</td><td>保存退款时间和状态，按最长 14 个工作日跟踪 OTC 入账</td></tr>
+            <tr><td>Disputed</td><td>已进入卡组织争议流程</td><td>停止重复向 Anthropic 申请退款，集中提供同一套证据</td></tr>
           </tbody>
         </table>
       </div>
+    </section>
 
-      <div class="callout ok">
-        <strong>Google Play 内购：当前最顺利的实测场景之一</strong>
-        本次将 Bitget 卡直接添加到 Google Play 付款方式后，已成功通过 Claude App 开通 Claude Pro，过程中没有遇到美区 App Store、PayPal、礼品卡和 Codashop 那类明显拒付。建议保留当前账户地区、账单资料和付款方式状态，并在首次自动续费前确认 OTC 可用余额覆盖订阅金额的 120% 以上及可能的税费、汇率与手续费。
+    <section id="fit">
+      <h2><span class="num">6</span>这张卡更适合什么：按支付成功和服务结果分别判断</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>用途</th><th>当前判断</th><th>证据与边界</th></tr></thead>
+          <tbody>
+            <tr><td>普通电商实物 / 旅行消费</td><td><span class="risk low">优先</span></td><td>接近标准 Visa 商品消费；仍取决于 BIN、3DS、地区和商户接受政策</td></tr>
+            <tr><td>SaaS、云服务、流媒体</td><td><span class="risk low">可小额尝试</span></td><td>真实持续服务通常比储值自然；首次成功不保证自动续费</td></tr>
+            <tr><td>Google Play → Claude Pro</td><td><span class="risk mid">支付成功 / 服务失败</span></td><td><span class="evidence ev-p">P</span> 初始扣款已通过，随后 Claude 封号；在原因与退款解决前不建议重新订阅</td></tr>
+            <tr><td>Google Pay / Apple Pay 普通消费</td><td><span class="risk low">可尝试</span></td><td>钱包只令牌化底层卡，不改变 BIN、发行地区或 MCC</td></tr>
+            <tr><td>iCloud+</td><td><span class="risk low">本人已成功</span></td><td><span class="evidence ev-p">P</span> 不代表 App Store 数字内容也会成功</td></tr>
+            <tr><td>游戏点数、礼品卡、充值码</td><td><span class="risk mid">谨慎</span></td><td>高欺诈 / 转售风险，常被归为数字价值或储值</td></tr>
+            <tr><td>Wise / Revolut / 投资账户卡充值</td><td><span class="risk high">不建议</span></td><td>金融、汇款、加密账户入金风险更高；标准卡资料明确写 Wise 不支持</td></tr>
+            <tr><td>P2P 收款、套现、代付</td><td><span class="risk high">避免</span></td><td>第三方付款、资金来源与平台滥用风险明显高于本人普通消费</td></tr>
+          </tbody>
+        </table>
       </div>
-
-      <p><strong>Google Play 与 Google Pay 不是同一条支付路径：</strong>前者是 Android 应用商店的应用内购买与订阅计费系统，后者是保存并令牌化银行卡的支付钱包。Google Play 首次订阅成功，不代表所有 Google Pay 商户或所有应用内商品都会接受同一张卡；自动续费仍需继续观察。</p>
-      <p>Google Pay 只是把底层卡片令牌化，并不会把非美国发行的卡变成美国银行卡，也不会改变商户类别。它能改善卡号暴露和部分验证体验，但不是绕过地区或风控规则的工具。</p>
+      <div class="callout warn">
+        <strong>“能绑卡”“能授权”“能长期使用服务”是三个不同门槛</strong>
+        PayPal 可绑但扣款失败、Bitget 卡可付 iCloud+ 但 App Store 失败、Google Play 可扣 Claude 但账号随后被封，三组实践都支持同一个判断：每个产品、订单和账号阶段都可能有独立风控。
+      </div>
     </section>
 
     <section id="declines">
-      <h2><span class="num">4</span>支付失败时按这个顺序排查</h2>
+      <h2><span class="num">7</span>支付失败时的分层排查</h2>
       <ol class="checklist">
-        <li><strong>看可用余额，不只看总资产。</strong>确认资金在卡片实际扣款的 OTC 账户，并覆盖 120% 授权冻结、手续费和汇率缓冲。</li>
-        <li><strong>看错误发生在哪一侧。</strong>Bitget 交易记录完全没有授权请求，常见于商户在请求到达发卡方前就拦截；出现 declined / reversed 则更可能已经到达卡网络或发卡侧。</li>
-        <li><strong>检查卡状态和限额。</strong>确认没有冻结、过期、日限额或风控限制。</li>
-        <li><strong>检查 3DS。</strong>是否弹出 OTP / App 确认；浏览器拦截弹窗、号码不可用或验证超时都可能失败。</li>
-        <li><strong>检查地区一致性。</strong>商户站点国家、卡片 BIN 发行地、真实账单地址和服务可用地区是否相容。只填写一个美国 ZIP Code 并不能改变卡片发行国。</li>
-        <li><strong>识别商户类型。</strong>礼品卡、数字点数、账户充值、汇款和加密货币相关交易应预期更高失败率。</li>
-        <li><strong>停止重复尝试。</strong>记录时间、金额、商户、错误码和卡号后四位，隔日或客服确认后再决定是否重试。</li>
+        <li><strong>先看 Bitget 是否出现授权。</strong>完全没有交易记录，更可能在商户 / 平台前置检查被拦；出现 declined / reversed，才说明请求到过卡网络或发卡侧。</li>
+        <li><strong>确认可用余额覆盖 120% + 费用。</strong>不要只看总资产，也不要把现货 / 资金账户余额当作卡片可用余额。</li>
+        <li><strong>确认卡状态、限额与交易开关。</strong>检查冻结、过期、线上 / 国际交易、日限额、3DS 和 OTP。</li>
+        <li><strong>检查真实资料一致性。</strong>Google Payments 名称、法定地址、账单地址、Play 国家、卡片发行地区和服务支持地区应准确；不要用任意 ZIP Code 或 VPN 制造表面一致。</li>
+        <li><strong>检查 Google Payments 告警。</strong>Google 可能要求验证身份或付款信息；待处理交易会被取消，资料审核通常需 1–7 天。</li>
+        <li><strong>识别商户类型。</strong>礼品卡、钱包充值、汇款、投资账户和加密相关交易应预期更高拒付率。</li>
+        <li><strong>失败一次就停止。</strong>记录时间、金额、币种、错误码、3DS、卡号后四位和两端状态；原因未解决前不要换浏览器 / 地址连续重试。</li>
       </ol>
 
       <details>
-        <summary>Codashop 为什么也会失败？</summary>
-        <p>Codashop 美国站明确要求使用美国发行的卡，并会检查 CVC、关联 ZIP Code 和 OTP；错误 704 表示发卡方或卡服务商拒绝，312 / 750 / 751 则与安全检查相关。如果 Bitget 卡的 BIN 不是美国，即使能打开美国站、使用 Google Pay 或填写美国 ZIP Code，也可能直接失败。</p>
-        <p>此外，如果你的卡片可用余额只有约 10 美元，而订单接近 10 美元，Bitget 的 120% 授权冻结也足以造成余额不足。应先查 Codashop 错误码和 Bitget 交易记录，不要立刻换浏览器连续重试。</p>
+        <summary>Google Play 国家与付款资料怎样影响交易？</summary>
+        <p>Google 规定，设置新的 Play 国家 / 地区时，用户应实际位于该地区并拥有该地区的付款方式；账单地址也应与卡片资料一致。公开资料没有披露系统究竟按 BIN、发卡方、账单地址、设备位置还是组合信号判断，因此不能从一笔成功或失败反推出完整风控模型。</p>
       </details>
 
       <details>
-        <summary>应该联系谁？</summary>
-        <p>商户未看到付款请求：先联系商户；Bitget 交易记录出现拒付：向 Bitget 提供商户、金额、时间、币种、错误信息和卡号后四位。官方资料列出的卡片联系邮箱为 <code>card@bitget.com</code>。</p>
+        <summary>Codashop 为什么失败？</summary>
+        <p>Codashop 美国站会检查美国发行卡、CVC、关联 ZIP Code 和 OTP；错误 704 与发卡方 / 卡服务商拒绝有关，312 / 750 / 751 与安全检查有关。非美国 BIN 不会因为填写美国 ZIP 或改用 Google Pay 就变成美国发行卡。</p>
+      </details>
+
+      <details>
+        <summary>什么时候联系 Bitget？</summary>
+        <p>Bitget 已出现拒付、异常 pending、Google 显示退款但超过 14 个工作日仍未入账，或需要卡片争议时，向 Bitget 提供商户、金额、时间、币种、状态、卡号后四位和完整沟通。公开联系邮箱为 <code>card@bitget.com</code>。</p>
       </details>
     </section>
 
-    <section id="apple">
-      <h2><span class="num">5</span>美区 Apple ID：当前现象怎么解释</h2>
+    <section id="apple-wallets">
+      <h2><span class="num">8</span>Apple、礼品卡与支付钱包的实测边界</h2>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>现象</th><th>更合理的解释</th><th>不要过度推断</th></tr></thead>
+          <thead><tr><th>本人实践</th><th>结果</th><th>可以确认</th><th>不能确认</th></tr></thead>
           <tbody>
-            <tr><td>美区 PayPal 可以绑定，但 App Store 扣款失败</td><td>绑定阶段与实际扣款阶段不是同一套检查；实际支付还会检查 PayPal 资金来源、地区和账户风险</td><td>“绑定成功”不能证明付款方式已经被完整认可</td></tr>
-            <tr><td>Bitget 卡可以订阅 iCloud+，但买 App 失败</td><td>订阅、数字内容和不同商户描述可能走不同授权与风控路径</td><td>不能据此认定整张卡已被 Apple 全场景接受</td></tr>
-            <tr><td>礼品卡充值 20 美元后，一开始仍失败，次日能买两个游戏</td><td>账户余额同步、订单风险冷却或账户信任状态更新都可能造成延迟</td><td>无法仅凭这一现象确定 Apple 内部的具体风控规则</td></tr>
-            <tr><td>上一个账号约 72 小时后被判违规</td><td>可能涉及账户、地区、付款来源或行为模式的综合判断</td><td>没有 Apple 的具体通知，不能把封禁单独归因于 PayPal 或某一次付款</td></tr>
+            <tr><td>美区 Apple ID 绑定美区 PayPal</td><td><span class="state success">绑定成功</span> <span class="state failed">付款失败</span></td><td>保存付款方式与实际授权是两阶段</td><td>不能证明 PayPal 资金源已获 Apple 认可</td></tr>
+            <tr><td>Bitget 卡用于 Apple</td><td><span class="state success">iCloud+ 成功</span> <span class="state failed">App Store 失败</span></td><td>产品 / 商户描述可能走不同规则</td><td>不能推广为 Apple 全场景接受</td></tr>
+            <tr><td>美区 Apple 礼品卡 20 USD</td><td><span class="state pending">首日失败</span> <span class="state success">次日买到两款游戏</span></td><td>该账号的余额路径最终可用</td><td>无法确定是同步、冷却还是其他内部风控</td></tr>
+            <tr><td>上一个 Apple 账号</td><td><span class="state failed">约 72 小时后判违规</span></td><td>账号层风险可晚于付款发生</td><td>没有通知原文时不能单独归因于 PayPal 或某次支付</td></tr>
           </tbody>
         </table>
       </div>
 
-      <div class="callout ok">
-        <strong>当前最稳的做法</strong>
-        既然 Apple Account 余额已经能购买游戏，就继续把它作为 App Store 数字内容的主要支付方式；Bitget 卡只保留给已经成功的 iCloud+ 或其他普通商户。不要在同一 Apple ID 上轮流添加多张新卡、PayPal 并连续重试。
-      </div>
-
-      <ul>
-        <li>Apple ID 国家/地区、真实居住与账单资料应保持准确，不建议伪造地址或用 VPN 制造地区一致的假象。</li>
-        <li>兑换礼品卡后若余额已到账但仍暂时失败，先等待账户同步；不要把短时失败变成密集支付尝试。</li>
-        <li>Apple Account 余额通常优先用于符合条件的购买，但部分订阅或服务仍可能要求保留有效付款方式。</li>
-        <li>只从 Apple 或可信授权渠道购买礼品卡，拒绝明显低于面值、要求代充或来历不明的卡密。</li>
-      </ul>
-
-      <h3>App Store 内购订阅的实际扣费顺序</h3>
-      <p>通过 App Store 订阅 Claude、ChatGPT 等第三方服务时，开发者只把购买请求交给 Apple；付款来源由 Apple 账户统一管理，所以订阅确认页通常不会让你临时选择 PayPal 或某一张卡。</p>
+      <h3>App Store 的公开扣费顺序</h3>
       <div class="flow" aria-label="App Store 内购订阅扣费顺序">
-        <div><strong>Apple Account 余额</strong><br><small>足够覆盖完整金额时优先</small></div>
+        <div><strong>Apple Account 余额</strong><br><small>足额时通常优先</small></div>
         <span class="arrow">→</span>
-        <div><strong>主要付款方式</strong><br><small>“付款与配送”列表第一项</small></div>
+        <div><strong>主要付款方式</strong><br><small>付款与配送列表第一项</small></div>
         <span class="arrow">→</span>
-        <div><strong>其他付款方式</strong><br><small>按列表从上到下尝试</small></div>
+        <div><strong>其他付款方式</strong><br><small>按列表继续尝试</small></div>
       </div>
+      <p>余额通常需要覆盖完整含税金额，不能假定会自动“余额 + 银行卡”拆分。Apple 还可能合并多笔购买，部分订阅仍要求保留有效付款方式。</p>
 
-      <ol class="checklist">
-        <li><strong>Apple Account 余额优先。</strong>Apple 会先尝试用余额覆盖整笔最终金额。余额不能手动排到银行卡后面。</li>
-        <li><strong>余额不足时尝试主要付款方式。</strong>Apple 的官方规则要求余额能够覆盖完整金额；若不足，会尝试列表最上面的主要付款方式，并且不会提供手动拆分或选卡界面。</li>
-        <li><strong>主要方式拒付后顺序尝试其他方式。</strong>例如 PayPal 在第一位、Bitget 卡在第二位时，Apple 会先尝试 PayPal，失败后再尝试 Bitget 卡。</li>
-        <li><strong>全部失败后可能稍后重试。</strong>持续无法扣款可能形成未付余额，并阻止新的购买、下载或 App 更新，直到付款问题解决。</li>
-      </ol>
-
+      <h3>礼品卡渠道：费用和风控通常无法同时最优</h3>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>账户状态</th><th>预期扣款路径</th><th>注意事项</th></tr></thead>
+          <thead><tr><th>渠道</th><th>2026 年 7 月本人观察</th><th>当前判断</th></tr></thead>
           <tbody>
-            <tr><td>余额 30 USD，订阅最终金额 19.99 USD</td><td>通常使用 Apple Account 余额</td><td>该订阅必须支持余额支付</td></tr>
-            <tr><td>余额 10 USD，订阅最终金额 19.99 USD</td><td>尝试主要付款方式</td><td>不要预期出现“10 USD 余额 + 9.99 USD 银行卡”的选择项</td></tr>
-            <tr><td>余额 20 USD，标价 19.99 USD</td><td>取决于含税后的最终金额</td><td>账单地址产生销售税时，20 USD 可能不足</td></tr>
-            <tr><td>Claude 与 ChatGPT 临近时间续费</td><td>由 Apple 的实际处理顺序决定</td><td>多笔购买或订阅可能合并计费，不能指定每项使用不同付款方式</td></tr>
-            <tr><td>主要付款方式拒付</td><td>继续尝试列表中的下一项</td><td>顺序可调整，但账户余额仍固定优先</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <h3>怎样调整卡片与 PayPal 的优先级</h3>
-      <p>在 iPhone 上前往 <strong>设置 → 你的姓名 → 付款与配送 → 编辑</strong>，拖动付款方式重新排序。最上面的是主要付款方式。这个顺序作用于整个 Apple 账户，不能分别指定“ChatGPT 用 PayPal、Claude 用 Bitget 卡”。</p>
-      <div class="callout info">
-        <strong>让两个订阅都尽量走账户余额</strong>
-        在续费日前，让余额高于 Claude 与 ChatGPT 的预计合计费用，并额外预留销售税和可能的合并账单缓冲。Apple 也提示某些订阅可能不能使用账户余额，因此仍建议保留至少一种有效付款方式。
-      </div>
-    </section>
-
-    <section id="gift-cards">
-      <h2><span class="num">6</span>礼品卡渠道与 Google Pay</h2>
-      <p>这轮测试得到的实际结论是：<strong>不存在一个同时满足“接受 Bitget 卡、零附加费、稳定出售美区 Apple 礼品卡”的通用渠道。</strong>礼品卡本身利润薄、欺诈率高，手续费或严格风控往往不可避免。</p>
-
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>渠道</th><th>本次观察</th><th>判断</th></tr></thead>
-          <tbody>
-            <tr><td>Bitrefill</td><td>主要面向加密货币支付，使用卡片有约 1 美元额外成本</td><td><span class="risk mid">可用性优先</span> 不适合小额追求最低费</td></tr>
-            <tr><td>Dundle</td><td>显示约 1.99 美元附加费</td><td><span class="risk mid">费用偏高</span></td></tr>
-            <tr><td>Coinsbee</td><td>支持 Bitget Wallet 的展示更接近加密货币钱包支付；页面体验不佳</td><td><span class="risk unknown">需逐单确认</span></td></tr>
+            <tr><td>Bitrefill</td><td>加密支付为主；卡片路径有约 1 USD 额外成本</td><td><span class="risk mid">可用性优先</span></td></tr>
+            <tr><td>Dundle</td><td>显示约 1.99 USD 附加费</td><td><span class="risk mid">小额费用偏高</span></td></tr>
+            <tr><td>Coinsbee</td><td>Bitget Wallet 展示更接近加密钱包支付</td><td><span class="risk unknown">逐单核对</span></td></tr>
             <tr><td>DoctorSIM</td><td>显示 Service fee 2.04 USD，并要求 ZIP Code</td><td><span class="risk mid">小额不划算</span></td></tr>
-            <tr><td>Codashop US</td><td>Bitget 卡支付失败</td><td><span class="risk high">不再重试</span> 先确认 BIN、错误码和余额缓冲</td></tr>
+            <tr><td>Codashop US</td><td>Bitget 卡支付失败</td><td><span class="risk high">不连续重试</span></td></tr>
           </tbody>
         </table>
       </div>
-      <p style="color:var(--muted);font-size:.84rem;">以上费用和体验为 2026 年 7 月本次实际观察，不代表平台长期固定价格；下单前以结算页为准。</p>
-
-      <div class="callout warn">
-        <strong>ZIP Code 应该填什么？</strong>
-        应填写发卡资料中真实关联的账单邮编，而不是为了通过美国站验证随意找一个 ZIP Code。若 Bitget 卡没有美国账单地址或不是美国发行，填写美国 ZIP 也不会改变 BIN，反而可能造成资料不一致。
-      </div>
-
-      <p>使用 Google Pay 结账只是在商户支持时替代直接输入卡号。底层仍是同一张 Bitget 卡，BIN、可用余额、商户类别和发行方限制不会消失。因此，直接刷卡失败的礼品卡商户，不应期待换成 Google Pay 就一定成功。</p>
+      <p class="muted">渠道费用会变化；只从官方或可信授权渠道购买礼品卡。Google Pay / Apple Pay 只改变卡号呈现与验证方式，不改变底层卡发行地区、余额、商户类别和平台政策。</p>
     </section>
 
-    <section id="wise">
-      <h2><span class="num">7</span>PayPal 与 Wise：三条路径要分开</h2>
+    <section id="finance-routes">
+      <h2><span class="num">9</span>Wise 与 Neverless：卡消费、银行转账和链上转账要分开</h2>
+      <h3>Wise</h3>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>路径</th><th>可行性</th><th>风险判断</th></tr></thead>
+          <thead><tr><th>路径</th><th>公开规则 / 实践</th><th>建议</th></tr></thead>
           <tbody>
-            <tr><td>Bitget Card → PayPal / Wise 卡充值</td><td>可能在绑卡阶段通过，但实际扣款失败；Bitget 明确写明不支持 Wise</td><td><span class="risk high">不建议</span></td></tr>
-            <tr><td>Bitget 法币账户 → Wise 同名银行信息</td><td>部分 Bitget 用户可使用 USD SWIFT 提现，但 Wise 是否接受取决于实际汇款实体及其风险政策</td><td><span class="risk mid">先书面确认</span></td></tr>
-            <tr><td>Bitget P2P 买家 → Wise</td><td>Wise 明确不接受个人因 P2P 加密货币交易支付的款项</td><td><span class="risk high">避免</span></td></tr>
+            <tr><td>Bitget Card → Wise 卡充值</td><td>标准 Bitget Card 资料明确写 Wise 不支持；绑卡成功也不保证扣款</td><td><span class="risk high">不建议</span></td></tr>
+            <tr><td>Bitget 法币账户 → Wise 同名银行信息</td><td>Wise 仅在相关加密平台受英国 / 欧盟监管且符合其风险偏好时接受；是否接受由 Wise 决定</td><td><span class="risk mid">先提供精确法律实体，取得书面确认</span></td></tr>
+            <tr><td>Bitget P2P 买家 → Wise</td><td>第三方付款与 P2P 加密来源风险高</td><td><span class="risk high">避免</span></td></tr>
           </tbody>
         </table>
       </div>
-
-      <h3>为什么“同名”仍然不够</h3>
-      <p>同名只能帮助满足账户所有人匹配要求，不能改变资金来自加密货币平台这一事实。Wise 的公开政策要求相关平台在英国或欧盟受监管，并且仍由 Wise 自行判断是否符合风险偏好；它还明确列出部分大型平台的款项也无法接受。</p>
-
       <div class="callout danger">
-        <strong>不要通过备注、拆单或第三方中转隐藏资金来源</strong>
-        如果确实需要从 Bitget 法币提现到 Wise，应先向 Wise 提供 Bitget 提现确认页上显示的完整法律实体名称，取得书面确认，并保存交易、兑换、提现和资金来源记录。未确认前不要测试大额。
+        <strong>不要用备注、拆单或第三方中转隐藏资金来源</strong>
+        同名只能帮助满足账户所有人匹配，不能改变资金来源。保存交易、兑换、提现和资金来源记录，未获 Wise 书面确认前不测试大额。
       </div>
+      <pre class="template">Can my Wise personal account receive a USD/EUR bank transfer from [exact Bitget legal entity], if both accounts are in my legal name? Is that entity an accepted cryptocurrency platform for incoming transfers?</pre>
 
-      <p>可直接复制给 Wise 客服的问题：</p>
-      <p><code>Can my Wise personal account receive a USD/EUR bank transfer from [exact Bitget legal entity], if both accounts are in my legal name? Is that entity an accepted cryptocurrency platform for incoming transfers?</code></p>
-    </section>
-
-    <section id="neverless">
-      <h2><span class="num">8</span>Bitget Card 向 Neverless 入金</h2>
-      <p><strong>Bitget 卡不能像银行账户一样向 Neverless 发起银行转账。</strong>它只能在 Neverless 提供 Apple Pay / Google Pay 入金入口时，作为钱包中的底层支付卡尝试充值；另一条完全不同的路径，是从 Bitget 交易账户向 Neverless 进行 USDT / USDC 链上转账。</p>
-
+      <h3>Neverless</h3>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>路径</th><th>可行性</th><th>成本与风险</th></tr></thead>
+          <thead><tr><th>路径</th><th>可行性</th><th>边界</th></tr></thead>
           <tbody>
-            <tr><td>Bitget Card → Apple Pay / Google Pay → Neverless</td><td><span class="risk mid">可以小额尝试</span></td><td>Neverless 支持 EUR / USD 钱包入金，但金融或加密账户充值可能被 Bitget 发卡方风控拒绝</td></tr>
+            <tr><td>Bitget Card → Apple Pay / Google Pay → Neverless</td><td><span class="risk mid">只做本人小额测试</span></td><td>金融 / 投资账户入金可能被发卡方或平台拒绝；钱包不改变底层卡属性</td></tr>
             <tr><td>Bitget Card → Neverless 银行账户</td><td><span class="risk high">不能直接完成</span></td><td>支付卡没有 ACH、SEPA 或 SWIFT 汇款能力</td></tr>
-            <tr><td>Bitget USDT / USDC → Neverless 链上地址</td><td><span class="risk low">优先推荐</span></td><td>Neverless 端链上充值费为零；需承担 Bitget 提币费或网络费</td></tr>
-            <tr><td>Bitget 法币账户 → Neverless 银行转账</td><td><span class="risk mid">取决于账户通道</span></td><td>不是卡片功能；USD SWIFT 在 Neverless 端公开费用为 30 USD，小额通常不划算</td></tr>
+            <tr><td>Bitget USDT / USDC → Neverless 链上地址</td><td><span class="risk low">路径更直接</span></td><td>币种、网络、地址、最低金额和 Memo / Tag 必须完全一致；先小额</td></tr>
+            <tr><td>Bitget 法币账户 → Neverless 银行转账</td><td><span class="risk mid">取决于通道</span></td><td>这不是卡片功能；费用与双方合规审核可能不适合小额</td></tr>
           </tbody>
         </table>
       </div>
-
-      <h3>使用 Apple Pay / Google Pay 测试</h3>
-      <ol class="checklist">
-        <li><strong>确认 Neverless 当前向你的账户显示钱包入金。</strong>公开价格页支持 Apple Pay / Google Pay，但具体入口、币种和限额仍可能因国家、账户与合规状态而不同。</li>
-        <li><strong>确认 Bitget 卡确实已加入对应钱包。</strong>Google Pay 或 Apple Pay 只负责令牌化，不会改变卡片 BIN、发行地区或交易类别。</li>
-        <li><strong>留足授权余额。</strong>Bitget 可能临时冻结交易金额的 120%，因此卡片可用余额应至少覆盖充值金额的 120%，并额外考虑交易费和换汇波动。</li>
-        <li><strong>只做一笔 10–20 USD 的本人实名测试。</strong>Neverless 与 Bitget 的姓名和账户资料应一致；失败一次后先查两端记录，不要连续重复提交。</li>
-      </ol>
-
-      <div class="callout info">
-        <strong>Neverless 公布的钱包入金费用</strong>
-        Apple Pay / Google Pay 的前 3 笔、累计不超过 1,000 USD 目前显示为零平台费用，之后为 2.49%；发卡方仍可能另外收取换汇费用。具体费用以 Neverless App 最终确认页为准。
-      </div>
-
-      <h3>更推荐：USDT / USDC 链上转账</h3>
-      <ol class="checklist">
-        <li><strong>在 Neverless 打开 Deposit / Blockchain transfer。</strong>选择 USDT 或 USDC，并记录它明确支持的网络、充值地址、最低金额及 Memo / Tag 要求。</li>
-        <li><strong>在 Bitget 发起链上提现。</strong>币种和网络必须与 Neverless 完全一致；“都是 USDT”并不代表不同网络之间可以互转。</li>
-        <li><strong>先转最小可接受测试金额。</strong>核对地址首尾字符和网络后提交，并保存 TxID。</li>
-        <li><strong>测试到账后再转剩余金额。</strong>链上交易确认后通常不可撤销，地址或网络填错可能无法追回。</li>
-      </ol>
-
-      <div class="callout warn">
-        <strong>投资账户不等于银行存款</strong>
-        Neverless 的客户协议说明其并非吸收存款的银行机构，相关账户和投资存在市场、托管、第三方平台及合规审核风险。不要因为入金方便就把大额长期闲置资金集中存放在其中。
-      </div>
+      <p>Neverless 是投资 / 资产服务，不是传统存款银行。入金方便不等于本金、流动性、托管或平台风险等同银行存款。</p>
     </section>
 
     <section id="ledger">
-      <h2><span class="num">9</span>本次真实测试记录</h2>
+      <h2><span class="num">10</span>个人实测账本：只记录发生了什么</h2>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>测试</th><th>结果</th><th>可确认的结论</th></tr></thead>
+          <thead><tr><th>测试</th><th>结果</th><th>可确认的结论</th><th>待补证据</th></tr></thead>
           <tbody>
-            <tr><td>美区 Apple ID 绑定美区 PayPal</td><td><span class="state success">绑定成功</span> <span class="state failed">支付失败</span></td><td>付款方式保存成功与交易授权成功是两回事</td></tr>
-            <tr><td>Bitget 卡绑定 Apple</td><td><span class="state success">iCloud+ 成功</span> <span class="state failed">App Store 失败</span></td><td>不同 Apple 产品可能有不同的交易路径与风控结果</td></tr>
-            <tr><td>Bitget 卡添加到 Google Play 并订阅 Claude Pro</td><td><span class="state success">首次订阅成功</span></td><td>Google Play 应用内订阅在当前账户与卡片组合下流程顺利；自动续费仍待验证</td></tr>
-            <tr><td>美区 Apple 礼品卡 20 USD</td><td><span class="state pending">首日失败</span> <span class="state success">次日购入两款游戏</span></td><td>账户余额方案在该账号上已实测可行；存在同步或冷却时间</td></tr>
-            <tr><td>PayPal / Apple 官方购买礼品卡</td><td><span class="state failed">失败</span></td><td>Bitget 卡不适合作为该场景的稳定来源</td></tr>
-            <tr><td>Codashop US</td><td><span class="state failed">失败</span></td><td>优先排查美国发行卡要求、120% 余额缓冲和安全错误码</td></tr>
-            <tr><td>Wise</td><td><span class="state unknown">未作为推荐路线继续</span></td><td>官方规则与账户风险不支持把它当常规出金通道</td></tr>
+            <tr><td>美区 Apple ID 绑定美区 PayPal</td><td><span class="state success">绑定成功</span> <span class="state failed">支付失败</span></td><td>绑卡与扣款不同</td><td>失败时间、Apple 原始错误、PayPal 资金源状态</td></tr>
+            <tr><td>Bitget 卡绑定 Apple</td><td><span class="state success">iCloud+ 成功</span> <span class="state failed">App Store 失败</span></td><td>不同产品路径不同</td><td>交易描述、卡片版本、Bitget 授权记录</td></tr>
+            <tr><td>Bitget 卡 → Google Play → Claude Pro</td><td><span class="state success">首次扣款成功</span> <span class="state failed">随后账号被封</span></td><td>当前卡 + Play 账号组合通过初始付款；服务访问随后失败</td><td><code>GPA-…</code>、精确时间、封禁原文、Play / Bitget 最终状态</td></tr>
+            <tr><td>美区 Apple 礼品卡 20 USD</td><td><span class="state pending">首日失败</span> <span class="state success">次日购入两款游戏</span></td><td>余额路径在该账号最终可用</td><td>同步时间与订单状态</td></tr>
+            <tr><td>PayPal / Apple 官方渠道购买礼品卡</td><td><span class="state failed">失败</span></td><td>该组合不稳定</td><td>实际商户、错误与授权记录</td></tr>
+            <tr><td>Codashop US</td><td><span class="state failed">失败</span></td><td>美国发行卡要求、120% 余额和安全错误都需核对</td><td>错误码、BIN 国家、余额</td></tr>
+            <tr><td>Wise</td><td><span class="state unknown">未继续作为推荐路线</span></td><td>公开规则不支持把它当常规出金通道</td><td>若重启测试，先取得 Wise 书面确认</td></tr>
           </tbody>
         </table>
       </div>
-      <p>这张表只记录“发生了什么”，不声称知道平台内部风控的唯一原因。今后测试新商户时，也应按同样方式记录：日期、站点国家、金额、币种、余额、3DS、错误码、Bitget 是否出现授权记录，以及最终是否退款。</p>
+
+      <h3>每次新测试统一记录</h3>
+      <ul>
+        <li>日期时间、商户完整名称、站点国家、金额、币种、含税最终价；</li>
+        <li>卡片产品、扣款资产、可用余额、是否约 120% 授权、3DS / OTP；</li>
+        <li>平台订单号、卡号后四位、商户错误、Google / Apple / Bitget 原始状态；</li>
+        <li>是否得到服务、是否取消、退款申请与决定、实际入账日期和金额；</li>
+        <li>只记录可观察事实；“可能原因”必须标成 U，不覆盖原始结果。</li>
+      </ul>
     </section>
 
     <section id="routine">
-      <h2><span class="num">10</span>推荐的日常使用习惯</h2>
+      <h2><span class="num">11</span>推荐的日常使用纪律</h2>
       <ul>
-        <li>卡内只保留近期消费需要的小额稳定币，不把 Bitget Card 当储蓄账户。</li>
-        <li>给卡片设置合理限额和即时通知；不用时冻结，订阅扣款日前再确认余额。</li>
-        <li>首次测试新商户选择低金额真实消费，并确保余额覆盖至少 120% 授权。</li>
-        <li>始终使用真实姓名、居住地和账单资料；不伪造 ZIP Code，不把 VPN 当作支付地区证明。</li>
-        <li>拒付一次就先排查；不要连续换浏览器、换钱包、换地址重复轰炸同一交易。</li>
-        <li>保存链上充值 TxID、兑换记录、订单和退款凭证，便于解释资金来源或处理争议。</li>
-        <li>对礼品卡和金融入金接受一个现实：手续费往往是风险处理成本。为了省 1–2 美元承担关户或资金冻结风险并不划算。</li>
+        <li>卡内只保留近期消费需要的小额稳定币，不把 Bitget Card 当储蓄或银行账户。</li>
+        <li>给卡片设置合理限额和即时通知；不用时冻结，订阅日前确认余额与有效期。</li>
+        <li>新商户只做一笔低金额真实消费，确保余额覆盖 120% 授权、税费和汇率波动。</li>
+        <li>使用真实姓名、居住地、账单地址和服务地区；不伪造 ZIP Code，不用 VPN 充当居住证明。</li>
+        <li>支付被拒一次就停，先看商户 / Google / Apple / Bitget 哪一层留下记录，不做密集重试。</li>
+        <li>保存 TxID、换汇、订单、取消、退款和服务不可用证据；不要把不同客服工单写成相互替代。</li>
+        <li>账号被封后不要创建新账号绕过限制；先走申诉与退款路径，避免叠加平台滥用风险。</li>
+        <li>chargeback 是最后手段；先核对卡版本、争议时限、调查费和商户退款是否仍在处理中。</li>
       </ul>
-
       <div class="callout ok">
-        <strong>当前最佳组合</strong>
-        普通国际消费和已经验证成功的订阅使用 Bitget Card；美区 App Store 使用已验证可消费的 Apple Account 余额；Wise 使用本人名下传统银行账户转入。让每种工具做它最擅长的事，比强行打通所有资金路径更稳定。
+        <strong>当前组合建议</strong>
+        Bitget Card 继续用于已验证的普通国际消费；美区 App Store 继续使用已验证可消费的 Apple Account 余额；Wise 优先使用本人名下传统银行账户。Claude 在封禁原因、支持地区合规与本次退款解决前，不重新付费测试。
       </div>
     </section>
 
     <section id="sources">
-      <h2><span class="num">11</span>官方资料与核查入口</h2>
-      <ul class="source-list">
-        <li><a href="https://support.apple.com/en-us/118244" target="_blank" rel="noopener">Apple：How apps, content, and subscriptions are billed</a>：账户余额、主要付款方式、备用付款方式和重试顺序。</li>
-        <li><a href="https://support.apple.com/zh-cn/118429?device-type=iphone" target="_blank" rel="noopener">Apple：为 Apple 账户添加付款方式</a>：调整“付款与配送”列表的扣费顺序。</li>
-        <li><a href="https://neverless.com/en_EAA/pricing" target="_blank" rel="noopener">Neverless Pricing</a>：Apple Pay / Google Pay、银行转账及链上充值支持与费用。</li>
-        <li><a href="https://neverless.com/en_GB/legal/terms" target="_blank" rel="noopener">Neverless Client Agreement</a>：链上转账、资金机制、限制及账户风险说明。</li>
-        <li><a href="https://www.bitget.com/support/articles/12560603840909" target="_blank" rel="noopener">Bitget Card Eligibility and Application Process</a>：OTC 账户扣款、USDT、Google Pay 与 Wise 支持情况。</li>
-        <li><a href="https://www.bitget.com/support/articles/12560603820724" target="_blank" rel="noopener">Managing Your Bitget Card</a>：120% 授权冻结、拒付和退款说明。</li>
-        <li><a href="https://www.bitget.com/support/articles/12560603803519" target="_blank" rel="noopener">Bitget Card Fee Schedule and Spending Limit</a>：标准卡交易费、换汇费与限额。</li>
-        <li><a href="https://www.bitget.com/support/articles/12560603881035" target="_blank" rel="noopener">Bitget Card Transaction Safety (Asia Pacific)</a>：亚太卡 USDC 结算与常见拒付原因。</li>
-        <li><a href="https://www.bitget.com/zh-CN/support/articles/12560603843507" target="_blank" rel="noopener">Bitget USD SWIFT 充值与提现</a>：同名银行账户和可用范围。</li>
-        <li><a href="https://wise.com/help/articles/2932118/incompatible-accounts-and-payments/vZgTcR2W3y.woff2" target="_blank" rel="noopener">Wise：Incompatible accounts and payments</a>：加密货币平台入账条件。</li>
-        <li><a href="https://wise.com/uk/help/articles/2v3OMcg97Z7gObSifJbjsu/understanding-wises-position-on-cryptocurrency" target="_blank" rel="noopener">Wise 对加密货币的立场</a>：P2P 收款、拒付与关户风险。</li>
-        <li><a href="https://us.support.codashop.com/hc/en-us/articles/4405767317775-Error-704-While-Making-A-Purchase" target="_blank" rel="noopener">Codashop US：Error 704</a>：美国发行卡、ZIP Code、OTP 与多次尝试。</li>
-        <li><a href="https://us.support.codashop.com/hc/en-us/articles/10426270596751-Card-Payment-Error-Codes" target="_blank" rel="noopener">Codashop US：Card Payment Error Codes</a>：312、403、410、704、706、711、750、751。</li>
-      </ul>
-      <p style="color:var(--muted);font-size:.84rem;">产品、费率、可用国家和风控政策会变化。执行资金操作前，重新打开对应官方页面核对当日规则。本手册基于公开资料和个人测试整理，不构成金融、法律或税务建议。</p>
+      <h2><span class="num">12</span>资料索引与最后核验日期</h2>
+      <p>以下动态页面均于 <strong>2026-07-15</strong>重新核验。页面可能按语言、地区和登录状态展示不同内容；链接文字概括用途，不替代适用于本人账户的条款。</p>
+
+      <div class="source-group">
+        <h3><span class="evidence ev-a">A 条款 / 平台规则 / 监管</span></h3>
+        <ul class="source-list">
+          <li><a href="https://www.anthropic.com/legal/consumer-terms" target="_blank" rel="noopener">Anthropic Consumer Terms</a>：App Distributor 购买、取消、退款与终止规则。</li>
+          <li><a href="https://www.anthropic.com/legal/aup" target="_blank" rel="noopener">Anthropic Usage Policy</a>：平台滥用、绕过封禁、支持地区等约束。</li>
+          <li><a href="https://www.anthropic.com/supported-countries" target="_blank" rel="noopener">Anthropic Supported Countries &amp; Regions</a>：Claude.ai 当前可用地区。</li>
+          <li><a href="https://support.google.com/googleplay/answer/11174377?hl=zh-Hans" target="_blank" rel="noopener">Google Play 与备选结算系统</a>：Play Billing 的付款信息边界与退款责任。</li>
+          <li><a href="https://developers.google.com/android-publisher/api-ref/rest/v3/purchases.subscriptionsv2" target="_blank" rel="noopener">Google Play Android Publisher API：SubscriptionsV2</a>：开发者可获得的订单、订阅状态与地区代码字段。</li>
+          <li><a href="https://support.google.com/googleplay/answer/7431675?hl=zh-Hans" target="_blank" rel="noopener">更改 Google Play 国家 / 地区</a>：所在地区与当地付款方式要求。</li>
+          <li><a href="https://support.google.com/googleplay/answer/2651410?hl=zh-Hans" target="_blank" rel="noopener">Google Play 接受的付款方式</a>：卡组织、地区差异及 VCC 限制。</li>
+          <li><a href="https://www.bitget.com/support/articles/12560603881449" target="_blank" rel="noopener">Bitget Card APAC Cardholder Terms</a>：卡片为支付产品而非银行存款、争议和地区规则。</li>
+          <li><a href="https://eservices.mas.gov.sg/fid/institution/detail/216-DCS-CARD-CENTRE-PTE-LTD" target="_blank" rel="noopener">MAS：DCS Card Centre</a>：APAC 发卡机构监管登记。</li>
+        </ul>
+      </div>
+
+      <div class="source-group">
+        <h3><span class="evidence ev-b">B 官方帮助 / 产品资料</span></h3>
+        <ul class="source-list">
+          <li><a href="https://support.claude.com/en/articles/8241253-safeguards-warnings-and-appeals" target="_blank" rel="noopener">Claude：Safeguards warnings and appeals</a>：公开封禁原因与申诉入口。</li>
+          <li><a href="https://support.claude.com/en/articles/12386328-requesting-a-refund-for-a-paid-claude-plan" target="_blank" rel="noopener">Claude：Requesting a refund</a>：Android active / inactive 订阅、无法登录和争议中的退款。</li>
+          <li><a href="https://support.claude.com/en/articles/9015913-how-to-get-support" target="_blank" rel="noopener">Claude：How to get support</a>：<code>I can't login</code> 与订阅支持。</li>
+          <li><a href="https://support.claude.com/en/articles/8325617-cancel-your-pro-or-max-subscription" target="_blank" rel="noopener">Claude：取消 Pro / Max</a>：App 内订阅由对应商店管理。</li>
+          <li><a href="https://support.claude.com/en/articles/9402418-why-was-my-card-declined" target="_blank" rel="noopener">Claude：Why was my card declined?</a>：直接卡支付的地区、地址与 3DS 说明；不能直接套用为本次 Play Billing 封禁原因。</li>
+          <li><a href="https://support.google.com/googleplay/answer/15574908?hl=zh-Hans" target="_blank" rel="noopener">Google Play：应用与订阅退款政策</a>：48 小时内外的处理路径。</li>
+          <li><a href="https://support.google.com/googleplay/workflow/9813244?hl=zh-Hans" target="_blank" rel="noopener">Google Play：退款申请入口</a>。</li>
+          <li><a href="https://support.google.com/googleplay/answer/15576193?hl=zh-Hans" target="_blank" rel="noopener">Google Play：退款到账时间</a>：银行卡 3–5 个工作日、可能最长 10 个工作日。</li>
+          <li><a href="https://support.google.com/googleplay/answer/7018481?hl=zh-Hans" target="_blank" rel="noopener">Google Play：取消订阅</a>：取消不等于退款。</li>
+          <li><a href="https://support.google.com/paymentscenter/answer/7644078?hl=zh-Hans" target="_blank" rel="noopener">Google Payments：身份与付款信息验证</a>。</li>
+          <li><a href="https://www.bitget.com/support/articles/12560603840909" target="_blank" rel="noopener">Bitget 标准卡申请与使用</a>：USDT、OTC、Google Pay、Wise 限制。</li>
+          <li><a href="https://www.bitget.com/support/articles/12560603803519" target="_blank" rel="noopener">Bitget 标准卡费率</a>：0.9%、FX、120% 授权与 50 USDT 调查费。</li>
+          <li><a href="https://www.bitget.com/support/articles/12560603820724" target="_blank" rel="noopener">Bitget 标准卡管理</a>：退款回 USDT、最长 14 个工作日。</li>
+          <li><a href="https://www.bitget.com/support/articles/12560603881031" target="_blank" rel="noopener">Bitget APAC 卡介绍</a>：USDC、Visa、Apple Pay / Google Pay。</li>
+          <li><a href="https://www.bitget.com/support/articles/12560603881034" target="_blank" rel="noopener">Bitget APAC 卡管理</a>：120% 授权、退款和冻结。</li>
+          <li><a href="https://www.bitget.com/support/articles/12560603881035" target="_blank" rel="noopener">Bitget APAC Transaction Safety</a>：pending、退款和常见拒付。</li>
+          <li><a href="https://www.bitget.com/support/articles/12560603881036" target="_blank" rel="noopener">Bitget APAC 费率与限额</a>：0.9%、FX 与 35 USDC 争议费。</li>
+          <li><a href="https://www.bitget.com/en-CA/support/articles/12560603881039" target="_blank" rel="noopener">Bitget APAC Chargeback and Dispute</a>：90 天、材料、费用与初次回复时间。</li>
+          <li><a href="https://support.apple.com/en-us/118244" target="_blank" rel="noopener">Apple：How apps, content, and subscriptions are billed</a>：余额与付款方式顺序。</li>
+          <li><a href="https://wise.com/help/articles/2932118/incompatible-accounts-and-payments" target="_blank" rel="noopener">Wise：Incompatible accounts and payments</a>：加密平台入账条件。</li>
+          <li><a href="https://neverless.com/en_EAA/pricing" target="_blank" rel="noopener">Neverless Pricing</a> 与 <a href="https://neverless.com/en_GB/legal/terms" target="_blank" rel="noopener">Client Agreement</a>：钱包、银行 / 链上入金与账户风险。</li>
+          <li><a href="https://us.support.codashop.com/hc/en-us/articles/4405767317775-Error-704-While-Making-A-Purchase" target="_blank" rel="noopener">Codashop US Error 704</a> 与 <a href="https://us.support.codashop.com/hc/en-us/articles/10426270596751-Card-Payment-Error-Codes" target="_blank" rel="noopener">错误码表</a>。</li>
+        </ul>
+      </div>
+
+      <div class="source-group">
+        <h3><span class="evidence ev-c">C 公开报道 / 社区经验</span></h3>
+        <ul class="source-list">
+          <li><a href="https://support.google.com/googleplay/thread/436745664/my-claude-pro-subscription-became-unusable-shortly-after-purchase?hl=en" target="_blank" rel="noopener">Google Play Community：购买后 Claude 账号被停用的相似报告</a>。它说明并非只有一个公开案例，但退款被拒等结果仅属于发帖者个案。</li>
+          <li><a href="https://www.forbes.com/sites/digital-assets/2026/04/11/suspicious-signals-why-ais-debanking-problem-should-worry-you/" target="_blank" rel="noopener">Forbes：付费 Claude 用户封禁与申诉透明度报道</a>。媒体综述不是封禁原因证明。</li>
+          <li><a href="https://www.reddit.com/r/claude/comments/1t9gweq/my_account_was_banned_2_hours_after_purchasing_pro/" target="_blank" rel="noopener">Reddit：购买 Pro 后不久被封的社区报告</a>。只作公开经验样本，不纳入因果判断。</li>
+        </ul>
+      </div>
+
+      <p class="muted">产品、费率、支持地区和风控政策都会变化。执行资金操作前重新打开适用页面；本手册是个人实测与公开资料的证据化整理，不构成金融、法律、税务或平台合规意见。</p>
     </section>
 
     <footer>
-      <p>Digital Nomad Guide · Bitget Card 使用手册 · 2026</p>
+      <p>Digital Nomad Guide · Bitget Card 使用与争议手册 · 2026</p>
     </footer>
   </main>
 </body>
