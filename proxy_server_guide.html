@@ -400,6 +400,9 @@
     color: var(--text-dim);
     font-size: 0.8rem;
   }
+  .doc-link { color: var(--accent); }
+  .callout-list { margin: 0.5rem 0 0 1rem; }
+  .footer-note { font-size: 0.8rem; }
 
   /* Responsive */
   @media (max-width: 640px) {
@@ -420,10 +423,11 @@
 <!-- Hero -->
 <header class="hero">
   <h1>代理服务器搭建与运维指南</h1>
-  <p class="subtitle">AWS Lightsail + Xray VLESS-XHTTP-Reality + Cloudflare WARP，从零搭建到日常维护</p>
+  <p class="subtitle">AWS Lightsail + Xray Reality 主入口 + Shadowsocks 链式备用入口 + Cloudflare WARP</p>
   <div class="tags">
     <span class="tag">AWS Lightsail</span>
     <span class="tag">Xray VLESS-XHTTP-Reality</span>
+    <span class="tag">Shadowsocks 2022 链式备用</span>
     <span class="tag">Cloudflare WARP</span>
     <span class="tag">住宅 IP</span>
     <span class="tag">V2rayN / V2rayNG</span>
@@ -439,6 +443,7 @@
     <li><a href="#xray">Xray VLESS-XHTTP-Reality 搭建（一键脚本）</a></li>
     <li><a href="#warp">Cloudflare WARP 出口配置</a></li>
     <li><a href="#routing">Xray 分流路由配置</a></li>
+    <li><a href="#ss-chain">Oregon Shadowsocks 链式备用入口</a></li>
     <li><a href="#client">本地客户端配置（V2rayN / V2rayNG）</a></li>
     <li><a href="#residential">住宅 IP 代理方案（可选）</a></li>
     <li><a href="#security">安全与风控注意事项</a></li>
@@ -451,7 +456,9 @@
 
   <div class="arch-diagram"><span class="node">本地客户端</span>  <span class="label">(V2rayN macOS / V2rayNG Android)</span>
     <span class="arrow">│</span>
-    <span class="arrow">│</span>  <span class="label">VLESS-XHTTP-Reality (HTTP 伪装，抗 DPI)</span>
+    <span class="arrow">├──</span> 直连主入口：<span class="label">VLESS-XHTTP-Reality / TCP 443（抗 DPI）</span>
+    <span class="arrow">│</span>
+    <span class="arrow">└──</span> 链式备用：<span class="label">香港机场前置 → SS2022 / TCP 18443</span>
     <span class="arrow">▼</span>
 <span class="node">AWS Lightsail</span>  <span class="label">($5/月, Ubuntu 24.04)</span>
     <span class="arrow">│</span>
@@ -468,7 +475,7 @@
   <h3>为什么选这个架构</h3>
   <table>
     <tr><th>维度</th><th>说明</th></tr>
-    <tr><td>协议层</td><td>VLESS-XHTTP-Reality 无需域名和 TLS 证书，流量特征类似普通 HTTPS 网页请求，抗 DPI 能力强</td></tr>
+    <tr><td>协议层</td><td>VLESS-XHTTP-Reality / 443 始终是抗 DPI 主入口；SS2022 / 18443 仅在本地直连 Oregon 不稳定时，作为香港前置后的链式备用入口</td></tr>
     <tr><td>出口层</td><td>WARP 将 Claude/OpenAI 流量从 AWS IP 转为 Cloudflare IP，降低风控风险</td></tr>
     <tr><td>成本</td><td>Lightsail $5/月 + WARP 免费 = <strong>$5/月</strong></td></tr>
     <tr><td>IP 信誉</td><td>Cloudflare 承载数千万正常用户，IP 信誉远优于 AWS 数据中心段</td></tr>
@@ -565,16 +572,19 @@
   </div>
 
   <h3>配置防火墙</h3>
-  <p>路径：Instances → 实例 → Networking → IPv4 Firewall。<strong>新实例默认只开 22 和 80，443 必须手动添加，否则客户端连不上 Xray。</strong></p>
+  <p>路径：Instances → 实例 → Networking → IPv4 Firewall。<strong>新实例默认只开 22 和 80，443 必须手动添加，否则客户端连不上 Reality 主入口。</strong>只有启用第 6 章的链式备用入口时，才额外开放 18443。</p>
   <pre><code><span class="comment"># 保留</span>
 SSH     TCP   22    <span class="cmd">✓</span>
 
 <span class="comment"># 删除（不需要）</span>
 HTTP    TCP   80    <span class="red">✗</span>
 
-<span class="comment"># 添加（Xray 端口，必须手动添加！）</span>
-Custom  TCP   443   <span class="cmd">✓</span></code></pre>
-  <p>同时检查下方的 <strong>IPv6 Firewall</strong>，也添加 <code>Custom TCP 443</code> 规则（如果选了 Dual-stack）。</p>
+<span class="comment"># 添加（Reality 主入口，必须手动添加）</span>
+Custom  TCP   443   <span class="cmd">✓</span>
+
+<span class="comment"># 可选：仅启用 SS2022 链式备用入口时添加；来源范围按第 6 章设置</span>
+Custom  TCP   18443 <span class="cmd">✓</span></code></pre>
+  <p>如果选了 Dual-stack，同时检查下方的 <strong>IPv6 Firewall</strong>：主入口添加 <code>Custom TCP 443</code>；确实需要通过 IPv6 访问链式入口时再添加 <code>Custom TCP 18443</code>。</p>
 
   <h3>SSH 连接</h3>
   <pre><code><span class="comment"># 设置私钥权限</span>
@@ -875,17 +885,198 @@ Custom  TCP   443   <span class="cmd">✓</span></code></pre>
   <p>脚本已部署到两台服务器：</p>
   <table>
     <tr><th>服务器</th><th>路径</th><th>当前状态</th></tr>
-    <tr><td>Oregon（44.236.112.113）</td><td><code>/usr/local/bin/toggle-google-warp.sh</code></td><td><span class="badge yellow">已部署，未开启</span></td></tr>
-    <tr><td>Tokyo（35.76.19.109）</td><td><code>/usr/local/bin/toggle-google-warp.sh</code></td><td><span class="badge yellow">已部署，未开启</span></td></tr>
+    <tr><td>Oregon（<code>&lt;OREGON_SERVER_IP&gt;</code>）</td><td><code>/usr/local/bin/toggle-google-warp.sh</code></td><td><span class="badge yellow">已部署，未开启</span></td></tr>
+    <tr><td>Tokyo（<code>&lt;TOKYO_SERVER_IP&gt;</code>）</td><td><code>/usr/local/bin/toggle-google-warp.sh</code></td><td><span class="badge yellow">已部署，未开启</span></td></tr>
   </table>
 </section>
 
 
-<!-- 5.5 Client Config -->
+<!-- 6. Optional Shadowsocks Chain Inbound -->
+<section id="ss-chain">
+  <h2><span class="num">6</span> Oregon Shadowsocks 链式备用入口（可选）</h2>
+
+  <p>当中国移动宽带或蜂窝网络直连 Oregon 不稳定时，可以保留 <strong>VLESS + XHTTP + Reality / TCP 443</strong> 主入口，同时在同一台 Oregon Xray 上增加 <strong>Shadowsocks 2022 / TCP 18443</strong> 入站，专供香港机场前置后的第二跳使用。Android 端完整配置见 <a class="doc-link" href="v2ray_proxy_guide.html#android-chain">V2rayNG 链式代理章节</a>。</p>
+
+  <div class="arch-diagram"><span class="node">中国本地网络</span>
+    <span class="arrow">│</span>
+    <span class="arrow">▼</span>
+<span class="node">香港机场前置</span>  <span class="label">（外层协议由机场节点决定）</span>
+    <span class="arrow">│</span>
+    <span class="arrow">│</span>  <span class="label">连接 &lt;OREGON_SERVER_IP&gt;:18443，内层为 SS2022</span>
+    <span class="arrow">▼</span>
+<span class="node">Oregon Xray / ss-chain</span>
+    <span class="arrow">│</span>
+    <span class="arrow">├──</span> 普通网站 ──→ <span class="node">direct</span>
+    <span class="arrow">│</span>
+    <span class="arrow">└──</span> Claude / Anthropic ──→ <span class="node">WARP</span>
+    <span class="arrow">▼</span>
+<span class="node">目标站点</span></div>
+
+  <div class="callout warn">
+    <div class="callout-title">兼容性备用，不替代 Reality 主入口</div>
+    <p>实际使用的 Xray <code>26.3.27</code> 已对 Shadowsocks 输出 <code>deprecated</code> 警告。当前 18443 入口虽已验证可用，但这表示协议存在后续移除或兼容性变化风险。因此它只定位为客户端支持较好的<strong>链式备用入口</strong>；443 Reality 主入口必须保留，升级 Xray 后也要重新做配置测试和端到端验证。</p>
+  </div>
+
+  <h3>加密边界</h3>
+  <table>
+    <tbody>
+    <tr><th>链路部分</th><th>能确认什么</th><th>不能误解成什么</th></tr>
+    <tr><td>机场的长入口域名</td><td>用于寻址、调度或智能入口选择</td><td>域名本身不是“加密协议”，长度也不代表加密强度</td></tr>
+    <tr><td>本地 → 香港前置</td><td>是否加密、如何伪装取决于机场节点实际使用的协议</td><td>不能只凭入口域名推断 TLS、Reality、Trojan 或其他协议</td></tr>
+    <tr><td>客户端 → Oregon SS2022</td><td><code>2022-blake3-aes-128-gcm</code> 使用预共享密钥加密内层负载</td><td>它不会隐藏 Oregon IP、18443 端口、连接时序或流量大小</td></tr>
+    <tr><td>香港前置可见范围</td><td>可以看到 Oregon 地址、端口和流量特征</td><td>在终端与密钥未失陷、实现正常的前提下，不能读取 SS2022 明文</td></tr>
+    </tbody>
+  </table>
+
+  <h3>部署前备份</h3>
+  <pre><code><span class="comment"># 为本次变更创建带时间戳的备份；备份同样含已有 Reality 凭据，禁止上传</span>
+STAMP="$(date +%Y%m%d-%H%M%S)"
+BACKUP="/usr/local/etc/xray/config.json.bak-ss-chain-${STAMP}"
+<span class="cmd">sudo cp</span> -a /usr/local/etc/xray/config.json "$BACKUP"
+<span class="cmd">sudo chmod</span> 600 "$BACKUP"
+<span class="cmd">printf</span> 'Backup: %s\n' "$BACKUP"</code></pre>
+
+  <div class="callout danger">
+    <div class="callout-title">凭据只在本机生成和保存</div>
+    <p>SS2022 AES-128 使用 16 字节预共享密钥。可在受信任终端运行 <code>openssl rand -base64 16</code>，立即存入密码管理器；不要把输出粘贴到文档、聊天、截图、Git、订阅示例或工单中。本文统一使用 <code>&lt;SS2022_16_BYTE_BASE64_KEY&gt;</code> 占位。</p>
+  </div>
+
+  <h3>添加 <code>ss-chain</code> 入站</h3>
+  <p>用 <code>sudoedit /usr/local/etc/xray/config.json</code> 编辑现有配置，在 <code>inbounds</code> 数组中追加下面的对象；把密码占位符替换为刚生成的密钥。不要删除原有 443 Reality 入站，也不要复制真实 Reality 参数到本文。</p>
+
+  <pre><code>{
+  <span class="key">"listen"</span>: <span class="str">"0.0.0.0"</span>,
+  <span class="key">"port"</span>: <span class="flag">18443</span>,
+  <span class="key">"protocol"</span>: <span class="str">"shadowsocks"</span>,
+  <span class="key">"settings"</span>: {
+    <span class="key">"network"</span>: <span class="str">"tcp"</span>,
+    <span class="key">"method"</span>: <span class="str">"2022-blake3-aes-128-gcm"</span>,
+    <span class="key">"password"</span>: <span class="str">"&lt;SS2022_16_BYTE_BASE64_KEY&gt;"</span>
+  },
+  <span class="key">"sniffing"</span>: {
+    <span class="key">"enabled"</span>: <span class="cmd">true</span>,
+    <span class="key">"destOverride"</span>: [<span class="str">"http"</span>, <span class="str">"tls"</span>]
+  },
+  <span class="key">"tag"</span>: <span class="str">"ss-chain"</span>
+}</code></pre>
+
+  <p><code>sniffing</code> 让既有 <code>ai-services</code> 域名规则继续识别 Claude / Anthropic 流量；SS 入站与 443 Reality 入站共用第 5 章的 <code>direct</code>、<code>warp</code> 和路由规则，不需要复制第二套出站配置。为保留来源证据，在现有 <code>log</code> 对象中确认或补充 <code>"access": "/var/log/xray/access.log"</code>，并把 <code>"loglevel"</code> 设为 <code>"info"</code>（或更详细的 <code>"debug"</code>）。如果不设置 <code>access</code> 路径，访问日志可能只进入服务标准输出；设为 <code>none</code> 则会关闭访问日志，后面的文件验证将无日志可读。字段语义见 <a class="doc-link" href="https://xtls.github.io/en/config/log.html">Xray 日志官方文档</a>。</p>
+  <p>字段与 16 字节密钥长度可对照 <a class="doc-link" href="https://xtls.github.io/en/config/inbounds/shadowsocks.html">Xray Shadowsocks inbound 官方文档</a>。</p>
+
+  <h3>配置校验与重启</h3>
+  <p>下面是一段 fail-closed 部署检查：把 <code>&lt;BACKUP_FILE_FROM_DEPLOYMENT_STEP&gt;</code> 换成上一步实际打印的备份路径后整体执行。任何语法、字段、密钥、二进制或端口预检失败都会在重启前退出，当前运行中的 443 主入口不受影响；只有全部预检通过才会重启。</p>
+  <pre><code><span class="cmd">set</span> -euo pipefail
+CONFIG="/usr/local/etc/xray/config.json"
+BACKUP="&lt;BACKUP_FILE_FROM_DEPLOYMENT_STEP&gt;"
+<span class="cmd">sudo test</span> -r "$BACKUP"
+
+<span class="comment"># 1. JSON 语法与关键字段（不会打印密码）</span>
+<span class="cmd">sudo jq</span> empty "$CONFIG"
+<span class="cmd">sudo jq</span> -e '
+  ([.inbounds[] | select(.tag == "ss-chain")] | length) == 1 and
+  any(.inbounds[];
+    .tag == "ss-chain" and .port == 18443 and .protocol == "shadowsocks" and
+    .settings.method == "2022-blake3-aes-128-gcm" and .settings.network == "tcp") and
+  .log.access == "/var/log/xray/access.log" and
+  (.log.loglevel == "info" or .log.loglevel == "debug")
+' "$CONFIG" &gt;/dev/null
+
+<span class="comment"># 2. 密钥必须能解码成 16 字节；pipefail 防止解码错误被 wc 掩盖</span>
+KEY_BYTES="$(<span class="cmd">sudo jq</span> -r '.inbounds[] | select(.tag=="ss-chain") | .settings.password' \
+  "$CONFIG" | <span class="cmd">base64</span> -d | <span class="cmd">wc</span> -c | <span class="cmd">tr</span> -d '[:space:]')"
+<span class="cmd">test</span> "$KEY_BYTES" -eq 16
+
+<span class="comment"># 3. 确认二进制存在，并排除其他程序占用 18443</span>
+XRAY_BIN="$(command -v xray || true)"
+<span class="cmd">test</span> -n "$XRAY_BIN"
+<span class="cmd">if</span> <span class="cmd">sudo ss</span> -ltnp 'sport = :18443' | <span class="cmd">grep</span> -q LISTEN &amp;&amp; \
+   ! <span class="cmd">sudo ss</span> -ltnp 'sport = :18443' | <span class="cmd">grep</span> -q xray; <span class="cmd">then</span>
+  <span class="cmd">echo</span> 'TCP 18443 is already used by another process' &gt;&amp;2
+  <span class="cmd">exit</span> 1
+<span class="cmd">fi</span>
+<span class="cmd">sudo</span> "$XRAY_BIN" run -test -config "$CONFIG"
+
+<span class="comment"># 4. 只有前三项都通过才重启；失败或监听检查异常时自动恢复本次备份</span>
+<span class="cmd">if</span> ! <span class="cmd">sudo systemctl</span> restart xray || \
+   ! <span class="cmd">sudo systemctl</span> is-active --quiet xray || \
+   ! <span class="cmd">sudo ss</span> -ltnp | <span class="cmd">grep</span> -q ':443 ' || \
+   ! <span class="cmd">sudo ss</span> -ltnp | <span class="cmd">grep</span> -q ':18443 '; <span class="cmd">then</span>
+  <span class="cmd">echo</span> 'Deployment failed; restoring the recorded backup' &gt;&amp;2
+  <span class="cmd">sudo cp</span> -a "$BACKUP" "$CONFIG"
+  <span class="cmd">sudo</span> "$XRAY_BIN" run -test -config "$CONFIG"
+  <span class="cmd">sudo systemctl</span> restart xray
+  <span class="cmd">exit</span> 1
+<span class="cmd">fi</span>
+<span class="cmd">sudo systemctl</span> --no-pager --full status xray
+<span class="cmd">sudo ss</span> -ltnp | <span class="cmd">grep</span> -E ':443 |:18443 '</code></pre>
+
+  <h3>Lightsail 防火墙</h3>
+  <ol class="steps">
+    <li>进入 <strong>Lightsail → Instances → Oregon 实例 → Networking → IPv4 Firewall</strong>。</li>
+    <li>新增 <strong>Custom / TCP / 18443</strong>；443 规则保持不变，不要把主入口改到 18443。</li>
+    <li>如果香港前置的实际出口 IP 固定，可在<strong>同一条 18443 规则</strong>上启用来源限制并填写 <code>&lt;HK_FRONT_EGRESS_IP&gt;/32</code>。如果之前已建 allow-all 规则，应编辑或删除它，不能同时保留 allow-all 与 <code>/32</code> 两条规则，否则较宽的规则会使限制失效。操作方式可对照 <a class="doc-link" href="https://docs.aws.amazon.com/lightsail/latest/userguide/understanding-firewall-and-port-mappings-in-amazon-lightsail.html">Lightsail 防火墙官方说明</a>。</li>
+    <li>智能入口或 IEPL 的 NAT 出口可能变化，限制来源前先以服务端日志确认，否则会误封。</li>
+    <li>只在确实使用 IPv6 链式连接时同步开放 IPv6 TCP 18443。</li>
+  </ol>
+
+  <h3>验证链路与出口</h3>
+  <pre><code><span class="comment"># Android 发起请求时，在 Oregon 观察 ss-chain 入站；示例值全部脱敏</span>
+<span class="cmd">sudo tail</span> -f /var/log/xray/access.log | grep 'ss-chain'
+
+<span class="comment"># 预期形态（不要把真实日志提交到仓库）</span>
+&lt;TIMESTAMP&gt; from &lt;HK_FRONT_EGRESS_IP&gt;:&lt;SOURCE_PORT&gt; accepted ... [ss-chain -&gt; direct]
+&lt;TIMESTAMP&gt; from &lt;HK_FRONT_EGRESS_IP&gt;:&lt;SOURCE_PORT&gt; accepted ... [ss-chain -&gt; warp]</code></pre>
+
+  <table>
+    <tbody>
+    <tr><th>证据</th><th>证明力</th></tr>
+    <tr><td>普通网站检测到的公网 IP 与 <code>&lt;OREGON_SERVER_IP&gt;</code> 完全一致（或与独立确认的 Oregon <code>direct</code> NAT 出口一致），Claude / Anthropic 显示 WARP 出口</td><td>证明 Oregon 服务端的 direct/WARP 出站符合预期；<strong>不能单独证明经过香港前置</strong></td></tr>
+    <tr><td>v2rayNG 生成配置中 Oregon outbound 的 <code>dialerProxy</code> 引用香港 outbound</td><td>证明客户端生成了链式拨号意图，但仍属于配置证据</td></tr>
+    <tr><td>Oregon 日志中 <code>ss-chain</code> 的来源是前置中转网络</td><td><strong>前置实际生效的关键运行证据</strong>；建议记录时间窗口并做关闭/开启前置的 A/B 对照</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout info">
+    <div class="callout-title">不要只靠 IP 地理库判断“是不是香港”</div>
+    <p>智能入口或 IEPL 的入口 DNS、节点物理位置、连接 Oregon 时使用的出口 NAT IP 可能分别属于不同网络。服务端看到的来源未必被 GeoIP 标成香港；应结合 <code>dialerProxy</code>、同一时间窗口的 <code>ss-chain</code> 日志和前置开关 A/B 对照判断。同理，IP 检测页如果只显示“美国”或“Oregon”地区标签，只能说明地理库对出口的分类，不能证明它就是这台 Oregon 服务器。</p>
+  </div>
+
+  <div class="callout success">
+    <div class="callout-title">已完成的实测闭环</div>
+    <ul class="callout-list">
+      <li>Oregon SS2022 / TCP 18443 可以连接；</li>
+      <li>普通网站从 Oregon <code>direct</code> 出站；</li>
+      <li>Claude / Anthropic 命中服务端 WARP 分流；</li>
+      <li>v2rayNG 使用香港前置后，页面访问和美国出口正常；</li>
+      <li>Oregon 日志确认请求来自前置网络并进入 <code>ss-chain</code>。</li>
+    </ul>
+  </div>
+
+  <h3>回滚</h3>
+  <pre><code><span class="comment"># 使用部署前记录的实际备份路径；不要原样使用占位符</span>
+BACKUP="&lt;BACKUP_FILE_FROM_DEPLOYMENT_STEP&gt;"
+<span class="cmd">sudo cp</span> -a "$BACKUP" /usr/local/etc/xray/config.json
+
+XRAY_BIN="$(command -v xray)"
+<span class="cmd">sudo</span> "$XRAY_BIN" run -test -config /usr/local/etc/xray/config.json
+<span class="cmd">sudo systemctl</span> restart xray
+<span class="cmd">sudo systemctl</span> --no-pager --full status xray
+
+<span class="comment"># 最后在 Lightsail 控制台删除 Custom TCP 18443 规则</span></code></pre>
+  <p>回滚后确认 443 Reality 仍监听并可连接，再删除包含旧凭据的临时副本。带凭据的正式备份应保持 <code>600</code> 权限、只存于服务器，不上传 Git 或云盘。</p>
+</section>
+
+
+<!-- 7. Client Config -->
 <section id="client">
-  <h2><span class="num">6</span> 本地客户端配置（V2rayN / V2rayNG）</h2>
+  <h2><span class="num">7</span> 本地客户端配置（V2rayN / V2rayNG）</h2>
 
   <p>服务端搭好后，本地需要安装代理客户端连接。macOS 使用 <strong>V2rayN</strong>，Android 使用 <strong>V2rayNG</strong>，底层都是 Xray-core 内核，原生支持 XHTTP Reality 协议。</p>
+
+  <div class="callout info">
+    <div class="callout-title">Android 链式配置已拆到客户端机制文档</div>
+    <p>本章保留 Reality 直连的通用安装和排障；香港机场前置 → Oregon SS2022 的 <code>dialerProxy</code>、加密边界和证据判断见 <a class="doc-link" href="v2ray_proxy_guide.html#android-chain">V2rayNG Android 链式代理</a>。</p>
+  </div>
 
   <h3>安装客户端</h3>
   <table>
@@ -931,9 +1122,9 @@ Custom  TCP   443   <span class="cmd">✓</span></code></pre>
   <h3>连接不通排查</h3>
   <table>
     <tr><th>检查项</th><th>命令 / 操作</th><th>说明</th></tr>
-    <tr><td><strong>1. Lightsail 防火墙</strong></td><td>控制台 → 实例 → Networking → IPv4 Firewall</td><td>必须有 <code>Custom TCP 443</code> 规则。新建实例默认只开 22 和 80，<strong>443 需要手动添加</strong></td></tr>
+    <tr><td><strong>1. Lightsail 防火墙</strong></td><td>控制台 → 实例 → Networking → IPv4 Firewall</td><td>Reality 主入口必须有 <code>Custom TCP 443</code>；启用链式备用时还要有 <code>Custom TCP 18443</code></td></tr>
     <tr><td>2. Xray 是否运行</td><td><code>sudo systemctl status xray</code></td><td>确认 Active: active (running)</td></tr>
-    <tr><td>3. 端口是否监听</td><td><code>sudo ss -tlnp | grep 443</code></td><td>应显示 xray 在 443 端口监听</td></tr>
+    <tr><td>3. 端口是否监听</td><td><code>sudo ss -tlnp | grep -E ':443 |:18443 '</code></td><td>443 必须监听；启用 SS 链式备用时 18443 也必须监听</td></tr>
     <tr><td>4. 服务端日志</td><td><code>sudo tail -30 /var/log/xray/error.log</code></td><td>检查是否有连接记录或错误</td></tr>
     <tr><td>5. WARP 状态</td><td><code>warp-cli --accept-tos status</code></td><td>应显示 Connected, healthy</td></tr>
   </table>
@@ -990,7 +1181,7 @@ Custom  TCP   443   <span class="cmd">✓</span></code></pre>
 
   <div class="callout info">
     <div class="callout-title">为什么服务端不用改任何配置</div>
-    Xray 监听的是 <code>0.0.0.0:443</code>（所有网卡），配置文件中不含服务器自身公网 IP。换 IP 后 Xray、WARP、分流路由全部自动生效，只需更新客户端的连接地址。
+    Xray 主入口监听 <code>0.0.0.0:443</code>；启用链式备用时还监听 <code>0.0.0.0:18443</code>。配置文件中不含服务器自身公网 IP。换 IP 后 Xray、WARP、分流路由全部自动生效，但 Reality 和 SS2022 两个客户端节点的 Oregon 地址都要同步更新。
   </div>
 
   <div class="callout warn">
@@ -1005,9 +1196,9 @@ Custom  TCP   443   <span class="cmd">✓</span></code></pre>
 </section>
 
 
-<!-- 9. Residential IP -->
+<!-- 8. Residential IP -->
 <section id="residential">
-  <h2><span class="num">7</span> 住宅 IP 代理方案（可选）</h2>
+  <h2><span class="num">8</span> 住宅 IP 代理方案（可选）</h2>
 
   <h3>什么时候需要住宅 IP</h3>
   <p>当 WARP 出口仍被 Claude 风控时才需要。WARP 本质还是 Cloudflare 数据中心 IP（AS 13335），如果被标记，需要叠加一层<strong>真实住宅 IP</strong> 作为最终出口。住宅 IP 来自美国家庭宽带运营商（Comcast、AT&T、Verizon 等），平台几乎无法将其与正常美国用户区分。</p>
@@ -1138,16 +1329,16 @@ Custom  TCP   443   <span class="cmd">✓</span></code></pre>
 </section>
 
 
-<!-- 10. Security -->
+<!-- 9. Security -->
 <section id="security">
-  <h2><span class="num">8</span> 安全与风控注意事项</h2>
+  <h2><span class="num">9</span> 安全与风控注意事项</h2>
 
   <h3>服务器安全</h3>
   <ul>
     <li>SSH 私钥本地加密保存，不传到任何云服务</li>
     <li>系统安装后立即 <code>sudo apt update && sudo apt upgrade</code></li>
     <li>建议创建非 root 用户，禁用密码登录，仅密钥认证</li>
-    <li>防火墙最小化：只开 22（SSH）+ 443（Xray）</li>
+    <li>防火墙最小化：默认只开 22（SSH）+ 443（Reality）；仅在使用链式备用时开放 18443，并在可行时限制前置出口来源</li>
     <li>SSH 考虑换端口或限制来源 IP</li>
   </ul>
 
@@ -1349,7 +1540,8 @@ echo <span class="str">"[$(date)] OK: geoip=${geoip_size} geosite=${geosite_size
 
 <footer>
   <p>整理于 2026 年 6 月 · 仅供个人学习与技术参考</p>
-  <p style="font-size:0.8rem;">本文档从 <a href="ai_subscription_guide.html" style="color:var(--accent);">海外 AI 服务订阅指南</a> 拆分而来，订阅/支付/eSIM 相关内容请参阅原文档。</p>
+  <p class="footer-note">本文档从 <a class="doc-link" href="ai_subscription_guide.html">海外 AI 服务订阅指南</a> 拆分而来，订阅/支付/eSIM 相关内容请参阅原文档。</p>
+  <p class="footer-note">客户端链式代理、<code>dialerProxy</code> 与 Android 验证见 <a class="doc-link" href="v2ray_proxy_guide.html#android-chain">V2rayN / V2rayNG 代理机制详解</a>。</p>
 </footer>
 
 </div>
