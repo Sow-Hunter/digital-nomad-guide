@@ -190,6 +190,7 @@
         <span class="pill">更新：2026-07-15</span>
         <span class="pill">实践记录 + 官方规则 + 公开报道</span>
         <span class="pill">标准卡 / 亚太卡分开</span>
+        <span class="pill">地区资格优先</span>
         <span class="pill">动态资料核验：2026-07-15</span>
       </div>
     </header>
@@ -210,6 +211,7 @@
         <li><a href="#ledger">个人实测账本</a></li>
         <li><a href="#routine">日常使用纪律</a></li>
         <li><a href="#sources">资料索引</a></li>
+        <li><a href="cross_border_finance_guide.html">跨境资金与 AI 订阅决策指南</a></li>
       </ol>
     </nav>
 
@@ -260,7 +262,7 @@
 
     <section id="evidence">
       <h2><span class="num">1</span>如何读这份文档：证据等级与矛盾备注</h2>
-      <div class="legend" aria-label="证据等级">
+      <div class="legend" role="group" aria-label="证据等级">
         <span class="evidence ev-p">P 本人实践</span>
         <span class="evidence ev-a">A 条款 / 监管 / 平台规则</span>
         <span class="evidence ev-b">B 官方帮助 / 产品资料</span>
@@ -292,13 +294,17 @@
 
     <section id="products">
       <h2><span class="num">2</span>先识别卡片版本，避免把规则混在一起</h2>
+      <div class="callout danger">
+        <strong>先过地区资格闸门，再看费率和商户成功率</strong>
+        Bitget 标准 Exchange Card 的官方申请资料明确禁止中国大陆和香港的证件或住址证明；APAC Card 只面向其当前支持地区的真实居民。Bitget Wallet Card 又是独立产品：旧版 Fiat24 中国项目曾面向中国大陆现居用户，但当前帮助中心已显示“中国大陆暂停新用户注册”。旧卡仍能使用、他人截图或一次扣款成功，都不能证明现在可新申请。
+      </div>
       <div class="table-wrap">
         <table>
           <thead><tr><th>产品</th><th>核心特征</th><th>本手册中的称呼</th><th>不要混用的地方</th></tr></thead>
           <tbody>
             <tr><td>Bitget Card 标准 / 既有项目</td><td>Visa；官方资料写 OTC 账户扣 USDT；邀请制 / VIP 资格</td><td>“标准卡”</td><td>争议调查费 50 USDT；有 12 个月不活跃费等规则</td></tr>
             <tr><td>Bitget Card（Asia Pacific）</td><td>2026 年上线；Visa；DCS Card Centre 发卡；OTC 账户扣 USDC</td><td>“APAC 卡”</td><td>争议费 35 USDC，胜诉后退；费率、限额和实体卡状态不同</td></tr>
-            <tr><td>Bitget Wallet Card</td><td>属于 Bitget Wallet 的另一套卡产品，部分地区 / 版本涉及不同卡组织</td><td>不纳入下列费率</td><td>不能用交易所 App 内 Bitget Card 的 USDT / USDC、发卡行和争议规则套用</td></tr>
+            <tr><td>Bitget Wallet Card</td><td>属于 Bitget Wallet 的另一套卡产品，可能由 Fiat24、DCS、Immersve 等不同项目提供</td><td>不纳入下列费率</td><td>钱包链上余额自托管，不代表充值后的 Card Account 也自托管；不能套用 Exchange Card 的 USDT / USDC、发卡行和争议规则</td></tr>
           </tbody>
         </table>
       </div>
@@ -306,6 +312,11 @@
       <div class="callout info">
         <strong>四项信息足以快速识别</strong>
         查看开卡日期、卡片页扣款资产（USDT 或 USDC）、条款中的发卡机构，以及争议费显示 50 USDT 还是 35 USDC。以本人 App 和适用条款为准，不按他人截图猜版本。
+      </div>
+
+      <div class="callout warn">
+        <strong>既有 Wallet Card 中国 / Fiat24 用户还要核对退出能力</strong>
+        当前帮助资料列出 1% 充值费，消费本身不另收卡费但跨币种可能约有 1% 汇差，微信 / 支付宝单笔超过 200 元可能另收 3%；更重要的是，充值后的未消费卡余额目前不能转出。只充值近期确定要花的小额，不把卡账户当储蓄或可逆中转。
       </div>
 
       <div class="table-wrap">
@@ -328,7 +339,7 @@
 
     <section id="play-claude">
       <h2><span class="num">3</span>Google Play 支付成功，与 Claude 账号资格是两套判断</h2>
-      <div class="flow" aria-label="Google Play 订阅与 Claude 账号访问边界">
+      <div class="flow" role="group" aria-label="Google Play 订阅与 Claude 账号访问边界">
         <div><strong>Bitget / Visa</strong><br><small>卡片授权、稳定币扣款、退款入账</small></div>
         <span class="arrow">→</span>
         <div><strong>Google Play Billing</strong><br><small>订单、订阅、付款资料和退款入口</small></div>
@@ -442,7 +453,7 @@ I purchased Claude Pro through Google Play on Android. The account was suspended
     <section id="mechanism">
       <h2><span class="num">5</span>充值、授权、清算与退款的完整生命周期</h2>
       <p>Bitget Card 是加密资产支持的支付卡，不是带 ACH / SEPA / SWIFT 能力的美元银行账户。卡面或页面显示 USD，通常只是卡片计价 / 结算单位。</p>
-      <div class="flow" aria-label="Bitget Card 扣款流程">
+      <div class="flow" role="group" aria-label="Bitget Card 扣款流程">
         <div><strong>商户请款</strong><br><small>USD 或当地货币</small></div>
         <span class="arrow">→</span>
         <div><strong>Visa / 发卡方授权</strong><br><small>可能预留订单额 120%</small></div>
@@ -538,7 +549,7 @@ I purchased Claude Pro through Google Play on Android. The account was suspended
       </div>
 
       <h3>App Store 的公开扣费顺序</h3>
-      <div class="flow" aria-label="App Store 内购订阅扣费顺序">
+      <div class="flow" role="group" aria-label="App Store 内购订阅扣费顺序">
         <div><strong>Apple Account 余额</strong><br><small>足额时通常优先</small></div>
         <span class="arrow">→</span>
         <div><strong>主要付款方式</strong><br><small>付款与配送列表第一项</small></div>
@@ -583,18 +594,22 @@ I purchased Claude Pro through Google Play on Android. The account was suspended
       <pre class="template">Can my Wise personal account receive a USD/EUR bank transfer from [exact Bitget legal entity], if both accounts are in my legal name? Is that entity an accepted cryptocurrency platform for incoming transfers?</pre>
 
       <h3>Neverless</h3>
+      <div class="callout danger">
+        <strong>先确认 Neverless 法律实体与居住资格</strong>
+        Neverless 目前不是一张消费卡；Apple Pay / Google Pay 只是部分地区的入金方式。当前 EAA 协议面向合资格 EEA 居民，并排除美国人士；中国大陆或香港居民不要用异地资料开户。证券、加密资产与 Strategies 可能由不同实体提供，保障不能互相套用。
+      </div>
       <div class="table-wrap">
         <table>
           <thead><tr><th>路径</th><th>可行性</th><th>边界</th></tr></thead>
           <tbody>
             <tr><td>Bitget Card → Apple Pay → Neverless</td><td><span class="risk high">当前无法实测</span></td><td><span class="evidence ev-p">P</span> 这张卡曾在后来被 Apple 禁用的老账号上成功绑定 Apple Pay，但当前 Apple 账号无法绑定；阻断发生在 Apple Pay 绑定阶段，不代表 Neverless 拒绝入金，也不能据此判断账号禁用与绑卡结果存在因果关系</td></tr>
             <tr><td>Bitget Card → Neverless 银行账户</td><td><span class="risk high">不能直接完成</span></td><td>支付卡没有 ACH、SEPA 或 SWIFT 汇款能力</td></tr>
-            <tr><td>Bitget USDT / USDC → Neverless 链上地址</td><td><span class="risk low">路径更直接</span></td><td>币种、网络、地址、最低金额和 Memo / Tag 必须完全一致；先小额</td></tr>
+            <tr><td>Bitget USDT / USDC → Neverless 链上地址</td><td><span class="risk mid">仅合资格用户小额测试</span></td><td>还涉及 Bitget / Neverless 实体、Travel Rule、资金来源、稳定币、链和托管风险；币种、网络、地址、最低金额和 Memo / Tag 必须完全一致</td></tr>
             <tr><td>Bitget 法币账户 → Neverless 银行转账</td><td><span class="risk mid">取决于通道</span></td><td>这不是卡片功能；费用与双方合规审核可能不适合小额</td></tr>
           </tbody>
         </table>
       </div>
-      <p>Neverless 是投资 / 资产服务，不是传统存款银行。入金方便不等于本金、流动性、托管或平台风险等同银行存款。</p>
+      <p>Neverless 是投资 / 资产服务，不是传统存款银行。当前 EAA 定价页写 Apple / Google Pay 前 3 笔且累计不超过 1,000 USD 后收 2.49%，Strategies 持有不足 14 天退出收 0.5%；条款还允许借出、质押 / 再质押和使用第三方协议。只有 Boku Securities SIA 提供的合资格证券服务，才可能在机构无法返还资产时适用最高 20,000 欧元的拉脱维亚投资者赔偿；该赔偿不保市场亏损，也不覆盖 Neverless Labs 的 crypto / Strategies。</p>
     </section>
 
     <section id="ledger">
@@ -638,13 +653,14 @@ I purchased Claude Pro through Google Play on Android. The account was suspended
       </ul>
       <div class="callout ok">
         <strong>当前组合建议</strong>
-        Bitget Card 继续用于已验证的普通国际消费；美区 App Store 继续使用已验证可消费的 Apple Account 余额；Wise 优先使用本人名下传统银行账户。Claude 在封禁原因、支持地区合规与本次退款解决前，不重新付费测试。
+        只有本人仍符合当前卡项目地区与账户条款时，既有 Bitget Card 才继续用于已验证的普通国际消费，并只留一个账单周期小额；Wallet Card 中国项目当前暂停新注册。美区 App Store 也只在本人真实符合商店与服务地区时使用已验证余额；Wise 优先使用本人名下传统银行账户。Claude 在封禁原因、支持地区合规与本次退款解决前，不重新付费测试。
       </div>
     </section>
 
     <section id="sources">
       <h2><span class="num">12</span>资料索引与最后核验日期</h2>
       <p>以下动态页面均于 <strong>2026-07-15</strong>重新核验。页面可能按语言、地区和登录状态展示不同内容；链接文字概括用途，不替代适用于本人账户的条款。</p>
+      <p>招行香港、Wise、Bitget Wallet / Card、Bybit Card、美国 PayPal 与 Neverless 的完整入金、出金、消费、投资和资金安全比较见 <a href="cross_border_finance_guide.html">跨境资金与 AI 订阅决策指南</a>。</p>
 
       <div class="source-group">
         <h3><span class="evidence ev-a">A 条款 / 平台规则 / 监管</span></h3>
@@ -682,9 +698,11 @@ I purchased Claude Pro through Google Play on Android. The account was suspended
           <li><a href="https://www.bitget.com/support/articles/12560603881035" target="_blank" rel="noopener">Bitget APAC Transaction Safety</a>：pending、退款和常见拒付。</li>
           <li><a href="https://www.bitget.com/support/articles/12560603881036" target="_blank" rel="noopener">Bitget APAC 费率与限额</a>：0.9%、FX 与 35 USDC 争议费。</li>
           <li><a href="https://www.bitget.com/en-CA/support/articles/12560603881039" target="_blank" rel="noopener">Bitget APAC Chargeback and Dispute</a>：90 天、材料、费用与初次回复时间。</li>
+          <li><a href="https://web3.bitget.com/card" target="_blank" rel="noopener">Bitget Wallet Card 项目总览</a> 与 <a href="https://web3.bitget.com/zh-CN/helpCenter" target="_blank" rel="noopener">当前帮助中心</a>：不同地区项目及中国大陆暂停新用户注册。</li>
+          <li><a href="https://web3.bitget.com/zh/helpCenter/235" target="_blank" rel="noopener">Wallet Card 中国项目旧申请资格</a>、<a href="https://web3.bitget.com/zh/helpCenter/239" target="_blank" rel="noopener">充值与未消费余额限制</a>、<a href="https://web3.bitget.com/zh/helpCenter/241" target="_blank" rel="noopener">费用说明</a>：旧申请页须与当前暂停状态一起阅读。</li>
           <li><a href="https://support.apple.com/en-us/118244" target="_blank" rel="noopener">Apple：How apps, content, and subscriptions are billed</a>：余额与付款方式顺序。</li>
           <li><a href="https://wise.com/help/articles/2932118/incompatible-accounts-and-payments" target="_blank" rel="noopener">Wise：Incompatible accounts and payments</a>：加密平台入账条件。</li>
-          <li><a href="https://neverless.com/en_EAA/pricing" target="_blank" rel="noopener">Neverless Pricing</a> 与 <a href="https://neverless.com/en_GB/legal/terms" target="_blank" rel="noopener">Client Agreement</a>：钱包、银行 / 链上入金与账户风险。</li>
+          <li><a href="https://neverless.com/en_EAA/pricing" target="_blank" rel="noopener">Neverless Pricing</a>、<a href="https://neverless.com/zh-Hant_EAA/legal/terms" target="_blank" rel="noopener">EAA Client Agreement</a>、<a href="https://neverless.com/es_GB/legal" target="_blank" rel="noopener">法律实体总览</a>、<a href="https://neverless.com/es_ES/stocks" target="_blank" rel="noopener">证券与投资者赔偿</a>与<a href="https://neverless.com/en_ES/advertising-policy" target="_blank" rel="noopener">风险披露</a>：资格、费用、再质押、流动性与保障边界。</li>
           <li><a href="https://us.support.codashop.com/hc/en-us/articles/4405767317775-Error-704-While-Making-A-Purchase" target="_blank" rel="noopener">Codashop US Error 704</a> 与 <a href="https://us.support.codashop.com/hc/en-us/articles/10426270596751-Card-Payment-Error-Codes" target="_blank" rel="noopener">错误码表</a>。</li>
         </ul>
       </div>
