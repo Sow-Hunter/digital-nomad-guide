@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="招行香港、招商永隆、Wise、Bitget、Bybit、美国 PayPal 与 Neverless 的跨境资金流、AI 订阅、消费、投资和安全决策指南。">
+  <title>跨境资金与 AI 订阅决策指南</title>
+  <style>
+    :root {
+      --bg: #071019;
+      --surface: #0d1924;
+      --surface-2: #122536;
+      --border: #254259;
+      --text: #edf6fb;
+      --muted: #9bb1bf;
+      --brand: #55d6be;
+      --brand-2: #8ce8d7;
+      --blue: #6fc5ff;
+      --yellow: #ffd166;
+      --orange: #ffad5c;
+      --red: #ff7485;
+      --green: #67e6a5;
+      --purple: #c6a5ff;
+      --shadow: 0 18px 55px rgba(0, 0, 0, 0.25);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 14% -5%, rgba(85, 214, 190, 0.14), transparent 28rem),
+        radial-gradient(circle at 92% 8%, rgba(111, 197, 255, 0.10), transparent 30rem),
+        var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      line-height: 1.72;
+    }
+
+    a { color: var(--brand-2); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    a:hover { color: #fff; }
+    code {
+      padding: 0.12rem 0.38rem;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      background: #07141e;
+      color: var(--brand-2);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.88em;
+    }
+
+    .container { width: min(1040px, calc(100% - 2rem)); margin: 0 auto; }
+    .hero {
+      position: relative;
+      overflow: hidden;
+      margin: 2rem auto 1.25rem;
+      padding: 3.6rem 3rem;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      background: linear-gradient(145deg, rgba(18, 37, 54, 0.97), rgba(7, 16, 25, 0.98));
+      box-shadow: var(--shadow);
+    }
+    .hero::after {
+      content: "SAFE";
+      position: absolute;
+      right: -1rem;
+      bottom: -2.5rem;
+      color: rgba(85, 214, 190, 0.045);
+      font-size: clamp(5rem, 15vw, 11rem);
+      font-weight: 900;
+      line-height: 1;
+      pointer-events: none;
+    }
+    .eyebrow {
+      display: inline-flex;
+      margin-bottom: 1rem;
+      padding: 0.3rem 0.75rem;
+      border: 1px solid rgba(85, 214, 190, 0.42);
+      border-radius: 999px;
+      background: rgba(85, 214, 190, 0.08);
+      color: var(--brand-2);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    h1 { max-width: 820px; margin: 0; font-size: clamp(2rem, 5vw, 3.45rem); line-height: 1.12; letter-spacing: -0.04em; }
+    .lead { max-width: 820px; margin: 1rem 0 0; color: var(--muted); font-size: 1.06rem; }
+    .meta { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1.35rem; }
+    .pill { padding: 0.28rem 0.7rem; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); background: rgba(7, 16, 25, 0.68); font-size: 0.78rem; }
+
+    nav, section {
+      margin-bottom: 1.25rem;
+      padding: 1.7rem;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: rgba(13, 25, 36, 0.95);
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.13);
+    }
+    nav h2 { margin-top: 0; color: var(--muted); font-size: 0.86rem; letter-spacing: 0.12em; text-transform: uppercase; }
+    .toc { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.45rem 1.2rem; padding: 0; margin: 0; list-style: none; }
+    .toc a { display: block; padding: 0.38rem 0.55rem; border-radius: 7px; color: var(--text); text-decoration: none; }
+    .toc a:hover { background: var(--surface-2); color: var(--brand-2); }
+
+    section > h2 { display: flex; align-items: center; gap: 0.7rem; margin: 0 0 1.1rem; padding-bottom: 0.8rem; border-bottom: 1px solid var(--border); font-size: 1.42rem; }
+    .num { display: inline-grid; flex: 0 0 auto; width: 2rem; height: 2rem; place-items: center; border-radius: 8px; background: var(--brand); color: #042019; font-size: 0.82rem; font-weight: 900; }
+    h3 { margin: 1.55rem 0 0.65rem; color: var(--brand-2); font-size: 1.05rem; }
+    h4 { margin: 1.2rem 0 0.45rem; color: var(--blue); }
+    p { margin: 0.65rem 0; }
+    ul, ol { padding-left: 1.35rem; }
+    li + li { margin-top: 0.35rem; }
+
+    .callout { margin: 1rem 0; padding: 1rem 1.1rem; border: 1px solid; border-left-width: 4px; border-radius: 10px; background: rgba(0, 0, 0, 0.14); }
+    .callout strong:first-child { display: block; margin-bottom: 0.2rem; }
+    .callout.info { border-color: rgba(111, 197, 255, 0.56); background: rgba(111, 197, 255, 0.06); }
+    .callout.ok { border-color: rgba(103, 230, 165, 0.56); background: rgba(103, 230, 165, 0.06); }
+    .callout.warn { border-color: rgba(255, 209, 102, 0.62); background: rgba(255, 209, 102, 0.06); }
+    .callout.danger { border-color: rgba(255, 116, 133, 0.64); background: rgba(255, 116, 133, 0.065); }
+
+    .cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.85rem; margin: 1rem 0; }
+    .card { padding: 1rem; border: 1px solid var(--border); border-radius: 12px; background: rgba(7, 16, 25, 0.74); }
+    .card h3 { margin: 0 0 0.4rem; }
+    .card p { color: var(--muted); font-size: 0.9rem; }
+
+    .table-wrap { overflow-x: auto; margin: 1rem 0; border: 1px solid var(--border); border-radius: 10px; }
+    table { width: 100%; min-width: 760px; border-collapse: collapse; font-size: 0.9rem; }
+    th, td { padding: 0.72rem 0.8rem; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+    th { background: var(--surface-2); color: var(--muted); font-size: 0.76rem; letter-spacing: 0.04em; text-transform: uppercase; }
+    tr:last-child td { border-bottom: 0; }
+    tbody tr:hover { background: rgba(85, 214, 190, 0.025); }
+
+    .status, .evidence { display: inline-block; white-space: nowrap; padding: 0.13rem 0.48rem; border-radius: 999px; font-size: 0.72rem; font-weight: 750; }
+    .good { background: rgba(103, 230, 165, 0.13); color: var(--green); }
+    .conditional { background: rgba(255, 209, 102, 0.13); color: var(--yellow); }
+    .avoid { background: rgba(255, 116, 133, 0.13); color: var(--red); }
+    .neutral { background: rgba(111, 197, 255, 0.13); color: var(--blue); }
+    .ev-a { border: 1px solid rgba(111, 197, 255, 0.4); color: var(--blue); }
+    .ev-b { border: 1px solid rgba(85, 214, 190, 0.4); color: var(--brand-2); }
+    .ev-c { border: 1px solid rgba(255, 209, 102, 0.4); color: var(--yellow); }
+    .ev-p { border: 1px solid rgba(103, 230, 165, 0.4); color: var(--green); }
+
+    .flow { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr; gap: 0.5rem; align-items: center; margin: 1rem 0; }
+    .flow > div { min-height: 6.6rem; display: grid; place-items: center; padding: 0.75rem; border: 1px solid var(--border); border-radius: 12px; background: #07141e; text-align: center; }
+    .arrow { color: var(--brand); font-size: 1.35rem; }
+    .formula { overflow-x: auto; margin: 0.8rem 0; padding: 1rem; border: 1px solid var(--border); border-radius: 9px; background: #06111a; color: #dff5ef; white-space: pre-wrap; font: 0.86rem/1.7 "SFMono-Regular", Consolas, monospace; }
+    .checklist { list-style: none; padding: 0; counter-reset: check; }
+    .checklist li { position: relative; min-height: 2rem; padding-left: 2.3rem; }
+    .checklist li::before { counter-increment: check; content: counter(check); position: absolute; left: 0; top: 0.03rem; display: grid; width: 1.55rem; height: 1.55rem; place-items: center; border-radius: 50%; background: var(--surface-2); color: var(--brand-2); font-size: 0.72rem; font-weight: 800; }
+    details { margin: 0.65rem 0; padding: 0.8rem 0.9rem; border: 1px solid var(--border); border-radius: 9px; background: rgba(7, 16, 25, 0.64); }
+    summary { cursor: pointer; color: var(--brand-2); font-weight: 700; }
+    .legend { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.8rem 0 1rem; }
+    .muted { color: var(--muted); }
+    .source-list { font-size: 0.88rem; }
+    .source-list li { margin-bottom: 0.55rem; }
+    footer { padding: 2rem 0 3rem; color: var(--muted); text-align: center; font-size: 0.82rem; }
+
+    @media (max-width: 780px) {
+      .container { width: min(100% - 1rem, 1040px); }
+      .hero { margin-top: 0.5rem; padding: 2.2rem 1.35rem; border-radius: 16px; }
+      nav, section { padding: 1.15rem; border-radius: 12px; }
+      .toc, .cards { grid-template-columns: 1fr; }
+      .flow { grid-template-columns: 1fr; }
+      .arrow { transform: rotate(90deg); justify-self: center; }
+    }
+    @media print {
+      :root { --bg: #fff; --surface: #fff; --surface-2: #f2f7fa; --border: #c7d5de; --text: #17232b; --muted: #4c616e; --brand: #138c78; --brand-2: #087260; }
+      body { background: #fff; }
+      .hero, nav, section { box-shadow: none; }
+      a { color: #065f50; }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <header class="hero">
+      <div class="eyebrow">Cross-border money decision guide</div>
+      <h1>跨境资金与 AI 订阅决策指南</h1>
+      <p class="lead">梳理招行香港、招商永隆、Wise、Bitget Wallet / Card、Bybit Card、美国 PayPal 与 Neverless 的资格、入金、出金、消费、投资和资金保护边界。目标不是把所有账户串成最长链路，而是用最少中间层完成合法、可解释、能退出的资金操作。</p>
+      <div class="meta">
+        <span class="pill">更新：2026-07-15</span>
+        <span class="pill">官方政策动态核验：2026-07-15</span>
+        <span class="pill">侧重：AI 订阅与资金安全</span>
+        <span class="pill">不构成金融、法律或税务意见</span>
+      </div>
+    </header>
+
+    <nav aria-label="目录">
+      <h2>目录</h2>
+      <ol class="toc">
+        <li><a href="#read-first">先看结论与证据等级</a></li>
+        <li><a href="#eligibility">六类产品的真实身份与资格</a></li>
+        <li><a href="#bank-rail">银行主干：招行香港、招商永隆与跨境支付通</a></li>
+        <li><a href="#money-flow">入金流、出金流与退出测试</a></li>
+        <li><a href="#ai-subscription">AI 服务订阅决策树</a></li>
+        <li><a href="#spending">最佳消费实践与全链路成本</a></li>
+        <li><a href="#investment">投资与“套利”空间</a></li>
+        <li><a href="#safety">资金保护层级与安全基线</a></li>
+        <li><a href="#personas">按居住地选择组合</a></li>
+        <li><a href="#runbook">每次操作的执行清单</a></li>
+        <li><a href="#sources">官方与社区资料索引</a></li>
+      </ol>
+    </nav>
+
+    <section id="read-first">
+      <h2><span class="num">0</span>先看结论：资格优先于费率</h2>
+      <div class="legend" role="group" aria-label="证据等级">
+        <span class="evidence ev-a">A 监管 / 条款</span>
+        <span class="evidence ev-b">B 官方帮助 / 产品资料</span>
+        <span class="evidence ev-c">C 社区经验</span>
+        <span class="evidence ev-p">P 本仓库实践</span>
+      </div>
+      <p>社区“成功”只证明某个用户在某个时间点完成过某一步，不能替代居住资格、KYC、资金用途或适用条款。本文的推荐顺序始终是：<strong>居住与服务资格 → 同名资金来源 → 可退出性 → 资金保护 → 成本 → 收益</strong>。</p>
+
+      <div class="callout danger">
+        <strong>典型中国大陆居民不能把“美国手机号、海外 IP、账单地址”当成居住资格</strong>
+        美国 PayPal 要求个人用户实际居住在美国或其领地；Bitget 标准卡与 Bybit 当前官方资料均限制中国大陆和香港；Neverless 的 EAA 协议面向其可服务辖区的合法居民。虚构地址、借用身份或用代理掩盖所在地，会把支付问题升级为冻结、关户和资金取回问题。
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>产品</th><th>适合扮演的角色</th><th>典型大陆居民当前判断</th><th>最常见误区</th></tr></thead>
+          <tbody>
+            <tr><td>招行香港 / 招商永隆</td><td>银行主账户、合法跨境收付、应急储备</td><td><span class="status conditional">已有合资格账户优先</span></td><td>把两家机构混为一谈，或把 5 万美元便利化额度当成海外投资许可</td></tr>
+            <tr><td>Wise</td><td>合资格地区的多币种收付与透明换汇</td><td><span class="status conditional">功能受地址限制</span></td><td>中国地址没有 Wise Card，也不能获得 USD 账户信息；不能把 Wise 当加密出金中转</td></tr>
+            <tr><td>Bitget Wallet（链上）</td><td>自托管资产与链上操作</td><td><span class="status conditional">仅作自托管工具</span></td><td>助记词自持不等于 Wallet Card 卡账户也自托管</td></tr>
+            <tr><td>Bitget Exchange Card</td><td>合资格地区的小额消费卡</td><td><span class="status avoid">大陆 / 香港禁止</span></td><td>把标准卡 / APAC 卡资格和费率套到 Wallet Card</td></tr>
+            <tr><td>Bitget Wallet Card 中国项目</td><td>Fiat24 托管卡账户；历史上面向大陆现居用户</td><td><span class="status avoid">当前暂停新注册</span></td><td>只看旧申请页，忽略当前帮助中心暂停提示和余额不可转出</td></tr>
+            <tr><td>Bybit Card</td><td>受支持地区用户的小额加密消费</td><td><span class="status avoid">不适用</span></td><td>只看卡能否刷，不看平台对中国大陆和香港的服务限制</td></tr>
+            <tr><td>美国 PayPal</td><td>真实美国居民的支付钱包与商户争议渠道</td><td><span class="status avoid">非美国居民不适用</span></td><td>认为美国电话号、代理和国内卡足以建立合规账户；忽略 3%–4% 的换汇价差</td></tr>
+            <tr><td>Neverless</td><td>合资格地区的投资 / 加密 / 证券产品</td><td><span class="status avoid">大陆 / 香港居民不适用 EAA</span></td><td>把展示年化收益当存款利息，或把证券投资者赔偿误解成保本</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout ok">
+        <strong>最稳的总体结构：三只桶</strong>
+        核心储备放在有存款保障的银行；支付账户只留一个账单周期的额度；加密资产、收益产品和卡片余额属于风险桶，只放即使冻结或亏损也不影响生活的钱。
+      </div>
+    </section>
+
+    <section id="eligibility">
+      <h2><span class="num">1</span>先辨认产品，再谈链路</h2>
+
+      <h3>招行香港不等于招商永隆</h3>
+      <ul>
+        <li><strong>招行香港分行（CMB Hong Kong Branch）</strong>是招商银行在香港的持牌银行分行。官方通知显示，自 2024-03-29 起，新开香港一卡通要求存入并维持不少于等值 <strong>800 万港元</strong>资产；此前已开账户不受该通知影响。</li>
+        <li><strong>招商永隆银行（CMB Wing Lung Bank）</strong>是另一家香港注册银行，有独立开户文件、费率、App 和条款。其官方开户文件页面列有中国大陆身份证材料，但是否获批仍取决于预约、KYC、用途与当期政策。</li>
+        <li>两者均不能因为“招商”品牌而共享开户资格、费用、账户号码或客服结论。转账前按收款银行全名、SWIFT、账户名和适用费用逐项核对。</li>
+      </ul>
+
+      <h3>Wise：同一个账户，功能随居住地和证件变化</h3>
+      <ul>
+        <li>Wise 官方页面当前允许中国居民持有余额，但香港居民的余额功能仅列企业账户；卡片支持地区列表不包含中国大陆或香港。</li>
+        <li>中国地址用户不能获得 USD 账户信息。HKD 账户信息还有证件类型和额外审核条件，不能从“能注册 Wise”推导出“有美元账号和卡”。</li>
+        <li>从 CNY 汇出功能面向符合税务记录条件的非中国籍人士；中国大陆籍用户不应把它当人民币自由出境通道。</li>
+      </ul>
+
+      <h3>Bitget：Wallet、交易所与 Card 是三个风险边界</h3>
+      <ul>
+        <li><strong>Bitget Wallet 链上余额</strong>是自托管钱包：用户控制助记词 / 私钥，平台无法替你恢复丢失的密钥；这不等于资产有银行存款保障。</li>
+        <li><strong>Bitget 交易所账户</strong>是平台托管和交易关系，受适用实体、地区、KYC 与平台条款约束。</li>
+        <li><strong>Bitget Exchange Card</strong>又分标准卡与 APAC 等项目。标准卡官方申请资料明确把中国大陆和香港列为禁止地区；APAC 资格和发卡实体另按居住地判断。</li>
+        <li><strong>Bitget Wallet Card</strong>另有 Fiat24、DCS、Immersve 等项目。旧版 Fiat24 中国申请页面向中国大陆现居用户、排除港澳与海外，但当前帮助中心明确显示“中国大陆暂停新用户注册”，所以旧资格不能当成现在可申请。既有中国卡账户的充值资产会转为托管法币余额，当前帮助资料写未消费余额不能转出；只充值近期确定要花的小额。</li>
+      </ul>
+
+      <h3>Bybit、美国 PayPal 与 Neverless</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>产品</th><th>资格门槛</th><th>资金性质</th><th>行动建议</th></tr></thead>
+          <tbody>
+            <tr><td>Bybit Card</td><td>只面向列明地区的真实居民；Bybit 当前限制中国大陆与香港服务</td><td>交易平台余额驱动的支付卡，不是银行存款</td><td>只有实际迁居受支持地区并完成真实 KYC 后再评估</td></tr>
+            <tr><td>美国 PayPal</td><td>个人必须是美国或其领地居民、年满 18 岁；可能要求政府证件和地址证明</td><td>支付钱包余额及绑定资金源，不是长期储蓄工具</td><td>仅真实美国居民使用；银行账户必须匹配美国账户与姓名</td></tr>
+            <tr><td>Neverless</td><td>按适用实体与所在地开放；当前 EAA 协议要求可服务国家的合法居民，范围不等同全球</td><td>加密托管、策略与证券可能由不同实体提供</td><td>先在 App / 协议确认法律实体和产品，再判断保障；大陆 / 香港居民不要伪造 EEA 居住</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout info">
+        <strong>Neverless 目前不是支付卡</strong>
+        Apple Pay / Google Pay 在其定价页中属于部分地区的入金方式，不是可用于商户或 AI 订阅的“Neverless Card”。Neverless 在本组合中只能放在投资 / 资产服务一侧。
+      </div>
+    </section>
+
+    <section id="bank-rail">
+      <h2><span class="num">2</span>银行主干：日常资金不要绕远路</h2>
+      <div class="flow" role="group" aria-label="合规银行资金流">
+        <div><strong>合法收入</strong><br><small>工资、经营、储蓄及来源材料</small></div>
+        <span class="arrow" aria-hidden="true">→</span>
+        <div><strong>境内本人账户</strong><br><small>真实用途购汇 / 人民币通道</small></div>
+        <span class="arrow" aria-hidden="true">→</span>
+        <div><strong>跨境支付通或银行汇款</strong><br><small>同名、额度与用途核验</small></div>
+        <span class="arrow" aria-hidden="true">→</span>
+        <div><strong>本人香港银行账户</strong><br><small>生活、留学、旅行或获准用途</small></div>
+      </div>
+
+      <h3>跨境支付通能降低操作摩擦，但不会改变外汇用途规则</h3>
+      <p>香港金管局当前说明：<strong>南向（内地 → 香港）</strong>汇款可在指定条件下使用内地居民每年等值 5 万美元便利化额度；<strong>北向（香港 → 内地）</strong>付款人须符合香港身份证等条件，并设有每家参与机构每日 1 万港元、每年 20 万港元等安排。服务为 16×7，参与银行和限额可能调整。招商银行是内地参与机构，招行香港与招商永隆均出现在香港参与机构资料中。</p>
+      <div class="callout warn">
+        <strong>“不另交用途证明”不等于“任何用途都允许”</strong>
+        国家外汇管理局仍禁止借用额度、拆分、虚假材料，以及使用个人购汇便利化额度进行未获允许的境外证券、房地产等资本项目。银行会按交易实质和 KYC 审核；备注、金额和后续流向应与真实用途一致。
+      </div>
+
+      <h3>存款保障只保护合资格存款</h3>
+      <p>香港存款保障计划自 2024-10-01 起，把每名存款人在每家成员银行的最高保障提高到 <strong>80 万港元</strong>。截至 2025-03-31 的公开成员附件分别列出招商银行股份有限公司与招商永隆，因此该名单下的合资格香港存款按两个成员分别计算；外币普通存款也可能合资格，但结构性存款、期限超过五年的存款、债券、股票、基金、保险、虚拟资产和存储值工具不在保障范围。开户和入金前仍应核对当期成员标识以及具体产品是否受保。</p>
+      <div class="callout warn">
+        <strong>香港银行账户不等于可做国际线上循环扣款的 Visa / Mastercard</strong>
+        招行香港与招商永隆的公开借记卡资料主要围绕银联、EPS、JETCO / ATM 和实体消费。它们适合作法币中枢，但不要仅凭“港卡”名称推断能订阅 Claude、ChatGPT 或其他国际 SaaS；应另行核对具体卡组织、线上交易、3DS 和 recurring billing 能力。
+      </div>
+    </section>
+
+    <section id="money-flow">
+      <h2><span class="num">3</span>入金流、出金流与退出测试</h2>
+
+      <h3>推荐入金流</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>场景</th><th>推荐路径</th><th>先决条件</th><th>不要做</th></tr></thead>
+          <tbody>
+            <tr><td>香港生活 / 海外日常支付</td><td>境内本人账户 → 合法购汇 / 跨境支付通 → 本人香港银行</td><td>真实用途、同名、保留收入与汇款记录</td><td>用多人额度拆分，或让陌生人代收代付</td></tr>
+            <tr><td>Wise 换汇 / 转账</td><td>本人银行 → 本人 Wise → 换汇 → 本人或真实收款方</td><td>居住地支持对应余额 / 账户信息；资金来源兼容</td><td>Bitget P2P 买家直接付款到 Wise，或隐瞒加密来源</td></tr>
+            <tr><td>合资格加密卡消费</td><td>本人合法资金 → 受支持入金 → 交易所 / 钱包 → 仅保留短期卡余额</td><td>真实受支持居住地、KYC、税务与链路可解释</td><td>把卡内稳定币当应急储蓄或工资账户</td></tr>
+            <tr><td>Neverless 投资</td><td>合资格地区本人银行 / 允许的链上资产 → 对应 Neverless 实体</td><td>先确认实体、产品、费用、赎回与税务</td><td>为追求展示年化借钱入金，或把投资者赔偿当保本</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>推荐出金流</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>起点</th><th>优先退出路径</th><th>必须保存的材料</th><th>主要风险</th></tr></thead>
+          <tbody>
+            <tr><td>香港银行</td><td>本人香港银行 → 本人境内 / 海外银行，按真实用途申报</td><td>银行流水、工资 / 交易合同、汇款用途、税务记录</td><td>频繁无解释往返、个人账户经营使用、拆单</td></tr>
+            <tr><td>Wise</td><td>Wise → 同名银行或真实商品 / 服务收款方</td><td>入金来源、兑换记录、发票 / 合同</td><td>第三方款项、P2P、Wise 不兼容的加密平台</td></tr>
+            <tr><td>Bitget / Bybit</td><td>先用平台当前支持的受监管出金或本人链上地址做小额测试</td><td>入金证明、交易历史、TxID、钱包归属、税务成本</td><td>平台 / 地区限制、链错、对手方污染、冻结</td></tr>
+            <tr><td>Neverless</td><td>先按产品赎回，再到同名银行或本人链上地址</td><td>产品确认、收益 / 成本、赎回和提现记录</td><td>提前退出费、流动性、合规审核、市场亏损</td></tr>
+            <tr><td>美国 PayPal</td><td>余额 → 同名美国银行，尽量保持同币种并选标准提现</td><td>商户订单、退款 / 争议记录、资金来源</td><td>即时提现费、换汇价差、账户限制</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout ok">
+        <strong>先做退出测试，再扩大余额</strong>
+        新路径只用可承受损失的小额完成一次“入金 → 使用 / 投资 → 赎回 → 到账”闭环。记录到账净额和天数；如果无法解释法律实体、资金来源或退出路径，就不扩大规模。
+      </div>
+    </section>
+
+    <section id="ai-subscription">
+      <h2><span class="num">4</span>AI 服务订阅：支付成功不是资格证明</h2>
+      <ol class="checklist">
+        <li><strong>先查服务地区。</strong>OpenAI 与 Anthropic 都维护支持国家 / 地区页面。人在未支持地区，不能用一张可扣款的海外卡替代服务资格。</li>
+        <li><strong>再查付款主体。</strong>网页直付要求发卡地区、账单地址、姓名和 3DS 能通过；Apple / Google 内购还要遵守真实商店地区及其付款规则。</li>
+        <li><strong>选最短链路。</strong>真实居住地的银行信用卡 / 借记卡直付通常最清楚；移动端内购适合需要 Apple / Google 账单与订阅管理的人。</li>
+        <li><strong>只留一个订阅渠道。</strong>网页、App Store 和 Google Play 可能形成重复订阅；切换前先取消原渠道并确认到期。</li>
+        <li><strong>首次只买月付。</strong>先验证账号稳定、发票、退款路径和续费，再评估官方年付或用量包。</li>
+      </ol>
+
+      <div class="callout danger">
+        <strong>中国大陆和香港目前不在 OpenAI 的 ChatGPT 支持地区列表中</strong>
+        OpenAI 说明，从不支持国家 / 地区访问或使用其不支持地区的付款方式，可能导致访问受阻或账户暂停。Anthropic 也要求先符合其支持地区和消费者条款。本文不提供伪造居住地、账单地址、商店区或绕过封禁的操作步骤。
+      </div>
+
+      <div class="callout info">
+        <strong>美国 PayPal 不是 Claude / ChatGPT 网页直付通道</strong>
+        Claude 当前官方账单帮助明确只接受信用卡 / 借记卡，不接受 PayPal 或 Venmo；ChatGPT 网页官方通用支付清单也没有把 PayPal 列为通用方式。真实美国居民可在 Apple / Google 明确支持 PayPal 时把它作为移动商店资金源，但商店地区、付款资料与本人所在地仍须一致。
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>订阅路径</th><th>适合谁</th><th>优点</th><th>主要边界</th><th>建议</th></tr></thead>
+          <tbody>
+            <tr><td>网页直接刷卡</td><td>服务与发卡地均受支持的真实用户</td><td>链路短、账单清楚、少一层平台</td><td>发卡地区、账单地址、3DS、续费风控</td><td><span class="status good">首选</span></td></tr>
+            <tr><td>App Store / Google Play</td><td>真实商店地区且需要移动端账单管理的用户</td><td>订阅管理和退款入口集中</td><td>商店地区、付款方式与服务资格是三套规则</td><td><span class="status conditional">合资格时可选</span></td></tr>
+            <tr><td>Wise Card</td><td>Wise Card 支持地区的真实居民</td><td>换汇透明，适合多币种日常消费</td><td>中国大陆 / 香港居民不能新领 Wise Card</td><td><span class="status conditional">按居住地</span></td></tr>
+            <tr><td>Bitget Exchange / Bybit Card</td><td>卡项目与 AI 服务均支持地区的用户</td><td>可把小额稳定币转为消费能力</td><td>地区资格；部分项目 0.9% 转换费，另有 FX、平台与发卡方多层风控</td><td><span class="status conditional">仅备用</span></td></tr>
+            <tr><td>Bitget Wallet Card</td><td>对应地区项目仍开放且本人合资格的用户</td><td>钱包充值后形成独立卡账户消费能力</td><td>费率和退出按 Fiat24 / DCS / Immersve 分开；中国项目当前暂停新注册且既有未消费余额不能转出</td><td><span class="status conditional">既有用户小额</span></td></tr>
+            <tr><td>美国 PayPal</td><td>真实美国居民且资料、美国银行 / 卡匹配</td><td>商户不直接保存卡号，部分交易有争议渠道</td><td>身份核验、位置变化、换汇价差；并非所有数字服务都适用买家保护</td><td><span class="status conditional">美国居民可选</span></td></tr>
+            <tr><td>礼品余额</td><td>真实商店地区、接受余额支付的用户</td><td>隔离主卡并限制损失上限</td><td>余额通常不可提现，礼品卡来源和账号限制风险</td><td><span class="status conditional">小额备用</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>本仓库实践给出的边界</h3>
+      <p><span class="evidence ev-p">P</span> Bitget 卡曾通过 Google Play 完成 Claude Pro 首次付款，但 Claude 账号随后被停用；美区 PayPal 曾成功绑定 Apple 付款方式但实际扣款失败。它们共同说明“绑卡成功”“订单成功”“服务持续可用”是三个独立阶段。详细证据、退款与申诉路径见 <a href="bitget_card_guide.html">Bitget Card 使用与争议手册</a>。</p>
+    </section>
+
+    <section id="spending">
+      <h2><span class="num">5</span>最佳消费实践：算净成本，不看卡面币种</h2>
+      <div class="formula">全链路消费成本 = 入金费 + 汇兑费 / 隐含价差 + 稳定币兑换费 + 卡交易费 + 非本币 FX + 商户附加费 + 提现 / 退款损耗
+
+实际返现收益 = 返现 - 上述全部成本 - 被排除 MCC / 撤销返现的预期损失</div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>工具</th><th>已知成本特征</th><th>适合的消费</th><th>不适合</th></tr></thead>
+          <tbody>
+            <tr><td>香港银行本币卡</td><td>取决于发卡行外币手续费和卡组织汇率</td><td>有稳定银行流水、需要传统争议处理的订阅与旅行</td><td>未核对 DCC、外币手续费和境外交易开关</td></tr>
+            <tr><td>Wise Card</td><td>中间价 + 明示费用；资金不足币种时自动转换</td><td>受支持居民的多币种日常消费</td><td>中国大陆 / 香港居民申请、加密平台充值</td></tr>
+            <tr><td>Bitget Exchange 标准 / APAC Card</td><td>对应公开费率通常含 0.9% 交易 / 转换费；非 USD 还可能有 1% + Visa 汇率；这些项目的授权可预留 120%</td><td>合资格用户的小额 USD 消费与已验证商户</td><td>酒店 / 租车等大额预授权、紧急资金、Wise 入金</td></tr>
+            <tr><td>Bitget Wallet Card 中国 / Fiat24（既有卡）</td><td>当前帮助资料列 1% 充值费，消费本身不另收费但跨币种可能约有 1% 汇差；微信 / 支付宝单笔超过 200 元可能另收 3%</td><td>仍合资格的既有用户小额、确定性消费</td><td>新注册当前暂停；未消费卡余额不能转出，不作储蓄或可逆中转</td></tr>
+            <tr><td>Bybit Card</td><td>费率、FX、ATM 和限额按项目与地区变化</td><td>合资格用户在 App 当前费率可接受时的小额备用</td><td>中国大陆 / 香港居民；只看营销返现忽略转换费</td></tr>
+            <tr><td>美国 PayPal</td><td>无换汇的合资格购买通常无消费者手续费；PayPal 当前个人费率页列出约 3%–4% 的换汇价差</td><td>真实美国居民、同币种、需要隐藏卡号的商户</td><td>跨币种“套利”、长期持有余额、身份资料不完整</td></tr>
+            <tr><td>Neverless</td><td>当前 EAA 定价页列 Apple / Google 前 3 笔且累计不超过 1,000 USD 后收 2.49%；银行、链上和退出费另按产品变化</td><td>合资格用户的投资入金，不是主消费卡</td><td>把入金优惠当消费返现或无风险收益</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>订阅消费的实操纪律</h3>
+      <ul>
+        <li>账单币种尽量和账户持有币种一致，拒绝商户 DCC；先用官方价格页确认税前 / 税后金额。</li>
+        <li>支付账户只留 1–2 个账单周期余额，打开即时通知和低限额；非订阅日冻结不用的卡。</li>
+        <li>卡片需要 120% 授权时，把“可用余额”而不是“总余额”作为判断依据。</li>
+        <li>保存订阅渠道、订单号、续费日、取消入口与退款责任方；不要同时从网页和移动商店购买同一服务。</li>
+        <li>连续拒付后停止重试，先判断是商户、商店、卡组织、发卡项目还是账户资格问题。</li>
+      </ul>
+    </section>
+
+    <section id="investment">
+      <h2><span class="num">6</span>投资与“套利”：先算回本，再算尾部风险</h2>
+      <div class="formula">往返成本率 = 入金 + 兑换价差 / 滑点 + 平台费 + 出金 + 税务与合规成本
+回本天数 ≈ 往返成本率 ÷ 税后可实现年化收益率 × 365</div>
+      <p>例如往返总成本 2%、可实现净年化 7.16%，仅回收交易成本就约需 102 天；7.16% 只是 Neverless 官网在 2026-07-15 展示的营销页快照，收益可变且不保证。这还没有计入收益率下降、稳定币脱锚、平台冻结、市场亏损或税务。不同平台之间的显示收益率差，不是无风险套利。</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>机会</th><th>可能的价值</th><th>隐藏成本 / 风险</th><th>结论</th></tr></thead>
+          <tbody>
+            <tr><td>香港银行定存 / 货币管理</td><td>核心现金分层、流动性和存保范围内的本金保护</td><td>外汇波动；结构性产品、基金和证券不受存保保护</td><td><span class="status good">适合核心储备</span></td></tr>
+            <tr><td>Wise 自动换汇 / 中间价</td><td>减少不透明价差，适合真实支付和汇款</td><td>仍有明示费用、动态费与转换频率限制；不是高频交易平台</td><td><span class="status good">省成本，不是套利</span></td></tr>
+            <tr><td>Wise Interest</td><td>部分地区把余额投资于货币市场基金</td><td>中国 / 香港不可用；收益可变，可能亏损，不是银行现金</td><td><span class="status conditional">仅合资格地区</span></td></tr>
+            <tr><td>Neverless Strategies</td><td>当前页面展示可变 AER，可作风险资产的一小部分</td><td>非存款、非保证收益；条款允许借出、质押 / 再质押和使用第三方协议，另有流动性、延迟赎回与不足 14 天退出费风险</td><td><span class="status conditional">限额、先退出测试</span></td></tr>
+            <tr><td>Bitget / Bybit Earn 与卡返现</td><td>闲置风险资金收益或抵消费成本</td><td>平台、稳定币、条款、MCC 排除、返现撤回和税务；Bybit 部分订阅奖励还要求商户官网直付，不含 App Store / Google Play</td><td><span class="status conditional">不能覆盖核心储备</span></td></tr>
+            <tr><td>PayPal 跨币种</td><td>支付便利</td><td>3%–4% 换汇价差通常已吞噬价差机会；用户协议也限制投机交易 / conversion arbitrage</td><td><span class="status avoid">不做 FX 套利</span></td></tr>
+            <tr><td>AI 官方年付 / 用量包</td><td>只有在持续真实使用时，官方折扣可降低单位成本</td><td>预付锁定、账号资格、退款限制和使用量预测误差</td><td><span class="status conditional">先月付验证</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout warn">
+        <strong>跨境投资必须和资金用途分开判断</strong>
+        产品对你开放，不代表境内资金可以通过个人购汇便利化额度用于该投资。先确认居住地、税务居民身份、资金来源地规则和平台法律实体；不确定时咨询持牌机构或专业顾问。
+      </div>
+    </section>
+
+    <section id="safety">
+      <h2><span class="num">7</span>资金保护层级：名字相似，保障完全不同</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>资金位置</th><th>典型保护</th><th>不保护什么</th><th>余额上限思路</th></tr></thead>
+          <tbody>
+            <tr><td>香港存保成员银行的合资格存款</td><td>每名存款人每家成员银行最高 80 万港元</td><td>市场亏损、结构性产品、证券、基金、保险、虚拟资产</td><td>核心储备按银行和保障上限分散</td></tr>
+            <tr><td>Wise 电子货币余额</td><td>客户资金隔离 / safeguarding，按服务实体规则执行</td><td>不是普通银行存款保险；冻结期间的即时可用性</td><td>日常周转，不放全部应急金</td></tr>
+            <tr><td>美国 PayPal 余额</td><td>支付平台控制、部分交易争议机制</td><td>不等同银行储蓄；买家保护有类别和时限排除</td><td>尽快结算到同名银行</td></tr>
+            <tr><td>Bitget Exchange / Bybit 托管账户与卡余额</td><td>平台安全措施、发卡项目争议流程</td><td>无银行存保；平台、稳定币、地区与交易对手风险</td><td>仅一个账单周期的小额</td></tr>
+            <tr><td>Bitget Wallet 自托管</td><td>用户掌握私钥，隔离交易所托管风险</td><td>助记词丢失、钓鱼、恶意授权、链错通常不可逆</td><td>按密钥管理能力分层，冷 / 热钱包分开</td></tr>
+            <tr><td>Bitget Wallet Card 托管余额</td><td>取决于 Fiat24 / DCS / Immersve 等发卡项目及争议流程</td><td>不是助记词控制的链上余额；中国项目当前未消费余额不能转出，也无银行存保</td><td>只充值近期确定要花的小额</td></tr>
+            <tr><td>Neverless 证券 / 加密 / 策略</td><td>仅 Boku Securities SIA 提供的合资格证券服务，可能在机构无法返还资产时适用拉脱维亚投资者赔偿，最高 20,000 欧元</td><td>不保护市场亏损；Neverless Labs 的 crypto / Strategies 不自动享有该证券赔偿或存保</td><td>先识别实体，再设风险预算</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>账户与密钥安全基线</h3>
+      <ul>
+        <li>每个平台使用独立邮箱和唯一密码；优先通行密钥 / 硬件密钥，其次 TOTP，不把短信作为唯一二要素。</li>
+        <li>启用提现白名单、反钓鱼码、登录 / 交易通知、低卡限额；不用时冻结卡和撤销不再使用的 API / 钱包授权。</li>
+        <li>助记词离线保存至少两份，分开地点；绝不放云笔记、聊天窗口、截图相册或密码管理器普通备注。</li>
+        <li>保留资金来源台账：收入、购汇、银行流水、交易所入金、TxID、成本价、提现、发票和税务材料能首尾相接。</li>
+        <li>每季度做一次小额退出演练；账户限制时不密集重试、不拆单，按平台要求提供完整原始材料。</li>
+      </ul>
+    </section>
+
+    <section id="personas">
+      <h2><span class="num">8</span>按真实居住地选择组合</h2>
+      <details open>
+        <summary>中国大陆居民，已有合资格香港银行账户</summary>
+        <p><strong>核心：</strong>香港银行做储备与真实跨境生活支付，跨境支付通 / 银行汇款做可解释入出金。Wise 只使用中国地址实际开放的转账功能；Bitget Exchange Card、Bybit Card、美国 PayPal、Neverless 不作为新开户方案，Bitget Wallet Card 中国项目当前也暂停新注册。AI 服务只在本人实际符合官方支持地区时订阅。</p>
+      </details>
+      <details>
+        <summary>中国大陆居民，没有香港或海外居住资格</summary>
+        <p><strong>核心：</strong>不要为订阅建立虚假海外账户链。招行香港新账户门槛很高，可按真实需求了解招商永隆或其他持牌银行的当前开户规则，但不保证批准。优先选择中国区正式提供的服务、雇主 / 企业合规渠道或等待服务开放。</p>
+      </details>
+      <details>
+        <summary>真实 EEA / Wise Card 支持地区居民</summary>
+        <p><strong>核心：</strong>当地受保存款银行做储备，Wise 做多币种消费和汇款；Neverless 只作为有上限的投资桶，并核对提供产品的法律实体。Bitget / Bybit Card 只有在居住地和卡项目均支持时才作小额备用。</p>
+      </details>
+      <details>
+        <summary>真实美国居民</summary>
+        <p><strong>核心：</strong>美国银行与匹配账单地址的卡直接支付 AI 服务；PayPal 用于希望隔离卡号或需要其支付流程的商户，并尽量避免 PayPal 换汇。Bybit 当前把美国列为受限地区，Neverless EAA 也面向 EEA 合资格且非美国人士；Wise、加密卡和 Neverless 都不是美国 AI 订阅的必需中间层。</p>
+      </details>
+      <details>
+        <summary>已有旧版 Bitget Card，当前账户仍显示可用</summary>
+        <p><strong>核心：</strong>“旧卡仍可刷”不证明当前新申请资格，也不覆盖账户所在地变化。以 App 内适用条款和客服书面答复为准；只留短期消费余额，先在低额普通商户测试，保留传统银行备用卡和退出路径。</p>
+      </details>
+    </section>
+
+    <section id="runbook">
+      <h2><span class="num">9</span>每次资金操作的执行清单</h2>
+      <ol class="checklist">
+        <li>记录当天日期、实际居住地、税务居民身份、产品法律实体和条款版本。</li>
+        <li>在官方支持 / 限制页面确认地区、证件、卡项目和服务资格；不要只问社区“能不能用”。</li>
+        <li>画出完整链路，逐段写出账户所有人、币种、费用、汇率、资金保护、预计到账时间和失败责任方。</li>
+        <li>确认资金来源与用途真实合法，所有银行 / 平台尽量同名；提前准备收入、合同、账单和税务文件。</li>
+        <li>用最小金额完成入金、支付 / 投资、退款 / 赎回、出金闭环，计算最终到账净额。</li>
+        <li>给支付桶和风险桶设硬上限；核心储备不经过 PayPal、交易所、加密卡或投资平台。</li>
+        <li>每月重新核对费率、支持地区、卡条款、提现网络与 AI 服务订阅状态；政策变化时先停新增资金。</li>
+      </ol>
+
+      <div class="callout info">
+        <strong>社区经验的正确用法</strong>
+        用近期社区帖寻找“哪个环节容易卡住、需要什么材料、退款多久”这类操作信号；资格、费率、额度、资金保障和法律边界仍以监管与适用于本人账户的官方条款为准。
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>近期社区样本</th><th>可以借鉴</th><th>不能推出</th></tr></thead>
+          <tbody>
+            <tr><td>招商永隆到店开户个案</td><td>提前准备身份、地址、职业、社保 / 资产、开户用途与资金来源材料</td><td>不能推出“人人 15–30 分钟必开”或固定存款就是开户门槛</td></tr>
+            <tr><td>美国 PayPal 绑定中国卡后受限 / 申诉个案</td><td>姓名、地址、卡账单与交易资料的一致性，以及提前保留退出证据很重要</td><td>不能推出美国 IP、手机号、护照或申诉可以替代美国居住资格</td></tr>
+            <tr><td>Wise 涉加密转账后关户报告</td><td>在执行前核对对手平台法律实体与 Wise 兼容政策</td><td>不能用单个用户对关户原因的推测证明因果，也不能用偶发成功覆盖官方限制</td></tr>
+            <tr><td>Bybit Card 支付 AI 服务的成败混合报告</td><td>商户受理、订阅奖励、卡项目与账号资格要分别验证</td><td>不能从 Claude 一笔成功推导 ChatGPT、Cursor 或续费都成功</td></tr>
+            <tr><td>Neverless 公开评价中的客服与提现反馈</td><td>先做小额赎回 / 提现，保存签约实体和第三方银行信息</td><td>自选择评价不能代表总体成功率或故障率</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="sources">
+      <h2><span class="num">10</span>官方与社区资料索引</h2>
+      <p>动态页面于 <strong>2026-07-15</strong>核验。不同语言、地区、登录状态和法律实体可能展示不同版本；执行前应再次打开原文。</p>
+
+      <h3><span class="evidence ev-a">A 监管、条款与资金保护</span></h3>
+      <ul class="source-list">
+        <li><a href="https://vpr.hkma.gov.hk/eng/regulatory-resources/registers/register-of-ais-and-lros/info/100255" target="_blank" rel="noopener">香港金管局：招商银行香港分行登记</a>。</li>
+        <li><a href="https://www.hkma.gov.hk/eng/smart-consumers/payment-connect/" target="_blank" rel="noopener">香港金管局：跨境支付通</a>：参与机构、服务时段与南北向限额。</li>
+        <li><a href="https://www.safe.gov.cn/shanghai/2019/1213/1198.html" target="_blank" rel="noopener">国家外汇管理局：个人购汇常见问题</a>：5 万美元便利化额度、禁止用途与不得拆分。</li>
+        <li><a href="https://www.safe.gov.cn/safe/file/file/20230908/1381cedc1da643a9b2f6ea097152dc4c.pdf" target="_blank" rel="noopener">国家外汇管理局：个人外汇业务政策问答</a>：真实性审核与交易实质。</li>
+        <li><a href="https://www.dps.org.hk/en/coverage.html" target="_blank" rel="noopener">香港存款保障委员会：保障范围</a>：80 万港元上限及不受保障产品；<a href="https://www.dps.org.hk/en/download/pdf/annual_report_2025/e_10_annex.pdf" target="_blank" rel="noopener">2025 成员名单附件</a>分别列出招商银行与招商永隆。</li>
+        <li><a href="https://www.paypal.com/us/legalhub/paypal/useragreement-full?locale.x=en-US" target="_blank" rel="noopener">PayPal US User Agreement</a>：美国居民资格、身份与账户规则。</li>
+        <li><a href="https://www.paypal.com/us/legalhub/paypal/buyer-protection" target="_blank" rel="noopener">PayPal Purchase Protection</a>：争议时限、适用条件与排除类别。</li>
+        <li><a href="https://www.bybit.com/en/help-center/article/Service-Restricted-Countries" target="_blank" rel="noopener">Bybit：受限制国家 / 地区</a>。</li>
+        <li><a href="https://neverless.com/zh-Hant_EAA/legal/terms" target="_blank" rel="noopener">Neverless EAA Client Agreement</a> 与 <a href="https://neverless.com/es_GB/legal" target="_blank" rel="noopener">法律实体总览</a>。</li>
+        <li><a href="https://neverless.com/en_ES/advertising-policy" target="_blank" rel="noopener">Neverless 风险披露</a>：加密资产、收益与保障边界。</li>
+      </ul>
+
+      <h3><span class="evidence ev-b">B 官方产品与帮助资料</span></h3>
+      <ul class="source-list">
+        <li><a href="https://hk.cmbchina.com/Notice/Detail?guid=2d817024-1756-46dd-8f6b-fc493f7589ff" target="_blank" rel="noopener">招行香港：香港一卡通新开户资产要求</a>。</li>
+        <li><a href="https://hk.cmbchina.com/Notice/Detail.aspx?guid=9baa8781-1c1d-4d88-9536-568c132221ce" target="_blank" rel="noopener">招行香港：个人账户合规使用提示</a>。</li>
+        <li><a href="https://s3gw.cmbimg.com/lb5001-cmbweb-prd-1255000097/cmbcms/20230324/6935fb36-ca18-4041-91a1-0edd29c18341.pdf" target="_blank" rel="noopener">招行香港：香港一卡通使用手册</a>：转账、汇款、卡片与限额的历史公开说明；使用前以 App 当前设置为准。</li>
+        <li><a href="https://www.cmbwinglungbank.com/wlb_corporate/hk/about-us/service-guide/documents-required-for-opening-account.html" target="_blank" rel="noopener">招商永隆：开户所需文件</a>、<a href="https://www.cmbwinglungbank.com/wlb_corporate/cn/about-us/service-guide/service-fee/tariff_guide.html" target="_blank" rel="noopener">服务收费</a>与<a href="https://www.cmbwinglungbank.com/wlb_corporate/hk/e-services/wing-lung-atm-card/new-wing-lung-chip-based-atm-card.html" target="_blank" rel="noopener">ATM 卡资料</a>。</li>
+        <li><a href="https://wise.com/help/articles/2813542/where-do-i-need-to-live-to-hold-money-with-wise" target="_blank" rel="noopener">Wise：余额功能支持地区</a>、<a href="https://wise.com/help/articles/2968915/can-i-get-the-wise-card-in-my-country" target="_blank" rel="noopener">Wise Card 支持地区</a>、<a href="https://wise.com/help/articles/2810318/can-i-get-usd-account-details" target="_blank" rel="noopener">USD 账户信息资格</a>。</li>
+        <li><a href="https://wise.com/help/articles/12CQfcpIVOHULnFNNzBgmE/how-do-i-receive-money-with-my-hkd-account-details" target="_blank" rel="noopener">Wise：HKD 账户信息与证件条件</a>、<a href="https://wise.com/help/articles/2955298/guide-to-cny-transfers" target="_blank" rel="noopener">CNY 转账条件</a>。</li>
+        <li><a href="https://wise.com/help/articles/2932118/incompatible-accounts-and-payments" target="_blank" rel="noopener">Wise：不兼容账户、第三方与加密付款</a>、<a href="https://wise.com/help/articles/2949821/how-wise-keeps-your-money-safe" target="_blank" rel="noopener">资金 safeguarding</a>。</li>
+        <li><a href="https://wise.com/help/articles/1o9thu2We5TjlL9YpGBnuI/wise-interest-how-is-your-money-held-and-what-is-the-risk" target="_blank" rel="noopener">Wise Interest：支持地区与投资风险</a>。</li>
+        <li><a href="https://wise.com/help/articles/2932395/whats-the-mid-market-exchange-rate" target="_blank" rel="noopener">Wise：中间市场汇率</a>、<a href="https://wise.com/help/articles/2596980/how-can-i-convert-money" target="_blank" rel="noopener">余额换汇与频率</a>、<a href="https://wise.com/help/articles/2amMyWoOyhgTL0CkDcY2m4/what-are-dynamic-charges" target="_blank" rel="noopener">动态费用</a>。</li>
+        <li><a href="https://www.bitget.com/support/articles/12560603840909" target="_blank" rel="noopener">Bitget 标准卡申请、地区与 Wise 限制</a>、<a href="https://www.bitget.com/support/articles/12560603803519" target="_blank" rel="noopener">标准卡费率</a>。</li>
+        <li><a href="https://www.bitget.com/support/articles/12560603881449" target="_blank" rel="noopener">Bitget APAC Cardholder Terms</a>、<a href="https://web3.bitget.com/about/security-technology" target="_blank" rel="noopener">Bitget Wallet 安全架构</a>、<a href="https://web3.bitget.com/card" target="_blank" rel="noopener">Wallet Card 项目总览</a>与<a href="https://web3.bitget.com/zh-CN/helpCenter" target="_blank" rel="noopener">当前帮助中心（含大陆暂停提示）</a>。</li>
+        <li><a href="https://web3.bitget.com/zh/helpCenter/235" target="_blank" rel="noopener">Bitget Wallet Card 中国项目旧申请资格</a>、<a href="https://web3.bitget.com/zh/helpCenter/239" target="_blank" rel="noopener">充值与未消费余额限制</a>、<a href="https://web3.bitget.com/zh/helpCenter/241" target="_blank" rel="noopener">费用说明</a>：旧申请页须与当前暂停状态一起阅读。</li>
+        <li><a href="https://www.bybit.com/en/help-center/article/How-to-Apply-for-Bybit-Card" target="_blank" rel="noopener">Bybit Card 申请资格</a>、<a href="https://www.bybit.com/en/help-center/article/Fees-and-Spending-Limits-Bybit-Card" target="_blank" rel="noopener">费率与限额</a>、<a href="https://www.bybit.com/en/help-center/article/Introduction-to-Bybit-Card-Rewards" target="_blank" rel="noopener">订阅奖励规则</a>。</li>
+        <li><a href="https://www.paypal.com/us/digital-wallet/paypal-consumer-fees?locale.x=en_US" target="_blank" rel="noopener">PayPal US 消费者费率</a>、<a href="https://securepayments.paypal.com/us/cshelp/article/how-do-i-confirm-my-identity-cip-help606" target="_blank" rel="noopener">身份核验</a>、<a href="https://www.paypal.com/us/cshelp/article/why-cant-i-link-a-bank-account-to-my-paypal-account-help199" target="_blank" rel="noopener">银行账户与姓名要求</a>、<a href="https://www.paypal.com/us/cshelp/article/why-do-i-have-to-complete-a-security-check-help171" target="_blank" rel="noopener">位置 / 设备安全检查</a>。</li>
+        <li><a href="https://neverless.com/" target="_blank" rel="noopener">Neverless 营销首页</a>：2026-07-15 的可变 AER 快照；<a href="https://neverless.com/en_EAA/pricing" target="_blank" rel="noopener">Neverless Pricing</a>、<a href="https://neverless.com/es_ES/stocks" target="_blank" rel="noopener">股票与投资者赔偿说明</a>。</li>
+        <li><a href="https://help.openai.com/en/articles/7947663-chatgpt-supported-countries/" target="_blank" rel="noopener">OpenAI：ChatGPT 支持地区</a>、<a href="https://help.openai.com/en/articles/9131992" target="_blank" rel="noopener">不支持地区访问与付款说明</a>、<a href="https://help.openai.com/en/articles/7232916-why-was-my-credit-card-declined" target="_blank" rel="noopener">卡片拒付排查</a>。</li>
+        <li><a href="https://help.openai.com/en/articles/20001043-how-do-i-avoid-being-charged-twice-if-i-subscribe-to-chatgpt-on-ios-android-and-the-web" target="_blank" rel="noopener">OpenAI：避免网页与移动端重复订阅</a>。</li>
+        <li><a href="https://www.anthropic.com/supported-countries" target="_blank" rel="noopener">Anthropic：支持国家 / 地区</a>、<a href="https://support.claude.com/en/articles/8325618-paid-plan-billing-faqs" target="_blank" rel="noopener">付费方案账单</a>、<a href="https://support.claude.com/en/articles/12386328-requesting-a-refund-for-a-paid-claude-plan" target="_blank" rel="noopener">退款路径</a>。</li>
+      </ul>
+
+      <h3><span class="evidence ev-c">C 公开经验样本</span></h3>
+      <ul class="source-list">
+        <li><a href="https://www.reddit.com/r/u_tanghua2/comments/1s7grls/" target="_blank" rel="noopener">近期跨境支付通入金香港账户的个人记录</a>：可用于理解 App 操作摩擦，不代表所有账户或用途都获批。</li>
+        <li><a href="https://forum.naixi.net/thread-5247-1-1.html" target="_blank" rel="noopener">2025 年港卡帖评论中的招商永隆开户个案</a> 与 <a href="https://linux.do/t/topic/971444" target="_blank" rel="noopener">另一份开户总结</a>：可用于准备材料，不构成审批或时效承诺。</li>
+        <li><a href="https://s.v2ex.com/t/1151547" target="_blank" rel="noopener">美国 PayPal 绑卡后 App Store 拒付 / 账户受限个案</a> 与 <a href="https://v2ex.com/t/1194818" target="_blank" rel="noopener">历时申诉恢复的个案</a>：证明绑定、扣款、KYC 和长期可用是不同阶段；虚假地址仍不合规。</li>
+        <li><a href="https://www.reddit.com/r/wisebank/comments/1m0i2k7/crypto_deposits_withdrawals/" target="_blank" rel="noopener">Wise 涉加密转账后的关户自述</a>：方向与官方兼容政策一致，但关户原因属于用户推测。</li>
+        <li><a href="https://www.reddit.com/r/BybitCard/comments/1t3cls0/bybit_card_chatgpt_plus_and_cursor_ai_payments/" target="_blank" rel="noopener">Bybit Card 支付多种 AI 商户结果不一致</a> 与 <a href="https://www.reddit.com/r/BybitCard/comments/1tuwod5/no_100_cashback_for_claude/" target="_blank" rel="noopener">Claude 返现争议</a>：营销资格不保证商户受理或返现结果。</li>
+        <li><a href="https://www.trustpilot.com/review/neverless.com" target="_blank" rel="noopener">Neverless 公开评价</a>：同时存在客服好评与入金 / 提现投诉，样本自选择，不能当总体故障率。</li>
+        <li><a href="https://support.google.com/googleplay/thread/436745664/my-claude-pro-subscription-became-unusable-shortly-after-purchase?hl=en" target="_blank" rel="noopener">Google Play Community：Claude 购买后账号不可用的公开报告</a>：说明支付与服务访问可能分离，不证明共同原因。</li>
+        <li><a href="bitget_card_guide.html">本仓库 Bitget Card 实测账本</a>：区分绑卡、授权、清算、服务访问、退款与争议；个人结果不推广为平台普遍承诺。</li>
+      </ul>
+
+      <p class="muted">任何“普遍成功经验”都有幸存者偏差。最可复用的共同点不是绕过规则，而是真实居住与地址、同名账户、小额测试、完整资金来源、低余额和可验证的退出路径。</p>
+    </section>
+
+    <footer>
+      <p>Digital Nomad Guide · 跨境资金与 AI 订阅决策指南 · 2026</p>
+    </footer>
+  </main>
+</body>
+</html>
