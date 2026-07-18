@@ -434,6 +434,66 @@ curl --socks5-hostname 127.0.0.1:40000 \
 >
 > `--xhttp` 不会自动启用 WARP，但 Xray-script 菜单可以另行部署 Docker WARP。本文使用宿主机 `cloudflare-warp`，Xray 连接 `127.0.0.1:40000`；脚本方案连接容器 IP 的 `40001`。不要混用两套实现，也不要因脚本菜单显示 WARP 未开启，就误判 host `warp-svc` 未工作。
 
+### 手动更换 WARP 出口 IP
+
+WARP 出口 IP 由两个因素决定：设备注册身份（`registration new` 生成的唯一标识）和连接的 Cloudflare 边缘节点（通常就近分配）。正常保持连接时 IP **基本稳定**，不会频繁自动变化。
+
+#### 什么时候需要换 IP
+
+- 当前出口 IP 被目标服务（Claude / OpenAI）风控标记，频繁出现验证码或登录限制
+- Scamalytics 评分偏高（>30），或外部黑名单命中
+
+#### 更换原理
+
+WARP 的出口 IP 是和设备注册身份绑定的。只 `disconnect → connect` 不断开注册，大概率还是同一个 IP。要换 IP 必须**删除旧注册 → 重新注册 → 重连**，Cloudflare 会为新的设备身份分配一个新出口 IP。
+
+#### 一键脚本
+
+服务器上已部署 `/usr/local/bin/rotate-warp-ip.sh`，脚本会自动完成断开、删注册、重新注册、恢复 proxy 模式、重连全套流程，并对比新旧 IP：
+
+```bash
+# 默认重试 3 次
+sudo /usr/local/bin/rotate-warp-ip.sh
+
+# 自定义重试次数（如 5 次）
+sudo /usr/local/bin/rotate-warp-ip.sh 5
+
+# 最多重试 20 次，直到 IP 成功更换
+sudo /usr/local/bin/rotate-warp-ip.sh --force
+```
+
+脚本运行时会用 `curl --socks5-hostname` 查询 Cloudflare cdn-cgi/trace 获取实际出口 IP，更换成功后自动验证 WARP 出站可用性。
+
+#### 手动更换步骤（不用脚本）
+
+```bash
+# 1. 记录当前 IP
+curl -s --socks5-hostname 127.0.0.1:40000 https://cloudflare.com/cdn-cgi/trace | grep '^ip='
+
+# 2. 断开 → 删注册 → 重新注册
+sudo warp-cli --accept-tos disconnect
+sudo warp-cli --accept-tos registration delete
+sudo warp-cli --accept-tos registration new
+
+# 3. 恢复代理模式并重连
+sudo warp-cli --accept-tos mode proxy
+sudo warp-cli --accept-tos proxy port 40000
+sudo warp-cli --accept-tos connect
+
+# 4. 验证新 IP
+sudo warp-cli --accept-tos status
+curl -s --socks5-hostname 127.0.0.1:40000 https://cloudflare.com/cdn-cgi/trace | grep '^ip='
+```
+
+#### 注意事项
+
+| 项目 | 说明 |
+| --- | --- |
+| IP 池大小 | 取决于边缘节点。实测 Oregon 实例连 PDX（Portland）节点，IP 地址集中在 `104.28.201.x` 段，约 2-3 个可用地址，有时一次就能换成功，有时需要重试 2-3 次 |
+| 对风控的影响 | 每次换出口 IP，从 Claude 角度看就是换了新 IP 登录。频繁更换（尤其配合新账号）可能触发风控。建议确认当前 IP 已被标记（如频繁验证码）再换，而不是日常随意切换 |
+| 对 Xray 的影响 | WARP 断开期间走 `warp` 出站的 AI 流量会暂时失败，但直连流量不受影响。脚本结束前会确认 Xray 正常运行，无需手动干预 |
+| 换完 IP 后 | 建议用 `scamalytics.com/ip/<新IP>` 检查新出口 IP 评分，确认质量合格 |
+
 <a id="routing"></a>
 
 ## 5. Xray 分流路由配置
