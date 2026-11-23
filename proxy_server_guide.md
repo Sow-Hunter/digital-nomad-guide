@@ -37,7 +37,7 @@ Lightsail Xray（Oregon，Ubuntu 24.04）
 
 | 项目 | 已核对的状态 |
 | --- | --- |
-| 入口 | Xray 同时监听 TCP `443` 和 `18443`。Mac 当前经香港前置连接 Oregon 的 `18443` Shadowsocks |
+| 入口 | Xray 同时监听 TCP `443` 和 `18443`。Mac 的链式配置原计划经香港连接 `18443`。本次测速时前置引用失效，实际运行的是 `18443` 直连 |
 | 出站 | `direct` 为默认出站，`ai-services` 匹配的 21 个域名也走 `direct`。服务端直出测试确认使用 Oregon 静态 IPv4 |
 | WARP | 宿主机 SOCKS5 `127.0.0.1:40000` 连通。Xray 保留 `warp` 出站，本次核对的规则未引用它。开启分流会改变命中请求的最终出口 |
 | 防火墙 | Lightsail 放行 `443`；`18443` 允许任意 IPv4 来源。控制台还放行 `80`，主机当前没有进程监听该端口 |
@@ -589,7 +589,7 @@ sudo toggle-google-warp.sh off
 
 ## 6. Oregon Shadowsocks 链式备用入口（可选）
 
-当客户端直连 Oregon 不稳定时，可以保留 **VLESS + XHTTP + Reality / TCP 443** 主入口，用同一台 Oregon 上的 **Shadowsocks AES-256-GCM / TCP 18443** 作为兼容性备用。该端口支持直连及经前置拨号。Mac 当前使用香港前置。[V2rayNG 链式代理章节](v2ray_proxy_guide.md#android-chain)介绍链式配置。
+当客户端直连 Oregon 不稳定时，可以保留 **VLESS + XHTTP + Reality / TCP 443** 主入口，用同一台 Oregon 上的 **Shadowsocks AES-256-GCM / TCP 18443** 作为兼容性备用。该端口支持直连及经前置拨号。[V2rayNG 链式代理章节](v2ray_proxy_guide.md#android-chain)介绍链式配置。
 
 ```text
 中国本地网络
@@ -769,7 +769,7 @@ sudo tail -f /var/log/xray/access.log | grep 'ss-chain'
 > [!NOTE]
 > 现有实测覆盖
 >
-> Mac 当前配置为香港前置 → Oregon `18443` Shadowsocks。此前 Mac 测速确认了最终的 Oregon 静态 IPv4，测试请求未与服务端来源日志逐条对应。过去的 Android 连通测试曾通过服务端来源日志确认香港前置可达。
+> 2026 年 11 月 23 日，Mac 选中的链式配置里，香港前置引用已无法解析。实际运行的 Xray 只有 Oregon `18443` 出站，没有 `dialerProxy`。服务端也观察到 YouTube 媒体域名的请求来自与测试 SSH 相同的来源。过去的 Android 连通测试曾通过服务端来源日志确认香港前置可达。
 
 ### 回滚
 
@@ -852,7 +852,7 @@ sudo systemctl --no-pager --full status xray
 
 ### 网络链路质量问题
 
-跨区延迟和稳定性随运营商、接入网络和时段变化。以 Mac 当前的香港前置 → `18443` 为基线，在同一客户端网络交替测 `18443` 直连。固定测试目标、请求大小和协议，按时间窗口核对 `ss-chain` 来源日志及最终 Oregon 静态 IP。记录首字节时间的中位数和 p90、超时比例及下载速度。`443` 直连可另作体验对照，其协议与 `18443` 不同。
+跨区延迟和稳定性随运营商、接入网络和时段变化。在同一客户端网络交替测 `18443` 直连与经香港前置的 `18443`。测速前先核对客户端实际加载的配置中包含有效的前置出站。固定测试目标、请求大小和协议，按时间窗口核对 `ss-chain` 来源日志及最终 Oregon 静态 IP。记录首字节时间的中位数和 p90、超时比例及下载速度。`443` 直连可另作体验对照，其协议与 `18443` 不同。
 
 同时保留 Oregon 上的直出测速，并观察 CPU 突发容量、TCP 重传和 swap 活动。若 Oregon 直出正常、客户端路径在晚高峰变慢，再对照不同入口或中转。若直出也变慢或主机资源持续吃紧，先排查 Oregon 到目标站点及实例负载。
 
