@@ -1,6 +1,6 @@
 # 代理服务器搭建与运维指南
 
-AWS Lightsail + Xray Reality 主入口 + Shadowsocks 链式备用入口 + Cloudflare WARP
+AWS Lightsail + Xray Reality 主入口 + Shadowsocks 备用入口 + Oregon 静态 IP 出站
 
 **标签：** AWS Lightsail · Xray VLESS-XHTTP-Reality · Shadowsocks AES-256-GCM 链式备用 · Cloudflare WARP · 住宅 IP · V2rayN / V2rayNG
 
@@ -9,7 +9,7 @@ AWS Lightsail + Xray Reality 主入口 + Shadowsocks 链式备用入口 + Cloudf
 1. [整体架构方案](#arch)
 2. [Lightsail 注册与购买](#lightsail)
 3. [Xray VLESS-XHTTP-Reality 搭建（一键脚本）](#xray)
-4. [Cloudflare WARP 出口配置](#warp)
+4. [Cloudflare WARP 出口配置（可选）](#warp)
 5. [Xray 分流路由配置](#routing)
 6. [Oregon Shadowsocks 链式备用入口](#ss-chain)
 7. [本地客户端配置（V2rayN / V2rayNG）](#client)
@@ -21,47 +21,29 @@ AWS Lightsail + Xray Reality 主入口 + Shadowsocks 链式备用入口 + Cloudf
 ## 1. 整体架构方案
 
 ```text
-本地客户端  (V2rayN macOS / V2rayNG Android)
-    │
-    ├── 直连主入口：VLESS-XHTTP-Reality / TCP 443（抗 DPI）
-    │
-    └── 链式备用：香港机场前置 → SS AES-256-GCM / TCP 18443
-    ▼
-AWS Lightsail  ($5/月, Ubuntu 24.04)
-    │
-    ├── 普通流量 ──→ 直连出站
-    │
-    └── Claude / OpenAI ──→ WARP (socks5://127.0.0.1:40000)
-                              │
-                              ▼
-                        Cloudflare 网络  (AS 13335, IP 信誉优于 AWS)
-                              │
-                              ▼
-                     claude.ai / openai.com
+本地客户端（V2rayN macOS / V2rayNG Android）
+    ├── 主入口：VLESS + XHTTP + Reality / TCP 443
+    └── 备用入口：Shadowsocks AES-256-GCM / TCP 18443（可经香港前置）
+        ▼
+Lightsail Xray（Oregon，Ubuntu 24.04）
+    └── 普通网站及 Claude / OpenAI 等 AI 域名 → direct → Oregon 静态 IPv4
 ```
 
-### 为什么选这个架构
+<a id="current-deployment"></a>
 
-| 维度 | 说明 |
+### 当前部署
+
+2026 年 11 月 23 日核对的现网部署只有一台 Oregon Lightsail 实例。
+
+| 项目 | 已核对的状态 |
 | --- | --- |
-| 协议层 | VLESS-XHTTP-Reality / 443 始终是抗 DPI 主入口；SS AES-256-GCM / 18443 仅在本地直连 Oregon 不稳定时，作为香港前置后的链式备用入口 |
-| 出口层 | WARP 将 Claude/OpenAI 流量从 AWS IP 转为 Cloudflare IP，降低风控风险 |
-| 成本 | Lightsail $5/月 + WARP 免费 = **$5/月** |
-| IP 信誉 | Cloudflare 承载数千万正常用户，IP 信誉远优于 AWS 数据中心段 |
+| 入口 | Xray 同时监听 TCP `443` 和 `18443`。Mac 测速样本直接连接 `18443`，Android 可另行配置香港前置 |
+| 出站 | `direct` 为默认出站，`ai-services` 匹配的 21 个域名也走 `direct`。服务端直出测试确认使用 Oregon 静态 IPv4 |
+| WARP | 宿主机 SOCKS5 `127.0.0.1:40000` 连通。Xray 保留 `warp` 出站，本次核对的规则未引用它。开启分流会改变命中请求的最终出口 |
+| 防火墙 | Lightsail 放行 `443`；`18443` 允许任意 IPv4 来源。控制台还放行 `80`，主机当前没有进程监听该端口 |
+| 实例 | Linux/Unix 公网 IPv4 $5 档，标称 512 MB 内存。`fq` 和 BBR 已生效 |
 
-### IP 信誉对比
-
-|  | 裸 Lightsail | \+ WARP | \+ 住宅 IP |
-| --- | --- | --- | --- |
-| AS 归属 | AS 16509 (Amazon) | AS 13335 (Cloudflare) | 当地 ISP |
-| IP 性质 | 数据中心 | 数据中心 + 大量正常用户 | 住宅 |
-| 被标记风险 | 高 | 中等 | 低 |
-| 额外成本 | $0 | $0 | $2-5/月 |
-
-> [!NOTE]
-> 推荐策略
->
-> 先用 WARP 跑一两周观察。如果稳定则无需加住宅 IP；如果被风控，再叠加 ISP 静态住宅代理作为 fallback 出口。
+需要保留现有 Oregon 出口时，使用 `direct`。如需评估其他出口，可将 [WARP](#warp) 或[住宅代理](#residential)作为独立方案验证。WARP 出口属于 Cloudflare 网络，其地址和目标站点的接受情况应按接入方式实测。
 
 > [!TIP]
 > 为什么选 XHTTP 而非 Vision
@@ -98,13 +80,13 @@ AWS Lightsail  ($5/月, Ubuntu 24.04)
 
 | 配置项 | 推荐选择 | 说明 |
 | --- | --- | --- |
-| Region | `us-west-2` (Oregon) | 国内直连 ~150-180ms，美东 Virginia ~220-260ms；AI 服务（Anthropic/OpenAI）主部署在美西，Oregon 出站延迟极低；Oregon 是免税州，AWS 账单不额外加税 |
-| Availability Zone | `us-west-2b` 或 `us-west-2c` | 同 Region 内各 AZ 延迟/价格无差异。默认 2a 选的人最多，IP 段被滥用/被墙的概率略高，换一个避开从众效应 |
+| Region | `us-west-2`（Oregon） | 保留现有 Oregon 静态出口。客户端时延随运营商、接入网络和时段变化 |
+| Availability Zone | `us-west-2a` | 当前实例所在可用区。新部署以当地可用容量和实际链路测量为准 |
 | Platform | Linux/Unix |  |
 | Blueprint | **OS Only** → Ubuntu 24.04 LTS | 选「Operating System only」标签页，不选「Apps + OS」。预装应用（WordPress、Node.js 等）用不上，占资源且增加攻击面 |
-| Network Type | **Dual-stack** | IPv4 + IPv6，无额外费用，多一个 IPv6 地址偶尔能用上 |
-| Plan Type | **General purpose** | Memory-optimized / Compute-optimized 用于数据库和批处理，代理服务器用不上 |
-| Plan | **$5/月** | 1 vCPU, 1GB RAM, 2TB 流量 |
+| Network Type | 公网 IPv4 | 当前实例通过静态 IPv4 对外。需要 IPv6 时再配置双栈和相应防火墙 |
+| Plan Type | **General purpose** | 用于这类轻量转发负载 |
+| Plan | **$5/月** | 当前公网 IPv4 Linux/Unix 套餐标价为 0.5 GB 内存、2 vCPU、20 GB SSD、1 TB 流量。以 [Lightsail 定价页](https://aws.amazon.com/lightsail/pricing/)和创建页为准 |
 | SSH Key | 默认创建即可 → **下载私钥** | 务必保存好，丢失无法恢复 |
 | Launch Script | 不用填 | 后面手动 SSH 安装 |
 | Automatic Snapshots | 不用开 | 配置稳定后手动打一个快照即可，自动快照按量收费 |
@@ -112,20 +94,18 @@ AWS Lightsail  ($5/月, Ubuntu 24.04)
 | Tags | 不用加 | 单台实例不需要标签分类 |
 
 > [!NOTE]
-> $5 够用吗？为什么不选 $7
+> 升配根据负载决定
 >
-> Xray + WARP 本质是转发流量，实测资源占用很低：CPU 日常 <5%，Xray ~30MB + WARP ~50MB 内存，1GB 完全够用。即使兼做日常代理（YouTube 1080p ~5GB/小时），2TB/月流量也很难超。$7 档（2 vCPU / 2GB RAM）多出来的资源在代理场景下基本闲置。
+> 在产生卡顿的时段查看 CPU、CPU 突发容量、可用内存和 swap 换入换出。只有资源压力与卡顿同时出现时，才有理由用更大套餐做对照。
 
 ### 后期升配
 
 如果以后发现资源不够（比如还想在上面跑其他服务），Lightsail 支持通过快照升配：
 
 1. **创建快照**：Instances → 实例 → Snapshots → Create snapshot
-2. **从快照创建新实例**：选择更高配置（如 $7 / $10），Xray/WARP 配置完整保留
-3. **迁移静态 IP**：把静态 IP 从旧实例移到新实例（免费，IP 地址不变，客户端不用改配置）
-4. **删除旧实例**：删掉即停止计费，从升级那一刻起按新档价格计费，无补差价
-
-整个过程约 10-15 分钟，期间代理短暂中断。所以先买 $5 完全没问题，有需要再升，没有惩罚性费用。
+2. **从快照创建新实例**：选择更高配置（如 $7 / $12），先用其临时地址验证 Xray 和所需附加服务。
+3. **迁移静态 IP**：验证通过后，把同区域的静态 IP 重新关联到新实例。客户端仍使用原地址，切换期间会有短暂中断。
+4. **清理旧资源**：确认生产连接恢复后再处理旧实例和快照。新旧实例重叠期间各自计费，快照按存储量计费。
 
 ### 分配静态 IP
 
@@ -154,7 +134,7 @@ Custom  TCP   443   ✓
 Custom  TCP   18443 ✓
 ```
 
-如果选了 Dual-stack，同时检查下方的 **IPv6 Firewall**：主入口添加 `Custom TCP 443`；确实需要通过 IPv6 访问链式入口时再添加 `Custom TCP 18443`。
+当前 `80` 仍留在 Lightsail 防火墙规则中，主机没有监听。若启用双栈，同时检查 IPv6 防火墙；只为实际使用 IPv6 的入口添加规则。
 
 ### SSH 连接
 
@@ -187,9 +167,9 @@ ssh -i ~/.ssh/<GCP_PRIVATE_KEY> <GCP_USER>@<GCP_EXTERNAL_IP>
 >
 > 不要仅因名称不熟悉就禁用 `google-*` 或 `1panel` 服务。
 
-### 内存优化（$5 实例必做）
+### 小内存实例的资源检查
 
-$5 plan 只有 1GB 内存（实际可用约 414MB）。Xray ~12MB + WARP ~77MB 本身不大，但 Ubuntu 默认运行的系统服务会额外占用 ~200MB，极易触发 **OOM（Out of Memory）**导致 DNS 崩溃、Xray 连接全断。
+当前套餐标称 512 MB，Ubuntu 24.04 实际识别约 414 MiB。后台维护任务的内存峰值可能造成 OOM，出现断连时应把 OOM 日志和连接失败的时间对齐。
 
 > [!CAUTION]
 > 实测踩坑：OOM 导致代理全部断连
@@ -247,24 +227,15 @@ free -h
 ```
 
 > [!NOTE]
-> 优化后的内存对比
+> 2026 年 11 月 23 日的资源快照
 >
-> |  | 优化前 | 优化后 |
-> | --- | --- | --- |
-> | 内存可用 | ~136MB | ~200MB（+47%） |
-> | Swap | 无 | 512MB（OOM 兜底） |
->
-> 优化后 $5 实例跑 Xray + WARP 完全稳定，不需要升配到 $7。
+> `/swapfile` 已启用并配置为随开机挂载。核对时可用内存为 105 MiB，swap 共约 511 MiB、已用 341 MiB。是否存在持续内存压力应结合卡顿时段的换入换出和 OOM 记录判断。
 
 ### 开启 BBR 加速
 
-BBR（Bottleneck Bandwidth and Round-trip propagation time）是 Google 开发的 TCP 拥塞控制算法。Ubuntu 默认使用 `cubic`，在高延迟和丢包链路上表现保守——遇到丢包就大幅降速。BBR 不依赖丢包信号，能更好地维持吞吐量。
+BBR（Bottleneck Bandwidth and Round-trip propagation time）是 TCP 拥塞控制算法。它估计可用带宽与往返传播时延，调整发送节奏。对高时延或有丢包线路的吞吐收益应以相同链路的实测为准。
 
-| 场景 | cubic（默认） | BBR |
-| --- | --- | --- |
-| 高延迟链路（200ms+） | 吞吐量受限 | 明显提升 |
-| 丢包链路（5-40%） | 遇丢包大幅降速 | 不因丢包降速 |
-| YouTube 视频 | 缓冲慢，易卡顿 | 缓冲更快 |
+2026 年 11 月 23 日核对到系统默认队列为 `fq`、TCP 拥塞控制为 `bbr`，采样时 `18443` 的已建立 TCP 连接均使用 BBR。
 
 ```bash
 # 使用独立配置文件，重复执行不会污染 /etc/sysctl.conf
@@ -279,17 +250,13 @@ sysctl net.core.default_qdisc net.ipv4.tcp_congestion_control
 # 应分别输出 fq 和 bbr
 ```
 
-> [!NOTE]
-> BBR 无副作用
->
-> BBR 是内核内置模块，不需要额外安装，两行配置即可。对服务器资源几乎无额外开销，重启后永久生效。建议所有实例都开启。
+使用 `ss -tin` 可查看活跃 TCP 连接的拥塞控制算法。BBR 可以影响发送速率和排队，跨太平洋的传播时延仍由实际路径决定。
 
 ### 计费注意
 
-- 新实例 **前 3 个月免费**（$5 以下 plan），按实例独立计算——同时创建 2 台 $5 实例，两台都各自有 3 个月免费
-- 超出流量按 $0.09/GB 计费，2TB 代理用很难超
-- 停止实例仍计费，只有 **删除** 才停止
-- IP 被墙时，删掉静态 IP 重新分配即可（免费）
+- 免费额度与 AWS 账户开通时间、计划和当期活动有关。使用前核对 [Lightsail 定价](https://aws.amazon.com/lightsail/pricing/)和 Billing 中赠金的适用产品及到期时间。
+- 超出套餐流量、保留快照和未关联的静态 IP 可能产生费用。实例停止后仍按 Lightsail 的规则计费。
+- 保留固定出口时，应保留现有静态 IP 资源。换实例时可把它移到同一区域的新实例。
 
 <a id="xray"></a>
 
@@ -396,7 +363,9 @@ sudo tail -20 /var/log/xray/error.log
 
 <a id="warp"></a>
 
-## 4. Cloudflare WARP 出口配置
+## 4. Cloudflare WARP 出口配置（可选）
+
+Oregon 当前运行宿主机 WARP 的 SOCKS5 代理，监听 `127.0.0.1:40000`。本机通过该端口测试得到 `warp=on`；通过 Xray 的默认请求和 AI 域名请求仍按第 5 章从 Oregon 直出。
 
 ### 在 Lightsail 上安装 WARP
 
@@ -436,7 +405,7 @@ curl --socks5-hostname 127.0.0.1:40000 \
 
 ### 手动更换 WARP 出口 IP
 
-WARP 出口 IP 由两个因素决定：设备注册身份（`registration new` 生成的唯一标识）和连接的 Cloudflare 边缘节点（通常就近分配）。正常保持连接时 IP **基本稳定**，不会频繁自动变化。
+普通 WARP 可以沿用同一个出口一段时间。需要地址长期固定的流量使用 Oregon 静态 IP。Cloudflare 将[专用静态出口 IP](https://developers.cloudflare.com/cloudflare-one/traffic-controls/egress-policies/dedicated-egress-ips/)作为独立能力提供。
 
 #### 什么时候需要换 IP
 
@@ -445,11 +414,11 @@ WARP 出口 IP 由两个因素决定：设备注册身份（`registration new` �
 
 #### 更换原理
 
-WARP 的出口 IP 是和设备注册身份绑定的。只 `disconnect → connect` 不断开注册，大概率还是同一个 IP。要换 IP 必须**删除旧注册 → 重新注册 → 重连**，Cloudflare 会为新的设备身份分配一个新出口 IP。
+重新注册并连接是曾经试用的换出口方法。每次以实测出口 IP 为准，分配结果可能与原地址相同。
 
 #### 一键脚本
 
-服务器上已部署 `/usr/local/bin/rotate-warp-ip.sh`，脚本会自动完成断开、删注册、重新注册、恢复 proxy 模式、重连全套流程，并对比新旧 IP：
+需要手动轮换时，可先审阅仓库的 [`rotate-warp-ip.sh`](scripts/rotate-warp-ip.sh)，并在确认已部署到 `/usr/local/bin/rotate-warp-ip.sh` 后运行。它会断开、重新注册、恢复代理模式并对比出口 IP。
 
 ```bash
 # 默认重试 3 次
@@ -491,14 +460,14 @@ curl -s --socks5-hostname 127.0.0.1:40000 https://cloudflare.com/cdn-cgi/trace |
 | --- | --- |
 | IP 池大小 | 取决于边缘节点。实测 Oregon 实例连 PDX（Portland）节点，IP 地址集中在 `104.28.201.x` 段，约 2-3 个可用地址，有时一次就能换成功，有时需要重试 2-3 次 |
 | 对风控的影响 | 每次换出口 IP，从 Claude 角度看就是换了新 IP 登录。频繁更换（尤其配合新账号）可能触发风控。建议确认当前 IP 已被标记（如频繁验证码）再换，而不是日常随意切换 |
-| 对 Xray 的影响 | WARP 断开期间走 `warp` 出站的 AI 流量会暂时失败，但直连流量不受影响。脚本结束前会确认 Xray 正常运行，无需手动干预 |
+| 对 Xray 的影响 | 暂停 WARP 会影响配置为 `warp` 的流量。当前 Oregon 的 `ai-services` 走 `direct` |
 | 换完 IP 后 | 建议用 `scamalytics.com/ip/<新IP>` 检查新出口 IP 评分，确认质量合格 |
 
 <a id="routing"></a>
 
 ## 5. Xray 分流路由配置
 
-Xray-script 生成的配置只有 `direct` 和 `block` 两个出站，需要手动添加 WARP 出站和 AI 服务分流规则。使用 `jq` 修改配置文件：
+新部署使用 `direct` 即可让代理流量从实例出站。以下片段用于复现当前 Oregon 的路由配置，保留一个可选的 `warp` SOCKS5 出站，并把 `ai-services` 明确指向 `direct`。
 
 ```bash
 CONFIG=/usr/local/etc/xray/config.json
@@ -533,7 +502,7 @@ sudo jq '
         "featuregates.org", "intercom.io", "intercomcdn.com",
         "sentry.io", "statsigapi.net", "stripe.com"
       ],
-      "outboundTag": "warp"
+      "outboundTag": "direct"
     }
   ] + .routing.rules[1:]
 ' "$CONFIG" | sudo tee "$NEW" > /dev/null
@@ -541,17 +510,17 @@ sudo jq '
 # 保留原配置的属主和权限，验证成功后再替换
 sudo chown --reference="$CONFIG" "$NEW"
 sudo chmod --reference="$CONFIG" "$NEW"
-sudo xray run -test -config "$NEW"
-sudo mv "$NEW" "$CONFIG"
-sudo systemctl restart xray
-sudo systemctl is-active --quiet xray
+sudo xray run -test -config "$NEW" &&
+  sudo mv "$NEW" "$CONFIG" &&
+  sudo systemctl restart xray &&
+  sudo systemctl is-active --quiet xray
 ```
 
 这段命令做了三件事：
 
 1. 日志级别改为 `info`（方便排障，默认 `warning` 看不到路由决策）
 2. 添加 WARP SOCKS5 出站（`127.0.0.1:40000`）
-3. 在脚本原有的 api 规则之后插入 AI 服务分流规则，匹配的域名走 WARP 出口
+3. 在原有 `api` 规则之后插入 `ai-services`，匹配的域名从 Oregon 静态 IP 直出。
 
 ### 验证分流生效
 
@@ -564,11 +533,12 @@ sudo jq '.outbounds[].tag' /usr/local/etc/xray/config.json
 sudo jq '.routing.rules[].ruleTag' /usr/local/etc/xray/config.json
 # 应输出: "api" "ai-services" "bt" "private-ip" "cn-ip" "ad-domain"
 
-# 查看某条规则的完整域名列表（如 ai-services）
-sudo jq '.routing.rules[] | select(.ruleTag=="ai-services") | {ruleTag, domain, outboundTag}' \
+# 核对 AI 域名规则及实际配置的出站
+sudo jq '.routing.rules[] | select(.ruleTag=="ai-services") | {ruleTag, outboundTag, domains: (.domain | length)}' \
   /usr/local/etc/xray/config.json
+# 当前 Oregon 应输出 outboundTag: direct，domains: 21
 
-# 查看所有走 WARP 的域名规则
+# 查看实际引用 WARP 的规则；当前 Oregon 应无输出
 sudo jq '.routing.rules[] | select(.outboundTag=="warp") | {ruleTag, domain}' \
   /usr/local/etc/xray/config.json
 ```
@@ -588,7 +558,7 @@ sudo jq '.routing.rules[] | select(.outboundTag=="warp") | {ruleTag, domain}' \
 > [!WARNING]
 > 域名补充
 >
-> 上面列出了核心域名。实际使用中如果发现某些资源加载失败，可通过浏览器开发者工具或 `sudo tail -f /var/log/xray/access.log` 查看被直连的域名，添加到分流规则中。
+日常排查先核对命中规则和预期出口；只有明确要为额外域名指定出站时，再调整域名清单。访问日志可能包含来源和目标地址，引用时应脱敏。
 
 ### Google 全家桶 WARP 分流开关脚本
 
@@ -613,18 +583,13 @@ sudo toggle-google-warp.sh off
 > - **status**：检查规则是否存在，列出当前覆盖的域名和 WARP 出站配置
 > - 每次操作前自动备份配置到 `/usr/local/etc/xray/backups/`，操作后自动重启 Xray
 
-脚本已部署到两台服务器：
-
-| 服务器 | 路径 | 当前状态 |
-| --- | --- | --- |
-| Oregon（`<OREGON_SERVER_IP>`） | `/usr/local/bin/toggle-google-warp.sh` | 已部署，未开启 |
-| Tokyo（`<TOKYO_SERVER_IP>`） | `/usr/local/bin/toggle-google-warp.sh` | 已部署，未开启 |
+2026 年 11 月 23 日在 Oregon 确认 `/usr/local/bin/toggle-google-warp.sh` 存在，Xray 配置未包含 `google-warp` 规则。Tokyo 实例已退出当前部署。
 
 <a id="ss-chain"></a>
 
 ## 6. Oregon Shadowsocks 链式备用入口（可选）
 
-当中国移动宽带或蜂窝网络直连 Oregon 不稳定时，可以保留 **VLESS + XHTTP + Reality / TCP 443** 主入口，同时在同一台 Oregon Xray 上增加 **Shadowsocks AES-256-GCM / TCP 18443** 入站，专供香港机场前置后的第二跳使用。Android 端完整配置见 [V2rayNG 链式代理章节](v2ray_proxy_guide.md#android-chain)。
+当客户端直连 Oregon 不稳定时，可以保留 **VLESS + XHTTP + Reality / TCP 443** 主入口，用同一台 Oregon 上的 **Shadowsocks AES-256-GCM / TCP 18443** 作为兼容性备用。Mac 可直连该端口，Android 也可用香港前置向该端口拨号。[V2rayNG 链式代理章节](v2ray_proxy_guide.md#android-chain)介绍链式配置。
 
 ```text
 中国本地网络
@@ -636,9 +601,7 @@ sudo toggle-google-warp.sh off
     ▼
 Oregon Xray / ss-chain
     │
-    ├── 普通网站 ──→ direct
-    │
-    └── Claude / Anthropic ──→ WARP
+    └── 普通网站及 AI 域名 → direct → Oregon 静态 IPv4
     ▼
 目标站点
 ```
@@ -778,7 +741,7 @@ sudo /usr/local/sbin/generate-ss-chain-link <GCP_EXTERNAL_IP>
 
 1. 进入 **Lightsail → Instances → Oregon 实例 → Networking → IPv4 Firewall**。
 2. 新增 **Custom / TCP / 18443**；443 规则保持不变，不要把主入口改到 18443。
-3. 如果香港前置的实际出口 IP 固定，可在**同一条 18443 规则**上启用来源限制并填写 `<HK_FRONT_EGRESS_IP>/32`。如果之前已建 allow-all 规则，应编辑或删除它，不能同时保留 allow-all 与 `/32` 两条规则，否则较宽的规则会使限制失效。操作方式可对照 [Lightsail 防火墙官方说明](https://docs.aws.amazon.com/lightsail/latest/userguide/understanding-firewall-and-port-mappings-in-amazon-lightsail.md)。
+3. 当前 `18443` 放行任意 IPv4 来源，Mac 直连测试使用这一入口。若后续只允许香港前置且确认它的实际出口固定，可在同一条规则上配置来源限制；同时取消对所有 IPv4 地址的放行。操作方式见 [Lightsail 防火墙说明](https://docs.aws.amazon.com/lightsail/latest/userguide/understanding-firewall-and-port-mappings-in-amazon-lightsail.md)。
 4. 智能入口或 IEPL 的 NAT 出口可能变化，限制来源前先以服务端日志确认，否则会误封。
 5. 只在确实使用 IPv6 链式连接时同步开放 IPv6 TCP 18443。
 
@@ -790,12 +753,11 @@ sudo tail -f /var/log/xray/access.log | grep 'ss-chain'
 
 # 预期形态（不要把真实日志提交到仓库）
 <TIMESTAMP> from <HK_FRONT_EGRESS_IP>:<SOURCE_PORT> accepted ... [ss-chain -> direct]
-<TIMESTAMP> from <HK_FRONT_EGRESS_IP>:<SOURCE_PORT> accepted ... [ss-chain -> warp]
 ```
 
 | 证据 | 证明力 |
 | --- | --- |
-| 普通网站检测到的公网 IP 与 `<OREGON_SERVER_IP>` 完全一致（或与独立确认的 Oregon `direct` NAT 出口一致），Claude / Anthropic 显示 WARP 出口 | 证明 Oregon 服务端的 direct/WARP 出站符合预期；**不能单独证明经过香港前置** |
+| 代理出口检测到的公网 IP 与 `<OREGON_SERVER_IP>` 一致，日志显示 `[ss-chain -> direct]` | 证明本次请求经 Oregon 直出。香港前置要结合同一时段的来源日志确认 |
 | v2rayNG 生成配置中 Oregon outbound 的 `dialerProxy` 引用香港 outbound | 证明客户端生成了链式拨号意图，但仍属于配置证据 |
 | Oregon 日志中 `ss-chain` 的来源是前置中转网络 | **前置实际生效的关键运行证据**；建议记录时间窗口并做关闭/开启前置的 A/B 对照 |
 
@@ -804,14 +766,10 @@ sudo tail -f /var/log/xray/access.log | grep 'ss-chain'
 >
 > 智能入口或 IEPL 的入口 DNS、节点物理位置、连接 Oregon 时使用的出口 NAT IP 可能分别属于不同网络。服务端看到的来源未必被 GeoIP 标成香港；应结合 `dialerProxy`、同一时间窗口的 `ss-chain` 日志和前置开关 A/B 对照判断。同理，IP 检测页如果只显示“美国”或“Oregon”地区标签，只能说明地理库对出口的分类，不能证明它就是这台 Oregon 服务器。
 
-> [!TIP]
-> 已完成的实测闭环
+> [!NOTE]
+> 现有实测覆盖
 >
-> - Oregon SS AES-256-GCM / TCP 18443 可以连接；
-> - 普通网站从 Oregon `direct` 出站；
-> - Claude / Anthropic 命中服务端 WARP 分流；
-> - v2rayNG 使用香港前置后，页面访问和美国出口正常；
-> - Oregon 日志确认请求来自前置网络并进入 `ss-chain`。
+> 本轮确认了 Mac 直连 Oregon `18443` 和静态 IPv4 出口。之前的 Android 测试曾用客户端配置和 Oregon 来源日志确认香港前置可达。香港前置对于时延、超时和吞吐量的影响仍需同网、同时段对照。
 
 ### 回滚
 
@@ -890,17 +848,13 @@ sudo systemctl --no-pager --full status xray
 | 2\. Xray 是否运行 | `sudo systemctl status xray` | 确认 Active: active (running) |
 | 3\. 端口是否监听 | `sudo ss -tlnp \| grep -E ':443 \|:18443 '` | 443 必须监听；启用 SS 链式备用时 18443 也必须监听 |
 | 4\. 服务端日志 | `sudo tail -30 /var/log/xray/error.log` | 检查是否有连接记录或错误 |
-| 5\. WARP 状态 | `warp-cli --accept-tos status` | 应显示 Connected, healthy |
+| 5\. WARP 状态（仅用于排查已启用的 WARP 路由） | `warp-cli status` | 检查连接状态，再通过本机 SOCKS5 验证实际出口 |
 
 ### 网络链路质量问题
 
-国内到不同 Region 的实际延迟和稳定性取决于运营商国际出口：
+跨区延迟和稳定性随运营商、接入网络和时段变化。在同一客户端网络交替测 `443` 直连、`18443` 直连和 `18443` 经香港前置。固定测试站点和请求大小，记录首字节时间的中位数和 p90、超时比例及下载速度；每条路径确认 Oregon 静态出口。
 
-| 现象 | 原因 | 应对 |
-| --- | --- | --- |
-| 连接超时、频繁断开 | 运营商国际出口拥堵或 DPI 干扰 | 换时段（晚高峰最差）、换 Region |
-| SSH 输入卡顿 | 高延迟 + 丢包 | 用 Lightsail 自带浏览器终端，或安装 `mosh` |
-| 持续严重丢包 | IP 段或线路被针对 | 快照 → 新建实例换 IP（免费） |
+同时保留 Oregon 上的直出测速，并观察 CPU 突发容量、TCP 重传和 swap 活动。若 Oregon 直出正常、客户端路径在晚高峰变慢，再对照不同入口或中转。若直出也变慢或主机资源持续吃紧，先排查 Oregon 到目标站点及实例负载。
 
 > [!NOTE]
 > mosh 安装（替代 SSH，可选）
@@ -912,17 +866,19 @@ sudo systemctl --no-pager --full status xray
 
 ### IP 被墙后的恢复操作
 
-GFW 的 DPI 可能将你的 Lightsail 静态 IP 加入黑名单，表现为：客户端突然无法连接，测试延迟显示超时或 `io: read/write on closed pipe`，但服务端 Xray 和 WARP 状态正常。
+客户端超时或出现 `io: read/write on closed pipe` 时，先核对 Lightsail 实例状态、Xray 监听和其他网络的连通性。线路拥堵、路由故障和针对地址的拦截都可能表现为超时。
 
 > [!CAUTION]
-> 如何判断 IP 被墙
+保留现有静态 IP 时先诊断接入路径
 >
 > - 客户端（V2rayN / V2rayNG）连接超时或测速失败
 > - Lightsail 浏览器终端能正常 SSH（说明服务器本身没问题）
-> - 本地终端 `ssh -i key.pem ubuntu@<IP>` 也超时（说明 IP 被墙，不只是 443 端口）
+- 本地终端 SSH 也超时，说明该网络到实例的异常涉及 `22` 端口。可结合其他网络或前置路径继续排查
 > - 同一节点在其他国家/地区的网络下能正常连接
 
-#### 恢复步骤（约 2 分钟）
+#### 允许更换静态 IP 时的恢复步骤
+
+这组步骤会释放原静态 IP。需要保持当前 Oregon 出口或仍在验证接入路径时，继续保留原地址。
 
 1. **Lightsail 控制台释放旧静态 IP**<br>
     Networking → Static IPs → 选中被墙的 IP → Detach → Delete
@@ -952,12 +908,7 @@ GFW 的 DPI 可能将你的 Lightsail 静态 IP 加入黑名单，表现为：�
 
 ### 什么时候需要住宅 IP
 
-当 WARP 出口仍被 Claude 风控时才需要。WARP 本质还是 Cloudflare 数据中心 IP（AS 13335），如果被标记，需要叠加一层**真实住宅 IP** 作为最终出口。住宅 IP 来自美国家庭宽带运营商（Comcast、AT&T、Verizon 等），平台几乎无法将其与正常美国用户区分。
-
-> [!NOTE]
-> 先试 WARP，不行再加
->
-> 住宅 IP 是备选方案，不是必须。大多数情况下 WARP 已经足够。先跑一两周观察，确认被风控后再购买住宅 IP，避免不必要的开支。
+ISP 或住宅代理适合明确需要其他出口的场景。启用后，匹配请求的最终 IP 由代理商提供。需要保持 Oregon 静态 IP 的流量继续走 `direct`。
 
 ### 选择 ISP 静态住宅代理
 
@@ -988,7 +939,7 @@ GFW 的 DPI 可能将你的 Lightsail 静态 IP 加入黑名单，表现为：�
 
 ### 架构变化
 
-叠加住宅 IP 后，Xray 出站链路从 WARP 替换为住宅代理：
+启用可选住宅代理后，可让指定 AI 域名从住宅代理出站，普通流量继续从 Oregon 直出。
 
 ```text
 本地客户端
@@ -998,7 +949,7 @@ AWS Lightsail
     │
     ├── 普通流量 ──→ 直连出站
     │
-    └── Claude / OpenAI ──→ 住宅代理 (SOCKS5)  ← 替换 WARP
+    └── Claude / OpenAI ──→ 住宅代理（SOCKS5）
                                   │
                                   ▼
                         美国家庭宽带 IP  (Comcast / AT&T / Verizon)
@@ -1009,7 +960,7 @@ AWS Lightsail
 
 ### Xray 配置变更
 
-把 WARP 出站替换为住宅代理出站，路由规则中 `"outboundTag": "warp"` 改为 `"outboundTag": "residential"`：
+添加 `residential` 出站，并将选中域名的 `outboundTag` 设为 `residential`。
 
 ```json
 {
@@ -1080,11 +1031,11 @@ AWS Lightsail
 
 ### 总成本对比
 
-| 方案 | 代理月费 | IP 信誉 | 适用场景 |
+| 方案 | 示例月费 | 最终出口 | 适用场景 |
 | --- | --- | --- | --- |
-| Lightsail 裸 IP | $5 | 低 | 临时使用、非敏感服务 |
-| Lightsail + WARP | $5 | 中等 | 默认方案，大多数情况够用 |
-| Lightsail + 住宅 IP | $8-10 | 高 | WARP 被风控后的终极方案 |
+| Lightsail 直出 | $5 | Oregon 静态 IP | 当前日常部署 |
+| Lightsail + WARP | $5 | 被选中请求走 Cloudflare IP | 可选的替代出口 |
+| Lightsail + 住宅 IP | $8-10 | 被选中请求走住宅代理 IP | 明确需要这种出口的场景 |
 
 <a id="security"></a>
 
@@ -1117,8 +1068,7 @@ AWS Lightsail
 | 注册邮箱 | 使用 Gmail 等国际邮箱，不用国内邮箱 |
 | 账号信息 | 名字和个人资料用英文，不要绑定中国手机号 |
 | IP 一致性 | 注册时就走代理，后续保持同一出口 IP |
-| 固定 Claude 出口 | Claude 流量始终走同一个节点的 WARP 出口，不要今天美国明天日本。日常浏览可以用另一个节点 |
-| 一 IP 一账号 | 同一个 WARP 出口 IP 不要登录多个 Claude 账号，多账号共用 IP 最容易触发关联封禁 |
+| 固定 Claude 出口 | Oregon 当前对 `ai-services` 使用 `direct`，沿用同一个静态 IPv4 |
 | 地区一致性 | 付款地址、IP 所在地保持逻辑一致 |
 | 设备稳定 | 不要频繁切换设备和 IP |
 | 浏览器语言 | `chrome://settings/languages` 把 English (US) 调到第一位，避免 `Accept-Language: zh-CN` 和美国 IP 矛盾 |
@@ -1142,24 +1092,24 @@ AWS Lightsail
 > | IPRoyal ISP 静态（Nigeria） | — | 已无库存 |
 > | SurferCloud 拉各斯 | ~$5.9/月（首月） | 不推荐——三次换壳历史、稳定性差、退款困难、信用卡被盗刷投诉 |
 >
-> **实际结论：不需要尼日利亚 IP。**Claude 账号没有区域概念——订阅通过 App Store，Claude 只知道你是 Pro 用户，不知道你付了多少钱。大量国内用户用美国/日本 IP + 尼区 App Store 订阅长期正常使用。封号更可能是 IP 信誉、行为模式等因素导致，不是"付款尼日利亚 + 使用美国"这种地区不一致。继续用 **Lightsail + WARP 美国出口**即可。
+> 这是此前的出口方案调研记录。当前流量路径见[当前部署](#current-deployment)。
 
 ### 代理出口质量检测
 
 配置完成后，开着代理逐一访问以下网站，确认出口 IP 的健康度和有无信息泄露：
 
-#### 1. 确认 Claude 流量走了 WARP
+#### 1. 核对 Oregon 直出和可选 WARP
 
-普通网站（如 ipinfo.io）走的是 Xray 直连出站，看到的是 Lightsail IP，不代表 Claude 的实际出口。需要用终端测试 Claude 域名：
+在客户端通过代理打开公网 IP 检测页，核对结果是否为 Oregon 的静态 IPv4。针对 Claude / OpenAI 域名，再核对第 5 章的 `ai-services` 规则及相应访问日志中的出站标签。IP 检测页只能证明该测试请求的出口。
+
+如要单独验证宿主机 WARP，在 Oregon 运行下面的只读对照。它测试的是 Cloudflare trace 请求。
 
 ```bash
-# 测试 Claude 域名的实际出口（端口按你的客户端配置）
-curl --proxy http://127.0.0.1:10809 https://api.anthropic.com/cdn-cgi/trace
-
-# 确认输出中：
-# warp=on     ← 走了 WARP
-# ip=104.x.x.x ← Cloudflare IP，不是 AWS IP
+curl --ipv4 --noproxy '*' -fsS https://www.cloudflare.com/cdn-cgi/trace | grep -E '^(ip|warp)='
+curl --noproxy '' --proxy socks5h://127.0.0.1:40000 -fsS https://www.cloudflare.com/cdn-cgi/trace | grep -E '^(ip|warp)='
 ```
+
+本次检查中，第一条命令返回 Oregon 静态 IPv4 且 `warp=off`，第二条返回 Cloudflare 出口且 `warp=on`。
 
 #### 2. IP 风险评分
 
@@ -1185,7 +1135,7 @@ curl --proxy http://127.0.0.1:10809 https://api.anthropic.com/cdn-cgi/trace
 | `https://whoer.net` | 综合匿名度 | 匿名度 >90%，时区/语言/IP 地区应一致 |
 
 > [!NOTE]
-> 实测参考值（WARP 出口）
+> 历史参考值（曾测试的 WARP 出口）
 >
 > | 指标 | 实测值 |
 > | --- | --- |
@@ -1194,15 +1144,11 @@ curl --proxy http://127.0.0.1:10809 https://api.anthropic.com/cdn-cgi/trace
 > | VPN / Tor / 公共代理检测 | 全部 No |
 > | 外部黑名单 | 全部 No |
 >
-> WARP 出口 IP 质量整体良好，远优于裸 Lightsail IP。
+> 这组评分对应当时的地址和检测站点。
 
 ### 线路稳定性
 
-- Oregon 区域偶尔有线路波动，可尝试不同可用区（`us-west-2a` / `2b`）
-- 备选区域：`ap-northeast-1`（Tokyo），延迟更低（~70ms vs ~240ms），线路更稳定，但日本 IP 对部分美区服务可能有限制
-- 建议多区域部署（如 Oregon + Tokyo），前 3 个月免费额度按实例独立计算，测完保留效果好的
-- 如果 IP 被墙，删掉静态 IP 重新分配即可（免费操作）
-- 配置稳定后做一个快照（Snapshot）留底，方便快速恢复
+保持现有 Oregon 静态 IP。在不同运营商网络上先复测主入口和备用入口，再评估前置是否能改善晚高峰的超时或吞吐。历史 Tokyo 测试仅供参考，当前实例已删除。
 
 ### geodata.dat 自动更新踩坑与修复
 
@@ -1227,7 +1173,7 @@ curl --proxy http://127.0.0.1:10809 https://api.anthropic.com/cdn-cgi/trace
 
 #### 修复方案：安全更新脚本
 
-替换 `/usr/local/xray-script/tool/geodata.sh` 为以下版本（两台服务器都需要）：
+以下安全更新脚本针对仍在使用 Xray-script 定时更新的实例。当前维护范围为 Oregon。
 
 ```bash
 #!/usr/bin/env bash
@@ -1331,7 +1277,7 @@ log "OK: geoip=${geoip_size} geosite=${geosite_size}"
 | 日志 | 输出被丢弃 | 写入 `/var/log/geodata-update.log` |
 | 临时文件清理 | 手动处理 | `trap cleanup EXIT` 自动清理 |
 
-#### 部署步骤（两台服务器都要做）
+#### 在仍运行的实例上部署
 
 ```bash
 # 备份旧脚本
@@ -1387,7 +1333,7 @@ sudo ss -tlnp | grep 443
 > [!WARNING]
 > Xray-script 自身更新可能覆盖这个 updater；更新脚本后要重新核对文件内容、`0700` 权限、cron 是否只有一条，并手动执行一次。它也可能重建 Xray 主配置，因此同时复查 `warp`、`ai-services` 与 `ss-chain`。
 
-整理于 2026 年 6 月 · GCP 实战补充于 2026 年 7 月 · 仅供个人学习与技术参考
+整理于 2026 年 6 月 · GCP 补充于 2026 年 7 月 · Oregon 现网核对于 2026 年 11 月 23 日
 
 本文档从 [海外 AI 服务订阅指南](ai_subscription_guide.md) 拆分而来，订阅/支付/eSIM 相关内容请参阅原文档。
 

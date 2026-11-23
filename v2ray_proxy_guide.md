@@ -163,7 +163,7 @@ V2rayNG 允许你精确控制哪些 App 走 VPN、哪些不走。这是 Android 
 
 ## 4. Android 链式代理：香港前置 → Oregon SS AES-256-GCM
 
-这个方案用于中国本地网络直连 Oregon 不稳定的场景。Oregon 服务端的 **VLESS + XHTTP + Reality / TCP 443** 仍是主入口；**Shadowsocks AES-256-GCM / TCP 18443** 只是经香港机场前置拨号的兼容性备用入口。服务端部署、备份和回滚见 [Oregon Shadowsocks 链式备用入口](proxy_server_guide.md#ss-chain)。
+当本地网络直连 Oregon 不稳定时，可在同一 Oregon 出口前增加香港前置。**VLESS + XHTTP + Reality / TCP 443** 是主入口，**Shadowsocks AES-256-GCM / TCP 18443** 是兼容性备用入口，可直连，也可经香港前置拨号。服务端部署、备份和回滚见 [Oregon Shadowsocks 链式备用入口](proxy_server_guide.md#ss-chain)。
 
 ```text
 中国本地网络
@@ -179,9 +179,7 @@ v2rayNG / Android VPN
     ▼
 Oregon Xray / ss-chain
     │
-    ├── 普通网站 ──→ direct
-    │
-    └── Claude / Anthropic ──→ WARP
+    └── 普通网站及 AI 域名 → direct → Oregon 静态 IPv4
     ▼
 目标站点
 ```
@@ -242,18 +240,17 @@ Oregon Xray / ss-chain
 | --- | --- | --- |
 | 普通 IP 检测页得到的公网 IP 与 `<OREGON_SERVER_IP>` 完全一致，或与独立确认的 Oregon `direct` NAT 出口一致 | 普通站点经这台 Oregon 的 `direct` 出站 | 不能证明客户端到 Oregon 经过了香港 |
 | 检测页只显示“美国”或“Oregon”地区标签 | 只说明地理库把当前出口归到该地区 | 不能证明是这台 Oregon，更不能证明经过香港前置 |
-| Claude / Anthropic 可访问并显示美国出口 | 目标域名可达；若命中规则，最终可能是 WARP 出口 | 不能据此反推香港前置或 Oregon 原生 IP |
+| Claude / Anthropic 请求出现 `[ss-chain -> direct]` | 该请求由当前 Oregon 配置直出 | 是否经过香港前置仍由客户端拨号配置和服务端来源日志确认 |
 | Oregon outbound 有 `dialerProxy = <HK_FRONT_OUTBOUND_TAG>` | 生成配置表达了正确的链式拨号计划 | 不能证明这次请求在运行时一定成功走过前置 |
 | Oregon `ss-chain` 入站日志来源属于前置中转网络 | **香港前置实际生效的关键运行证据** | 来源 IP 的 GeoIP 标签不必等于“香港” |
 
-如果本地可以直连 Oregon SS，推荐做同一时间窗口的 A/B 对照：关闭香港前置发起一次请求，再开启前置发起一次；记录 Oregon 日志的时间戳、入站 tag 和脱敏后的来源网络变化，同时保持最终 Oregon direct / WARP 出口逻辑不变。如果关闭前置后 Oregon SS 本来就无法直连，“没有日志”不能形成来源 IP 对照，此时应组合使用生成配置中的 `dialerProxy` 与开启前置后的 `ss-chain` 来源日志。服务端命令：
+如果本地可以直连 Oregon SS，先做同一时间窗口的 A/B 对照。轮流关闭、开启香港前置发起相同请求，记录时间、入站标签、脱敏后的来源网络和最终 Oregon 出口。如果直连本就不可用，用开启前置时生成配置中的 `dialerProxy` 和服务端 `ss-chain` 来源日志确认链路。
 
 ```bash
 sudo tail -f /var/log/xray/access.log | grep 'ss-chain'
 
 # 脱敏示例；真实来源 IP、端口和目标地址不得提交
 <TIMESTAMP> from <HK_FRONT_EGRESS_IP>:<SOURCE_PORT> accepted ... [ss-chain -> direct]
-<TIMESTAMP> from <HK_FRONT_EGRESS_IP>:<SOURCE_PORT> accepted ... [ss-chain -> warp]
 ```
 
 > [!NOTE]
@@ -269,14 +266,10 @@ sudo tail -f /var/log/xray/access.log | grep 'ss-chain'
 | 香港前置能否读取 Oregon SS 流量？ | `aes-256-gcm` 内层负载本身已加密并认证；在密码和终端未失陷、实现正常的前提下，前置不能直接读取明文。 |
 | 香港前置还能看到什么？ | 能看到 Oregon IP、TCP 18443、连接时间、包大小和流量特征；传统 SS AEAD 不提供这类元数据隐匿，也不能等同于 SS2022 的重放防护。 |
 
-> [!TIP]
-> 本方案已实际验证
+> [!NOTE]
+> 实测范围
 >
-> - Oregon SS AES-256-GCM / 18443 可连接；
-> - 普通网站走 Oregon `direct`；
-> - Claude / Anthropic 走服务端 WARP；
-> - v2rayNG 加香港前置后，页面访问和美国出口正常；
-> - Oregon 日志确认请求来自前置网络并进入 `ss-chain`。
+> 过去的 Android 连通测试用服务端来源日志确认过香港前置。2026 年 11 月 23 日的 Mac 样本直接连到 Oregon `18443`，使用 Oregon 静态出口。两次验证发生在不同条件下，前置的性能收益要在同一接入网络上交替测试。
 
 <a id="routing"></a>
 
@@ -325,7 +318,7 @@ sudo tail -f /var/log/xray/access.log | grep 'ss-chain'
 > - **客户端路由**（V2rayN/NG）：决定流量是直连还是发给代理服务器
 > - **服务端路由**（Lightsail 上的 Xray config）：决定收到的流量从哪个出口出去（直连 / WARP / 住宅 IP）
 >
-> 例如访问 claude.ai：客户端路由判断"不是大陆域名" → 发给代理服务器 → 服务端路由匹配 ai-services 规则 → 从 WARP 出口出去。
+例如访问 `claude.ai`，客户端将请求交给 Oregon Xray，服务端匹配 `ai-services` 后走 `direct`，目标站点看到 Oregon 静态 IPv4。
 
 <a id="terminal"></a>
 
@@ -406,7 +399,7 @@ proxy_off() {
 
 ### 完整流量路径示例
 
-以"桌面端 Tun 模式 + 绕过大陆 + 服务端 WARP 分流"为例，访问 claude.ai 的完整路径：
+以下是桌面端 Tun 模式使用 `443` 主入口访问 Claude 的路径。
 
 ```text
 Claude Code 发出 HTTPS 请求到 api.anthropic.com
@@ -424,15 +417,12 @@ VLESS-XHTTP-Reality 加密传输              ← 第 3 层：出站节点
     │
     ▼
 Lightsail Xray 服务端路由                ← 服务端分流（独立于客户端）
-    匹配 ai-services 规则 → 走 WARP 出站
+    匹配 ai-services → direct
     │
     ▼
-Cloudflare WARP (AS 13335)
-    │
-    ▼
-api.anthropic.com                        ← 目标服务器看到的是 Cloudflare IP
+api.anthropic.com                        ← 目标服务器看到 Oregon 静态 IPv4
 ```
 
-整理于 2026 年 6 月 · 仅供个人学习与技术参考
+整理于 2026 年 6 月 · Oregon 部署状态及验证范围更新于 2026 年 11 月 23 日
 
-Oregon 服务端的 Reality、SS AES-256-GCM、WARP 与回滚步骤见 [代理服务器搭建与运维指南](proxy_server_guide.md#ss-chain)。
+服务端入口、分流和可选 WARP 配置见 [代理服务器搭建与运维指南](proxy_server_guide.md#arch)。

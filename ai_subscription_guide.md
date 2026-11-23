@@ -28,7 +28,7 @@
 | **3** | **注册 Gmail**<br>用国内手机号注册全新 Gmail 即可。Google 账号本身没有区域锁定，区域由首次登录 Google Play 时的 IP 和付款方式决定。 | 5 分钟 | 无 | [第 6 章](#subscribe) |
 | **4** | **商家注册 Timon + 入金 + 开卡**<br>把步骤 3 的 Gmail 给商家 → 商家注册 Timon → 你登录后改密码、开 2FA → OKX 买 USDT（专用小额银行卡）→ 链上转到 Timon → 兑换 USD → 开 Visa/Mastercard（$5）→ 充值到卡。 | 1-2 小时 | 步骤 3 | [第 7 章](#timon) |
 | **5** | **注册 AWS + 创建 Lightsail 实例**<br>AWS 注册（**用国内信用卡**，不用 Timon 卡）→ 创建 Oregon 区 $5 实例 → 分配静态 IP → 配置防火墙。 | 30 分钟 | 国内信用卡 | [代理指南第 2 章](proxy_server_guide.md#lightsail) |
-| **6** | **搭建 Xray + WARP**<br>SSH 登录 Lightsail → Xray-script 一键安装 XHTTP Reality → 安装 WARP → jq 添加分流路由。 | 30 分钟 | 步骤 5 | [代理指南第 3-5 章](proxy_server_guide.md#xray) |
+| **6** | **搭建 Xray**<br>SSH 登录 Lightsail → 安装 XHTTP Reality → 使用 Oregon 静态 IP 直出。WARP 作为可选出口。 | 30 分钟 | 步骤 5 | [代理指南第 3-5 章](proxy_server_guide.md#xray) |
 | **7** | **安装客户端 + 扫码添加节点**<br>Mac 安装 V2rayN / 手机安装 V2rayNG → SSH 连服务器运行管理菜单 → 终端显示二维码 → 扫码导入节点 → 终端配置 `HTTPS_PROXY`。 | 15 分钟 | 步骤 6 | [代理指南第 6 章](proxy_server_guide.md#client) |
 | **8** | **订阅 Claude Pro**<br>美区 Google Play + 国内双币信用卡内购订阅（$19.99/月），或网页端 claude.ai 用 Timon 卡订阅。<br>*尼区 Google Play 无低价优惠且付款风控严格（IP 地区不一致会拦截），不推荐。想要低价需走尼区 App Store（需 iPhone/iPad）。* | 15 分钟 | 步骤 4 + 步骤 6 | [第 6 章](#subscribe) |
 | **9** | **登录 Claude Code**<br>终端运行 `claude` → OAuth 登录（浏览器弹出 claude.ai 授权页面）→ 授权完成 → 开始使用。 | 2 分钟 | 步骤 7 + 步骤 8 | [第 11 章](#claude-code-config) |
@@ -46,7 +46,7 @@
 | USDT 买入冻卡 | 中 | 用专用小额银行卡，只选 OKX 认证商家，单次 ¥500 以内 |
 | Claude 封号 | 中 | Timon 卡不存大额（够 1-2 月）；封号后退款→注销旧卡→开新卡→新账号 |
 | Google Play 尼区可行性 | 未验证 | 先尝试；不行则走 Apple（需 iPad）或网页端 claude.ai 直接订阅 |
-| Lightsail IP 被墙 | 低 | 重新分配静态 IP（免费），做好快照备份 |
+| 到 Lightsail 的连接不稳定 | 视运营商和时段而定 | 先对比现有入口和可用前置，保留 Oregon 静态 IP |
 | MTN 号码回收 | 极低 | 已开 1 年保号（¥16），到期前续费即可，eSIM 二维码多处备份 |
 | Claude Code 指纹泄露 | 中 | TZ/LANG 伪装 + 关闭遥测 + 始终走代理 |
 
@@ -54,11 +54,11 @@
 
 | 项目 | 月费 | 备注 |
 | --- | --- | --- |
-| AWS Lightsail | $5 | 前 3 个月免费（$5 plan） |
-| Cloudflare WARP | $0 | 免费 |
+| AWS Lightsail | $5 | 公网 IPv4 套餐标价，赠金及免费资格以账户为准 |
+| Cloudflare WARP（可选） | $0 | 独立出口，当前 Oregon 日常流量直出 |
 | Claude Pro 订阅（尼区） | ~¥88 | 约 $12；美区价 $20 |
 | MTN 保号 | ~¥1.3 | ¥16 / 12 个月，可忽略 |
-| 住宅 IP（可选） | $3-5 | WARP 被风控时才需要 |
+| 住宅 IP（可选） | $3-5 | 明确需要其他最终出口时再评估 |
 | **基础方案总计** | **~¥124/月** | Lightsail $5 + Claude ¥88 |
 | **含住宅 IP 方案** | **~¥150/月** | \+ 住宅 IP $3-5 |
 
@@ -76,7 +76,7 @@
 
 ## 代理服务器搭建
 
-代理服务器的搭建、配置与运维（AWS Lightsail + Xray + WARP + 住宅 IP + 安全加固）已拆为独立文档：
+Oregon Lightsail 的入口、静态 IP 直出、可选 WARP 和运维步骤见独立文档。
 
 **[→ 代理服务器搭建与运维指南](proxy_server_guide.md)**
 
