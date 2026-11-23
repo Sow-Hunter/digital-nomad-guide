@@ -37,7 +37,7 @@ Lightsail Xray（Oregon，Ubuntu 24.04）
 
 | 项目 | 已核对的状态 |
 | --- | --- |
-| 入口 | Xray 同时监听 TCP `443` 和 `18443`。Mac 测速样本直接连接 `18443`，Android 可另行配置香港前置 |
+| 入口 | Xray 同时监听 TCP `443` 和 `18443`。Mac 当前经香港前置连接 Oregon 的 `18443` Shadowsocks |
 | 出站 | `direct` 为默认出站，`ai-services` 匹配的 21 个域名也走 `direct`。服务端直出测试确认使用 Oregon 静态 IPv4 |
 | WARP | 宿主机 SOCKS5 `127.0.0.1:40000` 连通。Xray 保留 `warp` 出站，本次核对的规则未引用它。开启分流会改变命中请求的最终出口 |
 | 防火墙 | Lightsail 放行 `443`；`18443` 允许任意 IPv4 来源。控制台还放行 `80`，主机当前没有进程监听该端口 |
@@ -589,7 +589,7 @@ sudo toggle-google-warp.sh off
 
 ## 6. Oregon Shadowsocks 链式备用入口（可选）
 
-当客户端直连 Oregon 不稳定时，可以保留 **VLESS + XHTTP + Reality / TCP 443** 主入口，用同一台 Oregon 上的 **Shadowsocks AES-256-GCM / TCP 18443** 作为兼容性备用。Mac 可直连该端口，Android 也可用香港前置向该端口拨号。[V2rayNG 链式代理章节](v2ray_proxy_guide.md#android-chain)介绍链式配置。
+当客户端直连 Oregon 不稳定时，可以保留 **VLESS + XHTTP + Reality / TCP 443** 主入口，用同一台 Oregon 上的 **Shadowsocks AES-256-GCM / TCP 18443** 作为兼容性备用。该端口支持直连及经前置拨号。Mac 当前使用香港前置。[V2rayNG 链式代理章节](v2ray_proxy_guide.md#android-chain)介绍链式配置。
 
 ```text
 中国本地网络
@@ -741,7 +741,7 @@ sudo /usr/local/sbin/generate-ss-chain-link <GCP_EXTERNAL_IP>
 
 1. 进入 **Lightsail → Instances → Oregon 实例 → Networking → IPv4 Firewall**。
 2. 新增 **Custom / TCP / 18443**；443 规则保持不变，不要把主入口改到 18443。
-3. 当前 `18443` 放行任意 IPv4 来源，Mac 直连测试使用这一入口。若后续只允许香港前置且确认它的实际出口固定，可在同一条规则上配置来源限制；同时取消对所有 IPv4 地址的放行。操作方式见 [Lightsail 防火墙说明](https://docs.aws.amazon.com/lightsail/latest/userguide/understanding-firewall-and-port-mappings-in-amazon-lightsail.md)。
+3. 当前 `18443` 放行任意 IPv4 来源。若后续只允许香港前置且确认它的实际出口固定，可在同一条规则上配置来源限制；同时取消对所有 IPv4 地址的放行。操作方式见 [Lightsail 防火墙说明](https://docs.aws.amazon.com/lightsail/latest/userguide/understanding-firewall-and-port-mappings-in-amazon-lightsail.md)。
 4. 智能入口或 IEPL 的 NAT 出口可能变化，限制来源前先以服务端日志确认，否则会误封。
 5. 只在确实使用 IPv6 链式连接时同步开放 IPv6 TCP 18443。
 
@@ -769,7 +769,7 @@ sudo tail -f /var/log/xray/access.log | grep 'ss-chain'
 > [!NOTE]
 > 现有实测覆盖
 >
-> 本轮确认了 Mac 直连 Oregon `18443` 和静态 IPv4 出口。之前的 Android 测试曾用客户端配置和 Oregon 来源日志确认香港前置可达。香港前置对于时延、超时和吞吐量的影响仍需同网、同时段对照。
+> Mac 当前配置为香港前置 → Oregon `18443` Shadowsocks。此前 Mac 测速确认了最终的 Oregon 静态 IPv4，测试请求未与服务端来源日志逐条对应。过去的 Android 连通测试曾通过服务端来源日志确认香港前置可达。
 
 ### 回滚
 
@@ -852,7 +852,7 @@ sudo systemctl --no-pager --full status xray
 
 ### 网络链路质量问题
 
-跨区延迟和稳定性随运营商、接入网络和时段变化。在同一客户端网络交替测 `443` 直连、`18443` 直连和 `18443` 经香港前置。固定测试站点和请求大小，记录首字节时间的中位数和 p90、超时比例及下载速度；每条路径确认 Oregon 静态出口。
+跨区延迟和稳定性随运营商、接入网络和时段变化。以 Mac 当前的香港前置 → `18443` 为基线，在同一客户端网络交替测 `18443` 直连。固定测试目标、请求大小和协议，按时间窗口核对 `ss-chain` 来源日志及最终 Oregon 静态 IP。记录首字节时间的中位数和 p90、超时比例及下载速度。`443` 直连可另作体验对照，其协议与 `18443` 不同。
 
 同时保留 Oregon 上的直出测速，并观察 CPU 突发容量、TCP 重传和 swap 活动。若 Oregon 直出正常、客户端路径在晚高峰变慢，再对照不同入口或中转。若直出也变慢或主机资源持续吃紧，先排查 Oregon 到目标站点及实例负载。
 
